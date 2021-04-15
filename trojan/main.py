@@ -638,7 +638,7 @@ class Trojan:
 
         # Getting an request.
         try:
-            request = requests.request("http://ipinfo.io/json").json()
+            request = requests.get("http://ipinfo.io/json").json()
         except (json.JSONDecodeError, requests.exceptions.HTTPError, requests.exceptions.ConnectionError):
             request = {}
 
