@@ -1,0 +1,8 @@
+loguru
+requests
+future
+pillow
+pyaudio
+wave
+ctypes
+opencv-python
