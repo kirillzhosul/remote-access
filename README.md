@@ -1,24 +1,22 @@
 # **Malware Trojan**
+# **!!!Use this repository only in educational purposes!!!**
 
-#**Use this repository only in educational purposes**
-
-#### _This repository is contains malware trojan which is written using Python._
-
+#### _This repository is contains malware trojan that is written using Python._
+Python malware trojan that was written in educational purposes only. It take your data and give remote access to your PC.
 ##Features:
-- Remote Access - Syncing commands from the remote server,
-- Grabbing of some data about client,
-- Hiding in the system,
+- Remote Access - Syncing commands from the remote server and sending back result,
+- Grabbing of some data about client on which launched the trojan,
+- Hiding in the system (Autorun),
 - ~~_WIP More features._~~
 
-##Operating systems supported:
+## Operating systems supported:
 - **_Windows,_**
 - ~~Linux (WIP)~~
 - ~~MacOS (WIP)~~
 
-##Python version required:
+## Python version required:
 - Tested in 3.9 version.
 
-##Requirements:
+## Requirements:
 - ~~As you may not install all requirements, its just disable working of some~~
 - ~~functions~~. Just type command pip install -r requirements.txt
-
