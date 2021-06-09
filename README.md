@@ -4,7 +4,7 @@
 #### _This repository is contains malware trojan that is written using Python._
 Python malware trojan that was written in educational purposes only. It take your data and give remote access to your PC.
 ##Features:
-- Remote Access - Syncing commands from the remote server and sending back result,
+- Remote Access - Syncing commands from the remote server (NOW THIS IS VKontakte BUT LATER I WILL ADD HTTP/OTHER) and sending back result,
 - Grabbing of some data about client on which launched the trojan,
 - Hiding in the system (Autorun),
 - ~~_WIP More features._~~
