@@ -1,5 +1,5 @@
-loguru
 requests
+vk-api
 future
 pillow
 pyaudio
