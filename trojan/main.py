@@ -75,7 +75,7 @@ __SYSTEM_OK = 0
 # Server group ID.
 SERVER_GROUP = 0
 
-# Server admins list.
+# Server admins list (Empty or None for all users is admins (May be not so safe)).
 SERVER_ADMINS = []
 
 # Is HWID grabbing is disabled or not.
@@ -1834,6 +1834,12 @@ def user_is_admin(_peer: str) -> bool:
     # @function user_is_admin()
     # @returns None
     # @description Function that returns is given user is admin or not.
+
+    if SERVER_ADMINS is None or len(SERVER_ADMINS) == 0:
+        # If there is no admins in the list
+
+        # Returning true as there is no admins.
+        return True
 
     # Returning.
     return _peer in SERVER_ADMINS
