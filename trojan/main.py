@@ -78,7 +78,7 @@ SERVER_GROUP = 0
 # Server admins list.
 SERVER_ADMINS = []
 
-# Is HWID grabbing is disabled or not.
+# Is HWID grabbing is disabled or not (Slow working at the start).
 DISABLE_HWID = True
 
 # Dont add to autorun?
@@ -1441,13 +1441,6 @@ def get_hwid() -> str:
 
     # Default HWID.
     _DEFAULT = "00000000-0000-0000-0000-000000000000"
-
-    # Returning blank if HWID is disabled.
-    if DISABLE_HWID:
-        # If HWID is disabled.
-
-        # Returning default.
-        return _DEFAULT
 
     try:
         # Trying to get HWID
