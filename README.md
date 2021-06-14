@@ -2,6 +2,7 @@
 # **!!!Use this repository only in educational purposes!!!**
 
 #### _This repository is contains malware trojan that is written using Python._
+## THIS PROJECT USE VK AS CONTROL PANEL, LATER UPDATES WILL ADD OTHER LIKE HTTP/TELEGRAM!
 Python malware trojan that was written in educational purposes only. It take your data and give remote access to your PC.
 ## Features:
 - Remote Access - Syncing commands from the remote server (NOW THIS IS VKontakte BUT LATER I WILL ADD HTTP/OTHER) and sending back result,
