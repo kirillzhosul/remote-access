@@ -1,23 +1,28 @@
 # **Malware Trojan**
-# **!!!Use this repository only in educational purposes!!!**
+## This repository is contains malware trojan that is written using Python.
+## **Use this project only in educational purposes!**
+## This project uses VK as control panel only at this moment, later i will add HTTP/TELEGRAM support, but now there is only VK control panel!
 
-#### _This repository is contains malware trojan that is written using Python._
-## THIS PROJECT USE VK AS CONTROL PANEL, LATER UPDATES WILL ADD OTHER LIKE HTTP/TELEGRAM!
-Python malware trojan that was written in educational purposes only. It take your data and give remote access to your PC.
+## Previews:
+![img](img/preview-commands.png)
+![img](img/preview-connected.png)
+
 ## Features:
-- Remote Access - Syncing commands from the remote server (NOW THIS IS VKontakte BUT LATER I WILL ADD HTTP/OTHER) and sending back result,
-- Grabbing of some data about client on which launched the trojan,
-- Hiding in the system (Autorun),
-- ~~_WIP More features._~~
+- **Remote Access**: Syncing commands from the remote server (VK Only for now) and sending response back,
+- **Stealing Data**: Stealing some data about client machine and sending to you,
+- **Autorun**: Adding self in the Windows autorun,
 
-## Operating systems supported:
-- **_Windows,_**
-- ~~Linux (WIP)~~
-- ~~MacOS (WIP)~~
 
-## Python version required:
-- Tested in 3.9 version.
+
+## Operating systems:
+### Supported
+- **_Windows_**
+### Partially supported:
+- **_Linux_**
+- **_MacOS_**
+
+## Tested in the python version 3.9!
 
 ## Requirements:
-- ~~As you may not install all requirements, its just disable working of some~~
-- ~~functions~~. Just type command pip install -r requirements.txt
+- ```pip install -r requirements-max.txt``` Full support all features (Commands)
+- ```pip install -r requirements-min.txt``` Not full support all features (Commands)
