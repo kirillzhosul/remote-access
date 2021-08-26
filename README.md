@@ -4,8 +4,8 @@
 ## This project uses VK as control panel only at this moment, later i will add HTTP/TELEGRAM support, but now there is only VK control panel!
 
 ## Previews:
-![img](img/preview-commands.png)
-![img](img/preview-connected.png)
+![img](previews/preview-commands.png)
+![img](previews/preview-connected.png)
 
 ## Features:
 - **Remote Access**: Syncing commands from the remote server (VK Only for now) and sending response back,

