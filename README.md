@@ -1,18 +1,10 @@
-# **Malware Trojan**
-## This repository is contains malware trojan that is written using Python.
-## **Use this project only in educational purposes!**
+# **Remote Access Tool**
+## This repository is contains tool that gives remote access to any connected device (Written using Python).
 ## This project uses VK as control panel only at this moment, later i will add HTTP/TELEGRAM support, but now there is only VK control panel!
 
 ## Previews:
 ![img](previews/preview-commands.png)
 ![img](previews/preview-connected.png)
-
-## Features:
-- **Remote Access**: Syncing commands from the remote server (VK Only for now) and sending response back,
-- **Stealing Data**: Stealing some data about client machine and sending to you,
-- **Autorun**: Adding self in the Windows autorun,
-
-
 
 ## Operating systems:
 ### Supported
