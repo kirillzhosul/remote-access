@@ -1,0 +1,7 @@
+{
+  "server_type": "VK",
+  "server_vk_allowed_users": [],
+  "server_vk_retry_method_call_on_fail": false,
+  "server_vk_group_access_token": "",
+  "server_vk_group_index": ""
+}
