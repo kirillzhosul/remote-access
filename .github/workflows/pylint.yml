@@ -20,5 +20,4 @@ jobs:
         pip install pylint
     - name: Analysing the code with pylint
       run: |
-        ; `ls -R|grep .py$|xargs` 
         pylint "src/main.py"
