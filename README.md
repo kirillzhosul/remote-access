@@ -1,24 +1,15 @@
 # **Remote Access Tool**
-## This tool gives remote access to any connected device.
-### This project uses VK as control panel only (TODO: HTTP/TELEGRAM support!)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=kirillzhosul_python-remote-access&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=kirillzhosul_python-remote-access)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=kirillzhosul_python-remote-access&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=kirillzhosul_python-remote-access)
+![PyLint](https://github.com/kirillzhosul/python-remote-access/actions/workflows/pylint.yml/badge.svg) 
 
-## Running and configuring:
-- Edit ```src/config.json``` (You may want read [that](https://github.com/kirillzhosul/python-remote-access/wiki/Config-Values) article)
-- Setup requirements (See block below).
-- Run with ``` python3 src/main.py```
-- Some other articles: [Launching](https://github.com/kirillzhosul/python-remote-access/wiki/Launching), [Making Executable](https://github.com/kirillzhosul/python-remote-access/wiki/Making-executable)
+**Development Environment**: *Windows*, *Python 3.9* (Linux / MacOS is in DevMode) \
+[Launching](https://github.com/kirillzhosul/python-remote-access/wiki/Launching), [Making Executable](https://github.com/kirillzhosul/python-remote-access/wiki/Making-executable), [Config Values](https://github.com/kirillzhosul/python-remote-access/wiki/Config-Values)
 
-## Requirements:
-#### Commands like webcam, microphone (except screenshot) needs max install.
-- ```pip install -r requirements-max.txt``` Full support for all features.
-- ```pip install -r requirements-min.txt``` Minimal support.
+**Description**: \
+This repository contains Remote Access Tool (RAT) written in Python language. \
+This project uses VK as control panel only (TODO: HTTP/TELEGRAM support!)
 
-## Previews:
-![img](previews/preview-connected.png)
-![img](previews/preview-commands.png)
-
-## Operating systems:
-- **_Windows_** (Main)
-- **_Linux_** (Partially)
-- **_MacOS_** (Partially)
-## Tested and working in Python v3.9!
+**Requirements**: \
+```pip install -r requirements-max.txt``` Full support for all commands. \
+```pip install -r requirements-min.txt``` Minimal support.
