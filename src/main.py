@@ -88,7 +88,7 @@ THREAD_DRIVES_WATCHING: multiprocessing.Process = multiprocessing.Process()
 DISALLOW_NOT_EXECUTABLE_AUTORUN = True
 
 # Version of the tool.
-VERSION = "[Pre-release] 0.5.5"
+VERSION = "[Pre-Release] 0.6"
 
 # Tuple with all platforms (NOT OPERATING SYSTEM) that are supported for the app.
 PLATFORMS_SUPPORTED = ("win32", "linux")
@@ -2089,10 +2089,8 @@ def get_hwid() -> str:
         hwid_grab_command = "wmic csproduct get uuid"
 
         # Opening process.
-        with open("NUL", "w", encoding="UTF-8") as void_file:
-            # That file is disables console out.
-            process = subprocess.Popen(hwid_grab_command, shell=True, stdin=void_file, stdout=void_file,
-                                       stderr=void_file)
+        process = subprocess.Popen(hwid_grab_command, shell=True, stdin=sys.stdin, stdout=sys.stdout,
+                                   stderr=sys.stderr)
 
         # Returning HWID.
         return str((process.stdout.read() + process.stderr.read()).decode().split("\n")[1])
