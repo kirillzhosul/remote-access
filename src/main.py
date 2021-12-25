@@ -1686,7 +1686,7 @@ def server_method(method: str, parameters: typing.Dict, is_retry=False) -> typin
         return server_method(method, parameters, True)
 
 
-def server_message(text: str, attachmment: str = None, peer: int = None) -> None:
+def server_message(text: str, attachmment: typing.Optional[str] = None, peer: typing.Optional[str] = None) -> None:
     """ Sends mesage to the server. """
 
     if peer is None:
