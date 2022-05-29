@@ -4,6 +4,7 @@
 
 import os
 import sys
+from .config import get_folder
 
 
 class RunLock:
@@ -16,3 +17,11 @@ class RunLock:
             self.flock = open(filename, "w")
         except WindowsError:
             sys.exit()
+    def _unlock(self):
+        """ Unlock instance. (Currently not used)"""
+        self.flock.close()
+
+
+def lock() -> RunLock:
+    """Locks current instance. """
+    return RunLock(get_folder() + "lock")
