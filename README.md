@@ -5,6 +5,9 @@
 [![Python](https://img.shields.io/badge/Python-v3.9-yellow)]()
 [![Version](https://img.shields.io/badge/Version-0.6.0-green)]()
 
+
+## Archived: Note, project is abandoned and archived, use at your own and risk, I will not update this project in next major period.
+
 **Operating System**: *Windows*, (Linux / MacOS partially supported) \
 [Launching](https://github.com/kirillzhosul/python-remote-access/wiki/Launching), [Making Executable](https://github.com/kirillzhosul/python-remote-access/wiki/Making-executable), [Config Values](https://github.com/kirillzhosul/python-remote-access/wiki/Config-Values)
 
