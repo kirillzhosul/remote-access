@@ -5,6 +5,12 @@
 
 import os
 import typing
+import sys
+
+
+def executable_get_extension() -> str:
+    """ Returns current executable extension. """
+    return sys.argv[0].split(".")[-1]
 
 
 def try_delete(path) -> bool:
